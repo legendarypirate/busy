@@ -1,7 +1,27 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
+
+/** Fallback when `cookies()` is empty but the browser sent `Cookie` (e.g. some Server Action multipart POST paths). */
+function readCookieFromHeader(cookieHeader: string | null | undefined, name: string): string | undefined {
+  if (!cookieHeader) return undefined;
+  for (const segment of cookieHeader.split(";")) {
+    const s = segment.trim();
+    const eq = s.indexOf("=");
+    if (eq <= 0) continue;
+    const key = s.slice(0, eq).trim();
+    if (key !== name) continue;
+    const val = s.slice(eq + 1).trim();
+    if (!val) return undefined;
+    try {
+      return decodeURIComponent(val);
+    } catch {
+      return val;
+    }
+  }
+  return undefined;
+}
 
 export type PlatformUser = {
   id: bigint;
@@ -19,7 +39,11 @@ export type PlatformUserWithBusyAuthz = PlatformUser & {
 /** Cookie-based session (matches login / Google callback cookies). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
   const jar = await cookies();
-  const idRaw = jar.get("bni_platform_account_id")?.value;
+  let idRaw = jar.get("bni_platform_account_id")?.value;
+  if (!idRaw) {
+    const h = await headers();
+    idRaw = readCookieFromHeader(h.get("cookie"), "bni_platform_account_id");
+  }
   if (!idRaw) {
     return null;
   }

@@ -1,5 +1,6 @@
 "use server";
 
+import { connection } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma, type BusinessTrip } from "@prisma/client";
@@ -108,6 +109,7 @@ function buildExtrasPayload(
 }
 
 export async function saveTripAction(formData: FormData): Promise<void> {
+  await connection();
   const session = await getPlatformSession();
   if (!session) {
     redirect("/auth/login?next=/platform/trips");
@@ -227,6 +229,7 @@ export async function saveTripAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteTripAction(formData: FormData): Promise<void> {
+  await connection();
   const session = await getPlatformSession();
   if (!session) {
     redirect("/auth/login?next=/platform/trips");
@@ -246,6 +249,7 @@ export async function deleteTripAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleTripFeaturedAction(formData: FormData): Promise<void> {
+  await connection();
   const session = await getPlatformSession();
   if (!session) {
     redirect("/auth/login?next=/platform/trips");

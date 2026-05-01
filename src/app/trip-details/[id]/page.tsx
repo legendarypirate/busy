@@ -7,8 +7,11 @@ import { mediaUrl } from "@/lib/media-url";
 
 export const dynamic = "force-dynamic";
 
-export default async function TripDetailsPage({ params }: { params: { id: string } }) {
-  const tripId = parseInt(params.id, 10);
+type Props = { params: Promise<{ id: string }> };
+
+export default async function TripDetailsPage({ params }: Props) {
+  const { id } = await params;
+  const tripId = parseInt(id, 10);
   if (isNaN(tripId)) {
     notFound();
   }
