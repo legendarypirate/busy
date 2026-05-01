@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
 
@@ -18,7 +18,7 @@ export default async function TripDetailPage({ params }: Props) {
   if (!Number.isFinite(num)) {
     notFound();
   }
-  const trip = await prisma.businessTrip.findUnique({ where: { id: num } }).catch(() => null);
+  const trip = await dbBusinessTrip().findUnique({ where: { id: num } }).catch(() => null);
   if (!trip) {
     notFound();
   }

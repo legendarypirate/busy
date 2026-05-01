@@ -37,7 +37,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/css/auth-pages.css" />
       </head>
       <body className="page-home">
-        <Navbar />
+        <header className="site-header sticky-top border-bottom bg-white" style={{ zIndex: 1030 }}>
+          <Navbar />
+        </header>
         {children}
         <Footer />
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" async></script>

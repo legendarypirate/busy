@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicAppOrigin } from "@/lib/auth-public-origin";
+import { ensureOrganizerRoleForEligibleAccount } from "@/lib/busy-rbac";
 import { upsertPlatformAccountFromGoogle } from "@/lib/platform-google-upsert";
 import { defaultPostLoginPath } from "@/lib/platform-session";
 import { attachPlatformSessionToResponse } from "@/lib/platform-session-cookies";
@@ -178,5 +179,6 @@ export async function GET(request: NextRequest) {
   res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
   res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
   attachPlatformSessionToResponse(res, account.id, display);
+  await ensureOrganizerRoleForEligibleAccount(account.id);
   return res;
 }

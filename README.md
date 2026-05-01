@@ -2,6 +2,16 @@
 
 This folder is a **new** [Next.js](https://nextjs.org/) App Router application that **replaces** the legacy PHP/MySQL stack in the parent directory (`../`). Backend logic lives in **Route Handlers** (`src/app/api/**`) and **Server Components**; the database is **PostgreSQL** via [Prisma](https://www.prisma.io/).
 
+## Product vision (architecture rule)
+
+- **Mission:** Бизнес боломжоо үүсгэ. Зөв хүмүүстэй холбогд. Үр дүнгээ удирд.
+- **Rule:** Энэ байршуулалт платформын бүх архитектурыг удирдана.
+- **Goal:** Хэрэглэгч бүр өөрийн зорилгоор орж ирээд, өөрт хэрэгтэй үйлдлээ хурдан хийдэг байх.
+
+**Five audiences:** Оролцогч · Зохион байгуулагч · Бизнес гишүүн · Нийлүүлэгч/үйлдвэр · Хөрөнгө оруулагч/түнш.
+
+Canonical strings live in **`src/lib/busy-platform-vision.ts`**. Cursor applies **`.cursor/rules/busy-platform-vision.mdc`** so agents align new work with this framing.
+
 ## Prerequisites
 
 - Node.js 20+

@@ -1,4 +1,61 @@
+/* Theme + utilities only (no Preflight) — keeps Bootstrap navbar / collapse intact site-wide. */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+
+/* Scan app + components so shadcn + dashboard Tailwind utilities emit */
+@source "../components/**/*.{tsx,ts}";
+@source "../app/**/*.{tsx,ts}";
+
+/* shadcn/ui — semantic colors (blue primary for BUSY.mn dashboard tools) */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
 :root {
+  --radius: 0.65rem;
+  --background: 210 20% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
   --primary-color: #001f5b;
   --primary-dark: #000f33;
   --primary-light: #3b4f8f;
@@ -16,4 +73,64 @@ body {
 
 a {
   text-decoration: none;
+}
+
+/* BUSY.mn vision block (home + shared marketing) */
+.busy-vision-audiences {
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 40%);
+  border-top: 1px solid #e2e8f0;
+}
+.busy-vision-card {
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.busy-vision-icon {
+  width: 44px;
+  height: 44px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 1.1rem;
+}
+.pl-sidebar-mission {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+/* Оролцогчийн замнал (canonical funnel) */
+.busy-vision-journey {
+  border-color: #e2e8f0;
+}
+.busy-vision-journey-list {
+  padding-left: 0;
+}
+.busy-vision-journey-num {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+.busy-vision-journey-arrow {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Marketing header: keep Bootstrap collapse content visible at lg+ if layer order / JS timing breaks it */
+@media (min-width: 992px) {
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.collapse.navbar-collapse {
+    display: flex !important;
+    flex-basis: auto !important;
+    flex-grow: 1;
+    align-items: center;
+    width: auto;
+    visibility: visible;
+    height: auto !important;
+    overflow: visible;
+  }
 }

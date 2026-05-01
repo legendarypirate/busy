@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BUSY_ARCHITECTURE_RULE, BUSY_MISSION_LINES, BUSY_PLATFORM_GOAL } from "@/lib/busy-platform-vision";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -8,7 +9,17 @@ export function SiteFooter() {
         <div className="footer-main-grid">
           <div className="footer-logo-area">
             <div className="logo">BUSY.mn</div>
-            <p className="desc">Бизнес аялал, хурал, эвент үүсгэхэд зориулагдсан платформ</p>
+            <p className="desc mb-2">{BUSY_MISSION_LINES.join(" ")}</p>
+            <p className="desc small text-muted mb-2">{BUSY_ARCHITECTURE_RULE}</p>
+            <p className="desc small text-muted mb-2">{BUSY_PLATFORM_GOAL}</p>
+            <div className="d-flex flex-wrap gap-3">
+              <Link href="/#busy-audiences" className="small text-primary text-decoration-none">
+                Таван гол хэрэглэгч →
+              </Link>
+              <Link href="/#busy-participant-journey" className="small text-primary text-decoration-none">
+                Оролцогчийн замнал →
+              </Link>
+            </div>
             <div className="footer-social">
               <a href="#" className="social-circle" aria-label="Facebook">
                 <i className="fa-brands fa-facebook-f" aria-hidden />

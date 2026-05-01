@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 
 export type PlatformUser = {
   id: bigint;
@@ -8,6 +9,11 @@ export type PlatformUser = {
   displayName: string;
   role: string;
   photoUrl: string | null;
+};
+
+export type PlatformUserWithBusyAuthz = PlatformUser & {
+  busyRoleSlugs: string[];
+  busyPermissionKeys: string[];
 };
 
 /** Cookie-based session (matches login / Google callback cookies). */
@@ -50,6 +56,13 @@ export async function getPlatformSession(): Promise<PlatformUser | null> {
     role: account.role,
     photoUrl: account.profile?.photoUrl?.trim() || null,
   };
+}
+
+export async function getPlatformSessionWithBusyAuthz(): Promise<PlatformUserWithBusyAuthz | null> {
+  const base = await getPlatformSession();
+  if (!base) return null;
+  const authz = await fetchBusyAuthzForAccount(base.id);
+  return { ...base, busyRoleSlugs: authz.roleSlugs, busyPermissionKeys: authz.permissionKeys };
 }
 
 export async function requirePlatformUser(nextPath = "/platform"): Promise<PlatformUser> {

@@ -18,7 +18,7 @@ export default async function HomePage() {
   const heroTitlePreview = heroTitle.length > 56 ? heroTitle.slice(0, 56) + '...' : heroTitle;
   const heroImg = mediaUrl(hero?.coverImageUrl ?? "") || "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=100&q=80";
   const heroPeriod = hero && `${formatMnDate(hero.startDate)}${hero.endDate ? ` - ${formatMnDate(hero.endDate).slice(5)}` : ""}`;
-
+  
   const tripTotal = data.stats.tripTotal || 0;
   const tripActive = data.stats.tripActive || 0;
   const eventTotal = data.stats.eventTotal || 0;
@@ -51,6 +51,14 @@ export default async function HomePage() {
                   </Link>
                   <Link href="/dashboard/events/create" className="btn-hero-outline">
                     Хурал эвент үүсгэх
+                  </Link>
+                </div>
+                <p className="hero-weekly-lead small text-muted mt-3 mb-0" style={{ maxWidth: 520 }}>
+                  7 хоногийн бизнес хурлаа 5 минутанд үүсгэ. QR бүртгэлээр оролцогчдыг хялбар бүртгэж, уулзалтын таксийн төлбөрөө хянаж, roster sheet-ээ нэг товчоор хэвлээрэй.
+                </p>
+                <div className="mt-2">
+                  <Link href="/dashboard/weekly-meetings/new" className="small fw-semibold text-primary text-decoration-none">
+                    7 хоногийн хурал үүсгэх →
                   </Link>
                 </div>
                 <Link href="#" className="hero-how-it-works">
@@ -212,7 +220,7 @@ export default async function HomePage() {
                 const tDate = trip.startDate ? `${formatMnDate(trip.startDate)}${trip.endDate ? ` - ${formatMnDate(trip.endDate).slice(5)}` : ""}` : "Огноо удахгүй";
                 const tDesc = trip.description || "Бизнес аяллын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.";
                 const tStatus = trip.statusLabel || "Идэвхтэй";
-
+                
                 return (
                   <div className="trip-card-exact" key={trip.id}>
                     <div className="trip-exact-img-wrap">

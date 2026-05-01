@@ -1,5 +1,5 @@
 import type { BusinessTrip, LegacyMeeting, LegacyMember, NewsArticle } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { mediaUrl } from "@/lib/media-url";
 
 type RecentOrderRow = { orderRef: string; createdAt: Date };
@@ -53,6 +53,7 @@ export async function loadHomeData(): Promise<HomePayload> {
     today.setHours(0, 0, 0, 0);
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEndExclusive = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const tripDb = dbBusinessTrip();
 
     const [
       tripTotal,
@@ -70,8 +71,8 @@ export async function loadHomeData(): Promise<HomePayload> {
       profileRows,
       memberPartnerRows,
     ] = await Promise.all([
-      prisma.businessTrip.count().catch(() => 0),
-      prisma.businessTrip.count({ where: { startDate: { gte: today } } }).catch(() => 0),
+      tripDb.count().catch(() => 0),
+      tripDb.count({ where: { startDate: { gte: today } } }).catch(() => 0),
       prisma.legacyMeeting.count().catch(() => 0),
       prisma.legacyMeeting.count({ where: { status: "active" } }).catch(() => 0),
       prisma.paymentOrder.count({ where: { status: { in: ["paid", "success"] } } }).catch(() => 0),
@@ -96,7 +97,7 @@ export async function loadHomeData(): Promise<HomePayload> {
           select: { orderRef: true, createdAt: true },
         })
         .catch((): RecentOrderRow[] => []),
-      prisma.businessTrip
+      tripDb
         .findMany({
           orderBy: [{ startDate: "asc" }, { id: "asc" }],
           take: 3,

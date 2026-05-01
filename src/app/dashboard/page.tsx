@@ -1,164 +1,109 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPageRoute() {
   return (
-    <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="mb-0 fw-bold">Тойм мэдээлэл</h3>
-        <div className="d-flex gap-2">
-          <Link href="/dashboard/trips" className="btn btn-primary d-flex align-items-center gap-2">
-            <i className="fa-solid fa-plus"></i>
-            <span className="d-none d-sm-inline">Аялал үүсгэх</span>
-          </Link>
-          <Link href="/dashboard/events/create" className="btn btn-outline-primary d-flex align-items-center gap-2">
-            <i className="fa-solid fa-plus"></i>
-            <span className="d-none d-sm-inline">Эвент үүсгэх</span>
-          </Link>
+    <DashboardPage>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Тойм мэдээлэл</h1>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm">
+            <Link href="/dashboard/trips">Аялал үүсгэх</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/events/create">Эвент үүсгэх</Link>
+          </Button>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-xl-3">
-          <div className="platform-stat-card bg-white p-3 p-md-4 rounded shadow-sm border-0 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <div className="text-muted small fw-medium text-uppercase tracking-wide">Нийт аялал</div>
-              <div className="bg-primary bg-opacity-10 text-primary rounded p-2 lh-1">
-                <i className="fa-solid fa-paper-plane"></i>
-              </div>
-            </div>
-            <div className="fs-2 fw-bold mb-1">0</div>
-            <div className="text-success small d-flex align-items-center gap-1">
-              <i className="fa-solid fa-arrow-trend-up"></i>
-              <span>Энэ сард шинээр алга</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="col-12 col-sm-6 col-xl-3">
-          <div className="platform-stat-card bg-white p-3 p-md-4 rounded shadow-sm border-0 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <div className="text-muted small fw-medium text-uppercase tracking-wide">Хурал, эвент</div>
-              <div className="bg-info bg-opacity-10 text-info rounded p-2 lh-1">
-                <i className="fa-solid fa-calendar-days"></i>
-              </div>
-            </div>
-            <div className="fs-2 fw-bold mb-1">0</div>
-            <div className="text-muted small">Идэвхтэй эвентүүд</div>
-          </div>
-        </div>
-        
-        <div className="col-12 col-sm-6 col-xl-3">
-          <div className="platform-stat-card bg-white p-3 p-md-4 rounded shadow-sm border-0 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <div className="text-muted small fw-medium text-uppercase tracking-wide">Нийт бүртгэл</div>
-              <div className="bg-warning bg-opacity-10 text-warning rounded p-2 lh-1">
-                <i className="fa-solid fa-users"></i>
-              </div>
-            </div>
-            <div className="fs-2 fw-bold mb-1">0</div>
-            <div className="text-muted small">Хүлээгдэж буй 0</div>
-          </div>
-        </div>
-        
-        <div className="col-12 col-sm-6 col-xl-3">
-          <div className="platform-stat-card bg-white p-3 p-md-4 rounded shadow-sm border-0 h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <div className="text-muted small fw-medium text-uppercase tracking-wide">Нийт орлого</div>
-              <div className="bg-success bg-opacity-10 text-success rounded p-2 lh-1">
-                <i className="fa-solid fa-wallet"></i>
-              </div>
-            </div>
-            <div className="fs-3 fw-bold mb-1">₮0</div>
-            <div className="text-success small d-flex align-items-center gap-1">
-              <i className="fa-solid fa-arrow-trend-up"></i>
-              <span>Энэ сар</span>
-            </div>
-          </div>
-        </div>
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Нийт аялал", value: "0", hint: "Энэ сард шинээр алга", accent: "text-primary" },
+          { label: "Хурал, эвент", value: "0", hint: "Идэвхтэй эвентүүд", accent: "text-sky-600" },
+          { label: "Нийт бүртгэл", value: "0", hint: "Хүлээгдэж буй 0", accent: "text-amber-600" },
+          { label: "Нийт орлого", value: "₮0", hint: "Энэ сар", accent: "text-emerald-600" },
+        ].map((s) => (
+          <Card key={s.label} className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-[11px] font-medium uppercase tracking-wide">{s.label}</CardDescription>
+              <CardTitle className={`text-2xl font-bold tabular-nums ${s.accent}`}>{s.value}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{s.hint}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="row g-4">
-        {/* Recent Registrations */}
-        <div className="col-12 col-lg-8">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 fw-bold">Сүүлийн бүртгэлүүд</h5>
-              <Link href="/dashboard/registrations" className="btn btn-sm btn-light">Бүгд</Link>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="border-0 py-0 shadow-md lg:col-span-2">
+          <CardHeader className="border-b">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">Сүүлийн бүртгэлүүд</CardTitle>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/registrations">Бүгд</Link>
+              </Button>
             </div>
-            <div className="card-body">
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light text-muted small">
-                    <tr>
-                      <th className="fw-medium border-0 rounded-start">ID</th>
-                      <th className="fw-medium border-0">Нэр</th>
-                      <th className="fw-medium border-0">Арга хэмжээ</th>
-                      <th className="fw-medium border-0">Огноо</th>
-                      <th className="fw-medium border-0 text-end rounded-end">Төлөв</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={5} className="text-center py-4 text-muted">
-                        <div className="mb-2"><i className="fa-solid fa-inbox fs-3 opacity-50"></i></div>
-                        Бүртгэл олдсонгүй
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent className="px-0 pb-0 pt-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead>ID</TableHead>
+                  <TableHead>Нэр</TableHead>
+                  <TableHead>Арга хэмжээ</TableHead>
+                  <TableHead>Огноо</TableHead>
+                  <TableHead className="text-end">Төлөв</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    Бүртгэл олдсонгүй
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        {/* Quick Actions / Shortcuts */}
-        <div className="col-12 col-lg-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-header bg-white border-bottom-0 pt-4 pb-0">
-              <h5 className="mb-0 fw-bold">Хурдан холбоос</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex flex-column gap-3">
-                <Link href="/dashboard/trips" className="d-flex align-items-center gap-3 p-3 rounded bg-light text-decoration-none text-dark hover-bg-gray transition">
-                  <div className="bg-white rounded p-2 shadow-sm text-primary">
-                    <i className="fa-solid fa-paper-plane fa-fw"></i>
-                  </div>
-                  <div>
-                    <div className="fw-semibold">Аялал удирдах</div>
-                    <div className="small text-muted">Аялал нэмэх, засах, устгах</div>
-                  </div>
-                  <i className="fa-solid fa-chevron-right ms-auto opacity-50 small"></i>
-                </Link>
-                
-                <Link href="/dashboard/events" className="d-flex align-items-center gap-3 p-3 rounded bg-light text-decoration-none text-dark hover-bg-gray transition">
-                  <div className="bg-white rounded p-2 shadow-sm text-info">
-                    <i className="fa-solid fa-calendar-days fa-fw"></i>
-                  </div>
-                  <div>
-                    <div className="fw-semibold">Эвент удирдах</div>
-                    <div className="small text-muted">Хурал эвент нэмэх, засах</div>
-                  </div>
-                  <i className="fa-solid fa-chevron-right ms-auto opacity-50 small"></i>
-                </Link>
-
-                <Link href="/dashboard/payments" className="d-flex align-items-center gap-3 p-3 rounded bg-light text-decoration-none text-dark hover-bg-gray transition">
-                  <div className="bg-white rounded p-2 shadow-sm text-success">
-                    <i className="fa-solid fa-credit-card fa-fw"></i>
-                  </div>
-                  <div>
-                    <div className="fw-semibold">Төлбөр шалгах</div>
-                    <div className="small text-muted">QPay болон дансны гүйлгээ</div>
-                  </div>
-                  <i className="fa-solid fa-chevron-right ms-auto opacity-50 small"></i>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card className="border-0 py-0 shadow-md">
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Хурдан холбоос</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-4">
+            <Button asChild variant="outline" className="h-auto w-full justify-start py-3">
+              <Link href="/dashboard/trips">
+                <span className="flex w-full flex-col items-start gap-0.5 text-left">
+                  <span className="font-semibold">Аялал удирдах</span>
+                  <span className="text-xs font-normal text-muted-foreground">Аялал нэмэх, засах, устгах</span>
+                </span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto w-full justify-start py-3">
+              <Link href="/dashboard/events">
+                <span className="flex w-full flex-col items-start gap-0.5 text-left">
+                  <span className="font-semibold">Эвент удирдах</span>
+                  <span className="text-xs font-normal text-muted-foreground">Хурал эвент нэмэх, засах</span>
+                </span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto w-full justify-start py-3">
+              <Link href="/dashboard/payments">
+                <span className="flex w-full flex-col items-start gap-0.5 text-left">
+                  <span className="font-semibold">Төлбөр шалгах</span>
+                  <span className="text-xs font-normal text-muted-foreground">QPay болон дансны гүйлгээ</span>
+                </span>
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </DashboardPage>
   );
 }

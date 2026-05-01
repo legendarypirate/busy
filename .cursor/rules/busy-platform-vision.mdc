@@ -1,0 +1,26 @@
+---
+description: BUSY.mn product vision, five audiences, and UX goal — guides features and copy
+alwaysApply: true
+---
+
+# BUSY.mn platform vision (architecture rule)
+
+## Core idea (MN)
+
+- **Mission (three beats):** Бизнес боломжоо үүсгэ. Зөв хүмүүстэй холбогд. Үр дүнгээ удирд.
+- **Architecture rule:** Энэ байршуулалт платформын бүх архитектурыг удирдана. — When choosing scope, navigation, APIs, or DB design, align with this positioning first.
+- **Platform goal:** Хэрэглэгч бүр өөрийн зорилгоор орж ирээд, өөрт хэрэгтэй үйлдлээ хурдан хийдэг байх. — Prefer short paths, clear CTAs, and role-appropriate defaults over generic dashboards.
+
+## Five audiences (canonical)
+
+1. **Оролцогч** — trips, meetings, events as participant.  
+2. **Зохион байгуулагч** — creates trips, meetings, events, B2B meetings.  
+3. **Бизнес гишүүн** — showcases company, services, products.  
+4. **Нийлүүлэгч / үйлдвэр** — offers products, factory, opportunities.  
+5. **Хөрөнгө оруулагч / түнш** — seeks projects, collaboration, investment.
+
+## Implementation guidance
+
+- **Source of truth:** `src/lib/busy-platform-vision.ts` — import `BUSY_MISSION_LINES`, `BUSY_ARCHITECTURE_RULE`, `BUSY_PLATFORM_GOAL`, `BUSY_AUDIENCES` for UI and docs; keep marketing copy in sync when changing vision.
+- **New features:** Name flows by audience where possible; avoid one-size flows that only fit organizers.
+- **Copy:** Hero, footer, auth, and platform chrome should reinforce mission + goal; do not contradict the five-audience framing.

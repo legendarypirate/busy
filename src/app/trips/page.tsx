@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TripsFilterBudgetInputs } from "@/components/trips/TripsFilterBudgetInputs";
-import { prisma } from "@/lib/prisma";
+import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
 
@@ -74,7 +74,8 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
     where.priceMnt = { lte: budgetMax };
   }
 
-  const trips = await prisma.businessTrip.findMany({
+  const tripDb = dbBusinessTrip();
+  const trips = await tripDb.findMany({
     where,
     orderBy: [
       { isFeatured: 'desc' },
@@ -83,11 +84,11 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
     ]
   }).catch(() => []);
 
-  const totalTrips = await prisma.businessTrip.count().catch(() => 0);
+  const totalTrips = await tripDb.count().catch(() => 0);
   
   const next90 = new Date(today);
   next90.setDate(next90.getDate() + 90);
-  const nearTrips = await prisma.businessTrip.count({
+  const nearTrips = await tripDb.count({
     where: { startDate: { gte: today, lte: next90 } }
   }).catch(() => 0);
 

@@ -19,6 +19,8 @@ export async function SiteHeader() {
   const platformUser = platformDisplay ? { displayName: platformDisplay } : null;
 
   return (
-    <SiteHeaderNav initialLang={lang} legacySiteUrl={legacyBase()} platformUser={platformUser} />
+    <header className="site-header sticky-top border-bottom bg-white" style={{ zIndex: 1030 }}>
+      <SiteHeaderNav initialLang={lang} legacySiteUrl={legacyBase()} platformUser={platformUser} />
+    </header>
   );
 }

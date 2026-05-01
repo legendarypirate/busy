@@ -9,7 +9,7 @@ import {
   saveTripAction,
   toggleTripFeaturedAction,
 } from "@/app/platform/trips-actions";
-import { prisma } from "@/lib/prisma";
+import { dbBusinessTrip } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
 const DEFAULT_COVER =
@@ -113,15 +113,14 @@ export default async function TripsPanel({ searchParams }: Props) {
   const editRaw = firstParam(searchParams?.edit_trip) ?? firstParam(searchParams?.edit);
   const editTripId = Math.max(0, Number(editRaw ?? ""));
 
-  const managedTrips = await prisma.businessTrip.findMany({
+  const trips = dbBusinessTrip();
+  const managedTrips = await trips.findMany({
     orderBy: [{ isFeatured: "desc" }, { startDate: "desc" }],
     take: 200,
   });
 
   const editTrip =
-    editTripId > 0
-      ? await prisma.businessTrip.findUnique({ where: { id: editTripId } })
-      : null;
+    editTripId > 0 ? await trips.findUnique({ where: { id: editTripId } }) : null;
 
   if (editTripId > 0 && !editTrip) {
     return (
@@ -263,7 +262,7 @@ export default async function TripsPanel({ searchParams }: Props) {
       </div>
 
       {/* --- Main trip editor form --- */}
-      <form method="post" encType="multipart/form-data" id="tripMainForm" action={saveTripAction}>
+      <form id="tripMainForm" action={saveTripAction}>
         <input type="hidden" name="trip_id" value={editTrip?.id ?? 0} />
 
         <div className="tps-header mb-4">

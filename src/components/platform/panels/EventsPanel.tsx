@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
-import { deleteEventAction, saveEventAction } from "@/app/platform/events-actions";
+import EventManageForm from "@/components/platform/panels/EventManageForm";
+import { deleteEventAction } from "@/app/platform/events-actions";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
@@ -294,7 +295,7 @@ export default async function EventsPanel({ searchParams }: Props) {
         </div>
       </div>
 
-      <form method="post" id="eventManageForm" action={saveEventAction}>
+      <EventManageForm>
         <input type="hidden" name="event_id" value={eventForm.id.toString()} />
 
         <div className="tps-header mb-4">
@@ -602,7 +603,7 @@ export default async function EventsPanel({ searchParams }: Props) {
             </div>
           </div>
         </div>
-      </form>
+      </EventManageForm>
 
       <div className="pm-card mt-4" id="eventAttendeesCard">
         <div className="pm-card-header d-flex justify-content-between align-items-center">

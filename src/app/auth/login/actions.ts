@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { ensureOrganizerRoleForEligibleAccount } from "@/lib/busy-rbac";
 import { defaultPostLoginPath } from "@/lib/platform-session";
 import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
 
@@ -71,6 +72,7 @@ export async function loginAction(_prev: LoginFormState, formData: FormData): Pr
       : account.email;
 
   await setPlatformSessionCookies(account.id, display);
+  await ensureOrganizerRoleForEligibleAccount(account.id);
 
   redirect(defaultPostLoginPath(next));
 }

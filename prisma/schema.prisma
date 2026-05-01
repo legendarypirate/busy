@@ -47,6 +47,11 @@ model PlatformAccount {
   profile     PlatformProfile?
   memberships ChapterMembership[]
 
+  busyRoleAssignments BusyUserRoleAssignment[]
+  busyMeetingGroups   BusyMeetingGroup[]      @relation("BusyMeetingGroupOrganizer")
+  tripParticipants    TripParticipant[]
+  tripFormResponses   TripFormResponse[]
+
   @@map("bni_platform_accounts")
 }
 
@@ -230,6 +235,11 @@ model BusinessTrip {
   itineraryJson          Json?     @map("itinerary_json")
   extrasJson             Json?     @map("extras_json")
 
+  tripRegistrationForms TripRegistrationForm[]
+  tripFormResponses     TripFormResponse[]
+  tripParticipants      TripParticipant[]
+  tripPayments          TripPayment[]
+
   @@map("business_trips")
 }
 
@@ -296,4 +306,358 @@ model PaymentOrder {
 
   @@index([targetType, targetId])
   @@map("payment_orders")
+}
+
+// =============================================================================
+// BUSY.mn modular platform (PostgreSQL). Phase 1: weekly meetings + RBAC.
+// Legacy BNI tables above stay on @@map("bni_*"); new modules use busy_*.
+// =============================================================================
+
+enum BusyMeetingParticipantType {
+  member
+  guest
+  substitute
+}
+
+enum BusyMeetingPaymentStatus {
+  unpaid
+  paid
+  exempted
+  refunded
+}
+
+enum BusyMeetingAttendanceStatus {
+  unknown
+  present
+  absent
+  late
+  substitute_present
+}
+
+model BusyRole {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique @db.VarChar(64)
+  label       String   @db.VarChar(190)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  permissions BusyRolePermission[]
+  assignments BusyUserRoleAssignment[]
+
+  @@map("busy_roles")
+}
+
+model BusyPermission {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @db.VarChar(128)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  roles BusyRolePermission[]
+
+  @@map("busy_permissions")
+}
+
+model BusyRolePermission {
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  role       BusyRole       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission BusyPermission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("busy_role_permissions")
+}
+
+model BusyUserRoleAssignment {
+  id        BigInt   @id @default(autoincrement())
+  accountId BigInt   @map("account_id")
+  roleId    Int      @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account PlatformAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  role    BusyRole        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, roleId])
+  @@index([accountId])
+  @@map("busy_user_role_assignments")
+}
+
+/// Organizer-facing group (chapter / club / association). Weekly meetings belong to a group.
+model BusyMeetingGroup {
+  id                 BigInt   @id @default(autoincrement())
+  organizerAccountId BigInt   @map("organizer_account_id")
+  name               String   @db.VarChar(255)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organizer PlatformAccount    @relation("BusyMeetingGroupOrganizer", fields: [organizerAccountId], references: [id], onDelete: Cascade)
+  meetings  BusyWeeklyMeeting[]
+
+  @@index([organizerAccountId])
+  @@map("busy_meeting_groups")
+}
+
+model BusyWeeklyMeeting {
+  id        BigInt @id @default(autoincrement())
+  groupId   BigInt @map("group_id")
+  /// Opaque token for public QR registration URL (`/m/{token}`).
+  publicToken String @unique @map("public_token") @db.VarChar(64)
+
+  meetingDate DateTime @map("meeting_date") @db.Date
+  startTime   DateTime @map("start_time") @db.Time(0)
+  endTime     DateTime? @map("end_time") @db.Time(0)
+  location    String?  @db.VarChar(512)
+  feeMnt      Decimal? @map("fee_mnt") @db.Decimal(12, 2)
+
+  enableMemberRegistration    Boolean @default(true) @map("enable_member_registration")
+  enableGuestRegistration     Boolean @default(true) @map("enable_guest_registration")
+  enableSubstituteRegistration Boolean @default(true) @map("enable_substitute_registration")
+  enableShortIntroduction       Boolean @default(true) @map("enable_short_introduction")
+  enablePaymentTracking         Boolean @default(true) @map("enable_payment_tracking")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  group          BusyMeetingGroup         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  registrations  BusyMeetingRegistration[]
+  rosterExports  BusyMeetingRosterExport[]
+
+  @@index([groupId, meetingDate])
+  @@map("busy_weekly_meetings")
+}
+
+model BusyMeetingRegistration {
+  id              BigInt   @id @default(autoincrement())
+  weeklyMeetingId BigInt   @map("weekly_meeting_id")
+  participantType BusyMeetingParticipantType @map("participant_type")
+
+  displayName       String  @map("display_name") @db.VarChar(255)
+  companyName       String? @map("company_name") @db.VarChar(255)
+  position          String? @db.VarChar(255)
+  phone             String? @db.VarChar(64)
+  email             String? @db.VarChar(255)
+  invitedBy         String? @map("invited_by") @db.VarChar(255)
+  businessCategory  String? @map("business_category") @db.VarChar(255)
+  shortIntroduction String? @map("short_introduction") @db.Text
+
+  paymentStatus    BusyMeetingPaymentStatus    @default(unpaid) @map("payment_status")
+  attendanceStatus BusyMeetingAttendanceStatus @default(unknown) @map("attendance_status")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  meeting BusyWeeklyMeeting @relation(fields: [weeklyMeetingId], references: [id], onDelete: Cascade)
+
+  @@index([weeklyMeetingId])
+  @@map("busy_meeting_registrations")
+}
+
+model BusyMeetingRosterExport {
+  id                 BigInt   @id @default(autoincrement())
+  weeklyMeetingId    BigInt   @map("weekly_meeting_id")
+  format             String   @db.VarChar(32)
+  rowCount           Int?     @map("row_count")
+  createdByAccountId BigInt?  @map("created_by_account_id")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  meeting BusyWeeklyMeeting @relation(fields: [weeklyMeetingId], references: [id], onDelete: Cascade)
+
+  @@index([weeklyMeetingId])
+  @@map("busy_meeting_roster_exports")
+}
+
+model BusyAuditLog {
+  id             BigInt   @id @default(autoincrement())
+  actorAccountId BigInt?  @map("actor_account_id")
+  action         String   @db.VarChar(128)
+  subjectType    String   @map("subject_type") @db.VarChar(64)
+  subjectId      String   @map("subject_id") @db.VarChar(64)
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([subjectType, subjectId])
+  @@index([actorAccountId])
+  @@map("busy_audit_logs")
+}
+
+// --- BUSY.mn trip registration (Google Forms–style builder; MVP) ---
+
+enum TripFormQuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  MULTIPLE_CHOICE
+  CHECKBOXES
+  DROPDOWN
+  DATE
+  TIME
+  PHONE
+  EMAIL
+  FILE_UPLOAD
+  NUMBER
+  YES_NO
+  COUNTRY
+  COMPANY_BLOCK
+  EMERGENCY_CONTACT_BLOCK
+  PAYMENT_CONFIRMATION_BLOCK
+}
+
+enum TripFormResponseWorkflowStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CONFIRMED
+  CANCELLED
+}
+
+enum TripFormMoneyStatus {
+  UNPAID
+  PENDING
+  PAID
+  EXEMPTED
+  REFUNDED
+}
+
+enum TripParticipantLifecycleStatus {
+  REGISTERED
+  CONFIRMED
+  CANCELLED
+}
+
+model TripRegistrationForm {
+  id          String   @id @default(cuid())
+  tripId      Int      @map("trip_id")
+  title       String   @db.VarChar(512)
+  description String?  @db.Text
+  publicSlug  String   @unique @map("public_slug") @db.VarChar(160)
+  isPublished Boolean  @default(false) @map("is_published")
+  settings    Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  trip      BusinessTrip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  questions TripFormQuestion[]
+  responses TripFormResponse[]
+
+  @@index([tripId])
+  @@map("trip_registration_forms")
+}
+
+model TripFormQuestion {
+  id              String               @id @default(cuid())
+  formId          String               @map("form_id")
+  label           String               @db.VarChar(512)
+  description     String?              @db.Text
+  type            TripFormQuestionType
+  placeholder     String?              @db.VarChar(512)
+  isRequired      Boolean              @default(false) @map("is_required")
+  sortOrder       Int                  @default(0) @map("sort_order")
+  validationRules Json?               @map("validation_rules")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  form    TripRegistrationForm     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  options TripFormQuestionOption[]
+  answers TripFormResponseAnswer[]
+
+  @@index([formId, sortOrder])
+  @@map("trip_form_questions")
+}
+
+model TripFormQuestionOption {
+  id         String @id @default(cuid())
+  questionId String @map("question_id")
+  label      String @db.VarChar(512)
+  value      String @db.VarChar(512)
+  sortOrder  Int    @default(0) @map("sort_order")
+
+  question TripFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, sortOrder])
+  @@map("trip_form_question_options")
+}
+
+model TripFormResponse {
+  id                String                         @id @default(cuid())
+  formId            String                         @map("form_id")
+  tripId            Int                            @map("trip_id")
+  submittedByUserId BigInt?                        @map("submitted_by_user_id")
+  status            TripFormResponseWorkflowStatus @default(SUBMITTED)
+  paymentStatus     TripFormMoneyStatus            @default(UNPAID) @map("payment_status")
+  internalNote      String?                        @map("internal_note") @db.Text
+  submittedAt       DateTime                       @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  createdAt         DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  form         TripRegistrationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  trip         BusinessTrip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  submitter    PlatformAccount?     @relation(fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  answers      TripFormResponseAnswer[]
+  participant  TripParticipant?
+
+  @@index([formId])
+  @@index([tripId])
+  @@map("trip_form_responses")
+}
+
+model TripFormResponseAnswer {
+  id         String   @id @default(cuid())
+  responseId String @map("response_id")
+  questionId String @map("question_id")
+  value      String?  @db.Text
+  fileUrl    String?  @map("file_url") @db.VarChar(512)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  response TripFormResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question TripFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([responseId])
+  @@index([questionId])
+  @@map("trip_form_response_answers")
+}
+
+model TripParticipant {
+  id            String                         @id @default(cuid())
+  tripId        Int                            @map("trip_id")
+  userId        BigInt?                        @map("user_id")
+  responseId    String?                        @unique @map("response_id")
+  fullName      String                         @map("full_name") @db.VarChar(255)
+  phone         String?                        @db.VarChar(64)
+  email         String?                        @db.VarChar(255)
+  companyName   String?                        @map("company_name") @db.VarChar(255)
+  position      String?                        @db.VarChar(255)
+  status        TripParticipantLifecycleStatus @default(REGISTERED)
+  paymentStatus TripFormMoneyStatus            @default(UNPAID) @map("payment_status")
+  createdAt     DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  trip     BusinessTrip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  account  PlatformAccount?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  response TripFormResponse? @relation(fields: [responseId], references: [id], onDelete: SetNull)
+  payments TripPayment[]
+
+  @@index([tripId])
+  @@map("trip_participants")
+}
+
+model TripPayment {
+  id              String            @id @default(cuid())
+  tripId          Int               @map("trip_id")
+  participantId   String            @map("participant_id")
+  amount          Decimal?          @db.Decimal(12, 2)
+  method          String?           @db.VarChar(64)
+  status          TripFormMoneyStatus @default(PENDING)
+  receiptFileUrl  String?           @map("receipt_file_url") @db.VarChar(512)
+  note            String?           @db.Text
+  paidAt          DateTime?         @map("paid_at") @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  trip        BusinessTrip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  participant TripParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([participantId])
+  @@map("trip_payments")
 }

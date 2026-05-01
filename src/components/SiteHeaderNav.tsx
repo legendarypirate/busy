@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -73,7 +72,8 @@ export function SiteHeaderNav({ initialLang, legacySiteUrl, platformUser }: Site
     <nav className="navbar navbar-expand-lg navbar-light navbar-custom">
       <div className="container">
         <Link className="navbar-brand d-flex align-items-center gap-2" href="/">
-          <Image src="/bsy.png" alt="BUSY.mn" width={32} height={32} className="h-auto" priority />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/img/bsy.png" alt="BUSY.mn" width={32} height={32} className="h-auto" />
         </Link>
         <button
           className="navbar-toggler"

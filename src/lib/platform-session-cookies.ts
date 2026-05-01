@@ -11,7 +11,7 @@ const sessionOpts = {
   secure: secureCookie,
 };
 
-/** Server actions / server components: mutate Next cookie store. */
+/** Server actions: mutate Next cookie store (not during RSC render). */
 export async function setPlatformSessionCookies(accountId: bigint, display: string): Promise<void> {
   const jar = await cookies();
   jar.set("bni_platform_account_id", accountId.toString(), { ...sessionOpts, httpOnly: true });
@@ -24,15 +24,25 @@ export function attachPlatformSessionToResponse(res: NextResponse, accountId: bi
   res.cookies.set("bni_platform_nav_display", display, { ...sessionOpts, httpOnly: false });
 }
 
+const clearCookieOpts = {
+  path: "/",
+  maxAge: 0,
+  sameSite: "lax" as const,
+  secure: secureCookie,
+};
+
 /** Clear session cookies (route handlers). */
 export function attachClearPlatformSessionToResponse(res: NextResponse): void {
-  res.cookies.set("bni_platform_account_id", "", { path: "/", maxAge: 0 });
-  res.cookies.set("bni_platform_nav_display", "", { path: "/", maxAge: 0 });
+  res.cookies.set("bni_platform_account_id", "", { ...clearCookieOpts, httpOnly: true });
+  res.cookies.set("bni_platform_nav_display", "", { ...clearCookieOpts, httpOnly: false });
 }
 
-/** Server components / server actions: clear Next cookie store. */
+/**
+ * Clears session cookies from a Server Action only (`cookies().set` is not allowed during RSC render).
+ * For “visit link to log out”, use `GET /auth/logout` or `attachClearPlatformSessionToResponse`.
+ */
 export async function clearPlatformSessionCookies(): Promise<void> {
   const jar = await cookies();
-  jar.set("bni_platform_account_id", "", { path: "/", maxAge: 0 });
-  jar.set("bni_platform_nav_display", "", { path: "/", maxAge: 0 });
+  jar.set("bni_platform_account_id", "", { ...clearCookieOpts, httpOnly: true });
+  jar.set("bni_platform_nav_display", "", { ...clearCookieOpts, httpOnly: false });
 }
