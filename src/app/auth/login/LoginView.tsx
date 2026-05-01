@@ -49,7 +49,13 @@ export default async function LoginView({ searchParams }: { searchParams: Search
     nextGoogleReady && dbReady
       ? `/api/auth/google${nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : ""}`
       : null;
-  const legacyGoogleHref = legacyBase ? `${legacyBase}/auth/google-start.php` : null;
+  const appOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const legacyGoogleHref =
+    legacyBase && nextPath !== "/" && appOrigin
+      ? `${legacyBase}/auth/google-start.php?next=${encodeURIComponent(`${appOrigin}${nextPath}`)}`
+      : legacyBase
+        ? `${legacyBase}/auth/google-start.php`
+        : null;
   const googleHref = nextGoogleHref ?? legacyGoogleHref;
 
   const errKey = firstString(sp.error);
@@ -69,14 +75,22 @@ export default async function LoginView({ searchParams }: { searchParams: Search
               </div>
               <h1 className="bni-auth-title">Платформд нэвтрэх</h1>
               <p className="bni-auth-lead text-muted mb-1">Имэйл, нууц үг эсвэл Google ашиглан нэвтэрнэ үү.</p>
-              <p className="small text-muted text-center mb-0 px-1" style={{ lineHeight: 1.45 }}>
-                <span className="d-block fw-semibold text-body-secondary">{BUSY_MISSION_LINES.join(" ")}</span>
-                <span className="d-block mt-1">{BUSY_ARCHITECTURE_RULE}</span>
-                <span className="d-block mt-1">{BUSY_PLATFORM_GOAL}</span>
-                <Link href="/#busy-participant-journey" className="d-block mt-2 small text-primary">
-                  Оролцогчийн замнал (нүүр → follow-up)
-                </Link>
-              </p>
+              <div className="small text-muted text-center mb-0 px-1" style={{ lineHeight: 1.55 }}>
+                <p className="mb-2 fw-semibold text-body-secondary" style={{ marginBottom: "0.5rem" }}>
+                  {BUSY_MISSION_LINES.join(" ")}
+                </p>
+                <p className="mb-2" style={{ marginBottom: "0.5rem" }}>
+                  {BUSY_ARCHITECTURE_RULE}
+                </p>
+                <p className="mb-2" style={{ marginBottom: "0.5rem" }}>
+                  {BUSY_PLATFORM_GOAL}
+                </p>
+                <p className="mb-0">
+                  <Link href="/#busy-participant-journey" className="text-primary text-decoration-none">
+                    Оролцогчийн замнал (нүүр → follow-up)
+                  </Link>
+                </p>
+              </div>
             </div>
             {oauthMessage ? (
               <div className="alert alert-danger bni-auth-alert mb-4" role="alert">

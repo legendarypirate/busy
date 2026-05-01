@@ -117,8 +117,7 @@ export default function LoginForm({ nextPath, legacyBase, googleHref, defaultEma
         </>
       ) : null}
       <div className="bni-auth-footer">
-        {copy.noAccount}
-        <Link href={registerHref}>{copy.register}</Link>
+        <span>{copy.noAccount}</span> <Link href={registerHref}>{copy.register}</Link>
       </div>
     </form>
   );

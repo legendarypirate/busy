@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicAppOrigin } from "@/lib/auth-public-origin";
+import { googleOAuthCookieBase } from "@/lib/platform-session-cookies";
 
 const STATE_COOKIE = "bni_google_oauth_state";
 const NEXT_COOKIE = "bni_google_oauth_next";
@@ -37,24 +38,19 @@ export async function GET(request: NextRequest) {
     }).toString()}`
   );
 
-  const secure = process.env.NODE_ENV === "production";
   res.cookies.set(STATE_COOKIE, state, {
+    ...googleOAuthCookieBase,
     httpOnly: true,
-    sameSite: "lax",
-    path: "/",
     maxAge: 600,
-    secure,
   });
   if (next !== "/") {
     res.cookies.set(NEXT_COOKIE, next, {
+      ...googleOAuthCookieBase,
       httpOnly: true,
-      sameSite: "lax",
-      path: "/",
       maxAge: 600,
-      secure,
     });
   } else {
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+    res.cookies.set(NEXT_COOKIE, "", { ...googleOAuthCookieBase, httpOnly: true, maxAge: 0 });
   }
 
   return res;

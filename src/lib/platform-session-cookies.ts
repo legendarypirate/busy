@@ -4,16 +4,31 @@ import { cookies } from "next/headers";
 const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production";
 
-/** When set (e.g. `.busy.mn`), session is shared between `www` and apex host. Omit on localhost. */
-const cookieDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim() || "https://busy.mn";
+/**
+ * Optional parent domain for cookies (e.g. `.busy.mn`). Must NOT be a full URL.
+ * Leave unset on localhost; set in production only if both apex and www serve this app.
+ */
+export const platformSessionCookieDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim() || undefined;
+
+function domainOpts(): { domain?: string } {
+  return platformSessionCookieDomain ? { domain: platformSessionCookieDomain } : {};
+}
 
 const sessionOpts = {
   path: "/",
   maxAge: WEEK,
   sameSite: "lax" as const,
   secure: secureCookie,
-  ...(cookieDomain ? { domain: cookieDomain } : {}),
+  ...domainOpts(),
 };
+
+/** Shared attributes for Google OAuth start/callback cookies (state, next). */
+export const googleOAuthCookieBase = {
+  path: "/" as const,
+  sameSite: "lax" as const,
+  secure: secureCookie,
+  ...domainOpts(),
+} as const;
 
 /** Server actions: mutate Next cookie store (not during RSC render). */
 export async function setPlatformSessionCookies(accountId: bigint, display: string): Promise<void> {
@@ -33,7 +48,7 @@ const clearCookieOpts = {
   maxAge: 0,
   sameSite: "lax" as const,
   secure: secureCookie,
-  ...(cookieDomain ? { domain: cookieDomain } : {}),
+  ...domainOpts(),
 };
 
 /** Clear session cookies (route handlers). */

@@ -3,7 +3,7 @@ import { getPublicAppOrigin } from "@/lib/auth-public-origin";
 import { ensureOrganizerRoleForEligibleAccount } from "@/lib/busy-rbac";
 import { upsertPlatformAccountFromGoogle } from "@/lib/platform-google-upsert";
 import { defaultPostLoginPath } from "@/lib/platform-session";
-import { attachPlatformSessionToResponse } from "@/lib/platform-session-cookies";
+import { attachPlatformSessionToResponse, googleOAuthCookieBase } from "@/lib/platform-session-cookies";
 
 const STATE_COOKIE = "bni_google_oauth_state";
 const NEXT_COOKIE = "bni_google_oauth_next";
@@ -13,6 +13,34 @@ function safeNextPath(raw: string | null | undefined): string {
   const t = raw.trim();
   if (!t.startsWith("/") || t.startsWith("//")) return "/";
   return t.slice(0, 512);
+}
+
+function clearOAuthCookies(res: NextResponse) {
+  res.cookies.set(STATE_COOKIE, "", { ...googleOAuthCookieBase, httpOnly: true, maxAge: 0 });
+  res.cookies.set(NEXT_COOKIE, "", { ...googleOAuthCookieBase, httpOnly: true, maxAge: 0 });
+}
+
+/** Redirect to login with error; keep `next` from OAuth cookie so user can retry Google sign-in. */
+function redirectLoginOAuthError(request: NextRequest, error: string, detail?: string) {
+  const url = new URL("/auth/login", request.url);
+  url.searchParams.set("error", error);
+  const preserved = safeNextPath(request.cookies.get(NEXT_COOKIE)?.value);
+  if (preserved !== "/") url.searchParams.set("next", preserved);
+  if (detail) url.searchParams.set("detail", detail);
+  const res = NextResponse.redirect(url);
+  clearOAuthCookies(res);
+  return res;
+}
+
+function isDbConfigError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    msg.includes("DATABASE_URL") ||
+    msg.includes("Environment variable not found") ||
+    msg.includes("Can't reach database server") ||
+    msg.includes("P1001") ||
+    msg.includes("P1013")
+  );
 }
 
 async function exchangeCode(code: string, redirectUri: string): Promise<string> {
@@ -58,36 +86,21 @@ async function fetchGoogleUserInfo(accessToken: string): Promise<{
 }
 
 export async function GET(request: NextRequest) {
-  const baseLogin = new URL("/auth/login", request.url);
-
   const savedState = request.cookies.get(STATE_COOKIE)?.value;
   const state = request.nextUrl.searchParams.get("state");
 
   if (!savedState || !state || savedState !== state) {
-    baseLogin.searchParams.set("error", "google_state");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_state");
   }
 
   const oauthErr = request.nextUrl.searchParams.get("error");
   if (oauthErr) {
-    baseLogin.searchParams.set("error", "google_denied");
-    baseLogin.searchParams.set("detail", oauthErr);
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_denied", oauthErr);
   }
 
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
-    baseLogin.searchParams.set("error", "google_code");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_code");
   }
 
   const origin = getPublicAppOrigin(request);
@@ -99,50 +112,23 @@ export async function GET(request: NextRequest) {
   try {
     accessToken = await exchangeCode(code, redirectUri);
   } catch {
-    baseLogin.searchParams.set("error", "google_token");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_token");
   }
 
   let profile: { id: string; email?: string; name?: string; picture?: string };
   try {
     profile = await fetchGoogleUserInfo(accessToken);
   } catch {
-    baseLogin.searchParams.set("error", "google_profile");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_profile");
   }
 
   const email = (profile.email ?? "").trim().toLowerCase();
   if (!email) {
-    baseLogin.searchParams.set("error", "google_email");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_email");
   }
 
   if (!process.env.DATABASE_URL?.trim()) {
-    baseLogin.searchParams.set("error", "google_env_db");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
-  }
-
-  function isDbConfigError(err: unknown): boolean {
-    const msg = err instanceof Error ? err.message : String(err);
-    return (
-      msg.includes("DATABASE_URL") ||
-      msg.includes("Environment variable not found") ||
-      msg.includes("Can't reach database server") ||
-      msg.includes("P1001") ||
-      msg.includes("P1013")
-    );
+    return redirectLoginOAuthError(request, "google_env_db");
   }
 
   let account;
@@ -154,19 +140,11 @@ export async function GET(request: NextRequest) {
       picture: profile.picture ?? "",
     });
   } catch (err) {
-    baseLogin.searchParams.set("error", isDbConfigError(err) ? "google_env_db" : "google_db");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, isDbConfigError(err) ? "google_env_db" : "google_db");
   }
 
   if (!account) {
-    baseLogin.searchParams.set("error", "google_db");
-    const res = NextResponse.redirect(baseLogin);
-    res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-    res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
-    return res;
+    return redirectLoginOAuthError(request, "google_db");
   }
 
   const display =
@@ -176,8 +154,7 @@ export async function GET(request: NextRequest) {
 
   const dest = new URL(defaultPostLoginPath(nextPath), request.url);
   const res = NextResponse.redirect(dest);
-  res.cookies.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-  res.cookies.set(NEXT_COOKIE, "", { path: "/", maxAge: 0 });
+  clearOAuthCookies(res);
   attachPlatformSessionToResponse(res, account.id, display);
   await ensureOrganizerRoleForEligibleAccount(account.id);
   return res;
