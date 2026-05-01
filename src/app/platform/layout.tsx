@@ -1,15 +1,20 @@
 import "@/styles/platform-home-panels.css";
+import { connection } from "next/server";
 import { headers } from "next/headers";
 import PlatformBodyClass from "@/components/platform/PlatformBodyClass";
 import PlatformSidebar from "@/components/platform/PlatformSidebar";
 import PlatformTopNav from "@/components/platform/PlatformTopNav";
 import { requirePlatformUser } from "@/lib/platform-session";
 
+/** Session + `cookies()` must not be served from segment/prefetch cache without the real request. */
+export const dynamic = "force-dynamic";
+
 export default async function PlatformLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await connection();
   const h = await headers();
   const pathname = h.get("x-busy-pathname")?.trim() || "/platform";
   const user = await requirePlatformUser(pathname);

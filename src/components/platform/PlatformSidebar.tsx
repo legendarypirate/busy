@@ -19,7 +19,7 @@ export default function PlatformSidebar() {
 
   return (
     <aside className="pl-sidebar">
-      <Link href="/platform" className="pl-logo text-decoration-none d-block">
+      <Link href="/platform" prefetch={false} className="pl-logo text-decoration-none d-block">
         BUSY<span>.mn</span>
       </Link>
 
@@ -31,7 +31,11 @@ export default function PlatformSidebar() {
           return (
             <div key={item.key}>
               {showLabel ? <div className="pl-nav-label">{item.group}</div> : null}
-              <Link href={item.href} className={`pl-nav-item${active ? " active" : ""}`}>
+              <Link
+                href={item.href}
+                prefetch={false}
+                className={`pl-nav-item${active ? " active" : ""}`}
+              >
                 <i className={item.iconClass} aria-hidden="true" />
                 <span>{item.label}</span>
               </Link>

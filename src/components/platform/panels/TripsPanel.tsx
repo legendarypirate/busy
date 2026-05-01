@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
@@ -104,11 +103,8 @@ type Props = {
 };
 
 export default async function TripsPanel({ searchParams }: Props) {
-  const session = await getPlatformSession();
-  if (!session) {
-    redirect("/auth/login?next=/platform/trips");
-  }
-
+  const viewer = await getPlatformSession();
+  const greetingName = viewer?.displayName?.trim() || "Та";
   const err = errorBanner(firstParam(searchParams?.error));
   const editRaw = firstParam(searchParams?.edit_trip) ?? firstParam(searchParams?.edit);
   const editTripId = Math.max(0, Number(editRaw ?? ""));
@@ -276,7 +272,7 @@ export default async function TripsPanel({ searchParams }: Props) {
               <li className="breadcrumb-item active">{editTrip ? "Засах" : "Шинэ аялал үүсгэх"}</li>
             </ol>
           </nav>
-          <h1 className="tps-greeting">Сайн байна уу, {session.displayName}</h1>
+          <h1 className="tps-greeting">Сайн байна уу, {greetingName}</h1>
           <p className="text-muted small mb-0">Бизнес аяллаа үүсгээд гишүүдтэйгээ хуваалцаарай</p>
         </div>
 
