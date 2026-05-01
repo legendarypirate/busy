@@ -4,11 +4,15 @@ import { cookies } from "next/headers";
 const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production";
 
+/** When set (e.g. `.busy.mn`), session is shared between `www` and apex host. Omit on localhost. */
+const cookieDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim() || "https://busy.mn";
+
 const sessionOpts = {
   path: "/",
   maxAge: WEEK,
   sameSite: "lax" as const,
   secure: secureCookie,
+  ...(cookieDomain ? { domain: cookieDomain } : {}),
 };
 
 /** Server actions: mutate Next cookie store (not during RSC render). */
@@ -29,6 +33,7 @@ const clearCookieOpts = {
   maxAge: 0,
   sameSite: "lax" as const,
   secure: secureCookie,
+  ...(cookieDomain ? { domain: cookieDomain } : {}),
 };
 
 /** Clear session cookies (route handlers). */
