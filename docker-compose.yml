@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: busybni
+      POSTGRES_PASSWORD: busybni
+      POSTGRES_DB: busybni
+    volumes:
+      - busybni_pg:/var/lib/postgresql/data
+
+volumes:
+  busybni_pg:

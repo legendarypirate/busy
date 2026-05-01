@@ -1,0 +1,242 @@
+/**
+ * BNI schedule — meetings, events, trips (mobile-first, minimal)
+ */
+html {
+  scroll-behavior: smooth;
+}
+
+.bni-schedule {
+  --bni-s-line: #e2e8f0;
+  --bni-s-muted: #64748b;
+  --bni-s-card: #f8fafc;
+  --bni-s-border: #e8edf2;
+  --bni-s-now: #0f172a;
+  font-size: 0.9375rem;
+}
+
+.bni-schedule__title {
+  letter-spacing: -0.02em;
+}
+
+.bni-schedule__intro {
+  max-width: 48rem;
+  line-height: 1.65;
+}
+
+/* Sticky toolbar: day chips + add to calendar */
+.bni-schedule__toolbar {
+  position: sticky;
+  top: 4.5rem;
+  z-index: 9;
+  background: linear-gradient(180deg, #fdfdfd 0%, #fdfdfd 88%, rgba(253, 253, 253, 0) 100%);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.bni-schedule__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+  .bni-schedule__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.bni-schedule__nav-pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  padding-bottom: 0.2rem;
+  scrollbar-width: thin;
+}
+
+.bni-schedule__pill {
+  flex: 0 0 auto;
+  border: 1px solid var(--bni-s-border);
+  background: #fff;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.bni-schedule__pill:hover {
+  border-color: rgba(217, 35, 45, 0.35);
+  color: #0f172a;
+}
+
+.bni-schedule__pill.is-active,
+.bni-schedule__pill[aria-selected="true"] {
+  background: #fff5f5;
+  border-color: var(--bs-primary-custom, #d9232d);
+  color: #991b1b;
+}
+
+.bni-schedule__actions {
+  flex-shrink: 0;
+}
+
+.bni-schedule__btn-cal {
+  border-radius: 0.4rem;
+}
+
+/* Vertical timeline */
+.bni-schedule__timeline {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 0.5rem;
+}
+
+@media (min-width: 576px) {
+  .bni-schedule__timeline {
+    padding-left: 1.25rem;
+  }
+}
+
+.bni-schedule__timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.35rem;
+  bottom: 0.5rem;
+  width: 2px;
+  background: var(--bni-s-line);
+  border-radius: 1px;
+}
+
+.bni-schedule__item {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 576px) {
+  .bni-schedule__item {
+    padding-left: 1.6rem;
+  }
+}
+
+.bni-schedule__marker {
+  position: absolute;
+  left: -0.1rem;
+  top: 0.55rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #cbd5e1;
+  z-index: 1;
+  box-shadow: 0 0 0 2px #fdfdfd;
+}
+
+.bni-schedule__item--current .bni-schedule__marker,
+.bni-schedule__item--now .bni-schedule__marker {
+  border-color: var(--bs-primary-custom, #d9232d);
+  background: var(--bs-primary-custom, #d9232d);
+  box-shadow: 0 0 0 3px rgba(217, 35, 45, 0.2);
+}
+
+.bni-schedule__item--important .bni-schedule__card {
+  background: #fffaf0;
+  border-color: #fed7aa;
+}
+
+.bni-schedule__item--now .bni-schedule__card {
+  border-color: rgba(217, 35, 45, 0.45);
+  box-shadow: 0 0 0 1px rgba(217, 35, 45, 0.12);
+}
+
+.bni-schedule__card {
+  background: #fff;
+  border: 1px solid var(--bni-s-border);
+  border-radius: 0.65rem;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.bni-schedule__card:hover {
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.bni-schedule__card-inner {
+  padding: 0.9rem 1rem;
+}
+
+.bni-schedule__day-heading {
+  letter-spacing: 0.04em;
+}
+
+.bni-schedule__day-banner {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border: 1px solid var(--bni-s-border);
+}
+
+.bni-schedule__time-block {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--bni-s-now);
+  margin-bottom: 0.25rem;
+}
+
+.bni-schedule__time,
+.bni-schedule__time-end {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.bni-schedule__sep {
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.bni-schedule__item-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.bni-schedule__desc {
+  line-height: 1.55;
+}
+
+.bni-schedule__summary {
+  cursor: pointer;
+  color: #475569;
+  font-weight: 600;
+}
+
+.bni-schedule__details[open] .bni-schedule__summary {
+  color: var(--bni-s-muted);
+}
+
+.bni-schedule--empty {
+  margin-bottom: 0;
+}
+
+/* Smooth scroll offset for anchor links */
+#bni-schedule-event-anchor,
+#bni-schedule-trip-anchor,
+#bni-schedule-meeting-anchor {
+  scroll-margin-top: 5.5rem;
+}

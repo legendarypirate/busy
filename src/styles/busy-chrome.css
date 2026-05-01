@@ -1,0 +1,283 @@
+/* BUSY.mn — parity with PHP header inline vars + assets/css/home-busy.css + index-v3 tokens */
+
+:root {
+  --primary-color: #001f5b;
+  --primary-dark: #000f33;
+  --primary-light: #3b4f8f;
+  --white: #ffffff;
+  --light-gray: #f8f9fa;
+  --dark-text: #333333;
+
+  --busy-navy: #001f5b;
+  --busy-gold: #c5a059;
+  --busy-dark: #111111;
+  --busy-light: #f8f9fa;
+
+  --brand-primary: var(--primary-color);
+  --brand-secondary: var(--busy-gold);
+  --text-main: #111827;
+  --text-muted: #64748b;
+  --border-color: #e5e7eb;
+  --bg-page: #f9fafb;
+
+  --bni-font-sans: var(--font-nunito), "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Bootstrap 5 — force Nunito everywhere UI components render */
+  --bs-font-sans-serif: var(--bni-font-sans);
+  --bs-body-font-family: var(--bni-font-sans);
+  --bs-body-color: var(--text-main);
+  --bs-body-bg: var(--bg-page);
+  --bs-primary: var(--primary-color);
+  --bs-primary-rgb: 0, 31, 91;
+  --bs-link-color: var(--primary-light);
+  --bs-link-hover-color: var(--busy-gold);
+}
+
+html {
+  font-family: var(--bni-font-sans);
+}
+
+body {
+  font-family: var(--bni-font-sans) !important;
+  background-color: var(--bg-page) !important;
+  color: var(--text-main) !important;
+}
+
+.page-content {
+  flex: 1 0 auto;
+}
+
+/* Ensure every Bootstrap widget inherits Nunito */
+.navbar,
+.btn,
+.form-control,
+.form-select,
+.dropdown-menu,
+.modal-content,
+.card,
+.list-group,
+.breadcrumb,
+.nav,
+.table {
+  font-family: var(--bni-font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  font-family: var(--bni-font-sans);
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* PHP uses class `navbar-custom` on header nav */
+.navbar-custom {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+.navbar-custom .navbar-brand img {
+  height: 32px;
+  width: auto;
+}
+
+/* home-busy.css nav treatment */
+.navbar-custom .nav-link {
+  color: #334155 !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.65rem !important;
+}
+
+.navbar-custom .nav-link:hover {
+  color: var(--busy-gold) !important;
+}
+
+.navbar-custom .nav-link.active {
+  color: var(--busy-navy) !important;
+}
+
+.navbar-custom .navbar-toggler {
+  border-color: rgba(0, 31, 91, 0.15);
+}
+
+.btn-brand {
+  background: linear-gradient(135deg, var(--busy-navy), #0a3d8f);
+  color: #fff !important;
+  border: none;
+  font-weight: 700;
+}
+
+.btn-brand:hover {
+  filter: brightness(1.06);
+  color: #fff !important;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--busy-navy);
+  --bs-btn-border-color: rgba(0, 31, 91, 0.35);
+  --bs-btn-hover-bg: var(--busy-navy);
+  --bs-btn-hover-border-color: var(--busy-navy);
+  font-weight: 600;
+}
+
+.text-primary {
+  color: var(--busy-navy) !important;
+}
+
+.footer-v3 {
+  padding: 4rem 0 2rem;
+  background: var(--white);
+  border-top: 1px solid var(--border-color);
+}
+
+.footer-main-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr 1fr 200px;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-logo-area .logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+  margin-bottom: 1rem;
+  font-family: var(--bni-font-sans);
+}
+
+.footer-logo-area .desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: var(--busy-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.social-circle:hover {
+  color: var(--busy-gold);
+}
+
+.footer-col-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--brand-primary);
+}
+
+.btn-footer-login {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  text-decoration: none;
+  display: inline-block;
+}
+
+@media (max-width: 991px) {
+  .footer-main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .navbar-custom .nav-link {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .footer-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-hero {
+  background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 80%);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(0, 31, 91, 0.12) 1px, transparent 1px),
+    linear-gradient(125deg, rgba(0, 31, 91, 0.03) 0%, rgba(0, 31, 91, 0) 60%);
+  background-size:
+    34px 34px,
+    cover;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.home-hero > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card {
+  background: #fbfcff;
+  border: 1px solid #e6ebf5;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.stat-card .small {
+  color: var(--text-muted);
+}

@@ -1,0 +1,421 @@
+/* Main Styles for BNI BUSINESS TRIP */
+
+/* General Styles */
+body {
+    font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+}
+
+.text-primary-custom {
+    color: var(--primary-color) !important;
+}
+
+.bg-primary-custom {
+    background-color: var(--primary-color) !important;
+}
+
+/* Button Styles */
+.btn-primary-custom {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary-custom:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+.btn-outline-primary-custom {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary-custom:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Section Styles */
+.section-title {
+    position: relative;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.section-title:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.section-title.text-center:after {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Hero Section */
+.hero-section {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 100px 0;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #001f5b 0%, #111111 100%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.member-card .card-img-top {
+    height: 250px;
+}
+
+.red-top-border {
+    border-top: 4px solid var(--primary-color);
+}
+
+/* Feature Icon */
+.feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 28px;
+    margin-bottom: 1rem;
+}
+
+/* Social Icons */
+.social-icons a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.1);
+    transition: background-color 0.3s;
+}
+
+.social-icons a:hover {
+    background-color: var(--primary-color);
+    color: white !important;
+}
+
+/* News Article */
+.article-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.article-img {
+    max-height: 400px;
+    object-fit: cover;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.page-link {
+    color: var(--primary-color);
+}
+
+.page-link:hover {
+    color: var(--primary-dark);
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 60px 0;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+}
+
+
+/* Additional mobile styling for banner section */
+@media (max-width: 767.98px) {
+  .banner-section {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .banner-section .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .banner-section .fw-bold {
+    font-size: 0.9rem;
+  }
+  
+  .banner-section .fas {
+    width: 16px;
+  }
+}
+
+/* Banner Section Styles */
+.banner-section {
+    width: 100vw;
+}
+
+.banner-section .table {
+    margin-bottom: 0;
+}
+
+.banner-section .table th,
+.banner-section .table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border: none;
+    color: black;
+}
+
+.banner-section .fas {
+    width: 20px;
+    text-align: center;
+}
+
+.banner-section .btn-light {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.banner-section .btn-light:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+
+    .banner-section .table-responsive {
+        border: none;
+    }
+
+/* Meeting / Event Section (home page) */
+.meeting-event-section {
+    background: linear-gradient(180deg, #f8f9fa 0%, #fff 100%);
+}
+
+.meeting-event-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.meeting-event-card .meeting-event-banner {
+    display: block !important;
+    height: 210px !important;
+    min-height: 210px !important;
+}
+
+.meeting-event-banner {
+    position: relative;
+    height: 210px !important;
+    min-height: 210px !important;
+    flex-shrink: 0;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+/* Banner with image: img fills container, caption overlays */
+.meeting-event-banner-with-img {
+    padding: 0;
+}
+
+.meeting-event-banner-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.meeting-event-banner-default {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #a01c24 100%);
+}
+
+.meeting-event-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.meeting-event-banner-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 1.25rem 1.5rem;
+    color: #fff;
+}
+
+.meeting-event-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+    opacity: 0.95;
+}
+
+.meeting-event-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 768px) {
+    .meeting-event-banner,
+    .meeting-event-card .meeting-event-banner {
+        height: 260px !important;
+        min-height: 260px !important;
+    }
+    .meeting-event-title {
+        font-size: 1.75rem;
+    }
+}
+
+.meeting-event-details {
+    background: #fff;
+    border-top: 3px solid rgba(217, 35, 45, 0.15);
+}
+
+/* Meeting list */
+.meeting-event-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.meeting-event-list-header {
+    font-weight: 600;
+    color: var(--primary-color);
+    background: rgba(217, 35, 45, 0.06);
+    padding: 0.75rem 1rem;
+    grid-template-columns: 1fr 1fr 2fr 1fr 120px;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.meeting-event-list-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
+    gap: 0.35rem 1rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-color: rgba(0,0,0,0.06) !important;
+}
+
+.meeting-event-list-item .meeting-event-list-action {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+}
+
+.meeting-event-list-item:nth-child(even) {
+    background: #fafafa;
+}
+
+@media (min-width: 768px) {
+    .meeting-event-list-item {
+        grid-template-columns: 1fr 1fr 2fr 1fr 120px;
+        grid-template-rows: auto;
+        gap: 0.5rem;
+    }
+    .meeting-event-list-item .meeting-event-list-action {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
+.meeting-event-list-date,
+.meeting-event-list-time,
+.meeting-event-list-location,
+.meeting-event-list-seats,
+.meeting-event-list-action {
+    font-size: 0.9rem;
+}
+
+.meeting-event-list-action {
+    text-align: end;
+}
+
+.meeting-event-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.meeting-event-meta i {
+    font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+    .meeting-event-meta {
+        flex-direction: row;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+}
+
+

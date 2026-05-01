@@ -1,0 +1,468 @@
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { formatMnDate } from "@/lib/format-date";
+import { mediaUrl } from "@/lib/media-url";
+
+export const dynamic = "force-dynamic";
+
+export default async function TripDetailsPage({ params }: { params: { id: string } }) {
+  const tripId = parseInt(params.id, 10);
+  if (isNaN(tripId)) {
+    notFound();
+  }
+
+  const trip = await prisma.businessTrip.findUnique({
+    where: { id: tripId },
+  });
+
+  if (!trip) {
+    return (
+      <div className="container py-5 text-center">
+        <h3>Аялал олдсонгүй</h3>
+        <Link href="/" className="btn btn-primary">Нүүр хуудас руу буцах</Link>
+      </div>
+    );
+  }
+
+  const startDate = new Date(trip.startDate);
+  const endDate = new Date(trip.endDate);
+  
+  // Calculate days difference
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const nDays = Math.max(1, Math.min(14, diffDays));
+
+  const dest = trip.destination?.trim() || "";
+  const scheduleDays = [];
+
+  for (let i = 1; i <= nDays; i++) {
+    const dDt = new Date(startDate);
+    dDt.setDate(dDt.getDate() + (i - 1));
+    
+    scheduleDays.push({
+      id: `trd-plh-${i}`,
+      label: `Өдөр ${i}`,
+      date: dDt.toISOString().split('T')[0],
+      heading: i === 1 ? 'Хөтөлбөр' : '',
+      banner_image: '',
+      items: [
+        {
+          time: '',
+          end_time: '',
+          title: i === 1 ? 'Хөтөлбөрийн дэлгэрэнгүй удахгүй шинэчлэгдэнэ.' : '—',
+          description: (dest ? `${dest} · ` : '') + formatMnDate(dDt),
+          highlight: '',
+        }
+      ]
+    });
+  }
+
+  let tripCover = mediaUrl(trip.coverImageUrl || "");
+  if (!tripCover) {
+    tripCover = 'https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1600&q=80';
+  }
+
+  const payTripUrl = `/pay-advance?type=trip&id=${tripId}`;
+  const tripRegisterLoginUrl = `/auth/login?next=${encodeURIComponent(payTripUrl)}`;
+  const qpayLogoUrl = '/assets/img/qpay-logo.png';
+
+  const isLoggedIn = false; // Replace with NextAuth or session logic
+
+  const mapQueryPlain = dest ? `${dest}, South Korea` : 'Busan Seoul South Korea';
+  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQueryPlain)}`;
+
+  const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
+
+  const tripPrice = trip.priceMnt ? Number(trip.priceMnt).toLocaleString() : '4,590,000';
+  
+  const formattedStartYear = startDate.getFullYear();
+  const formattedEndYear = endDate.getFullYear();
+  const formattedStartStr = formatMnDate(startDate).replace(/-/g, '.');
+  const formattedEndStr = formattedStartYear === formattedEndYear ? formatMnDate(endDate).slice(5).replace(/-/g, '.') : formatMnDate(endDate).replace(/-/g, '.');
+  const tripDateRange = `${formattedStartStr} – ${formattedEndStr}`;
+
+  return (
+    <div className="trd-body">
+      {/* Hero Section */}
+      <div className="trd-hero">
+        <div className="trd-hero-img" style={{ backgroundImage: `url('${tripCover}')` }}></div>
+        <div className="trd-hero-overlay"></div>
+        <div className="container trd-hero-content">
+          <div className="row">
+            <div className="col-lg-8">
+              <div className="trd-status-badge"><i className="fa-solid fa-circle-check"></i> Бүртгэл нээлттэй</div>
+              <h1 className="trd-hero-title">{trip.destination}</h1>
+              <p className="lead mb-4 opacity-75">7 хоногийн бизнесийн дэлхийн хэмжээний арга хэмжээ</p>
+              {isLoggedIn ? (
+                <Link href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
+                  Төлбөр төлөх
+                </Link>
+              ) : (
+                <Link href={tripRegisterLoginUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
+                  Бүртгүүлэх
+                </Link>
+              )}
+              <div className="trd-hero-meta">
+                <div className="trd-hero-meta-item">
+                  <i className="fa-regular fa-calendar-days"></i>
+                  <div>
+                    <div className="opacity-50 small">Аяллын хугацаа</div>
+                    <div>{formattedStartStr} — {formattedEndStr}</div>
+                  </div>
+                </div>
+                <div className="trd-hero-meta-item">
+                  <i className="fa-solid fa-location-dot"></i>
+                  <div>
+                    <div className="opacity-50 small">Чиглэл</div>
+                    <div>БНСУ – Бусан, Сеүл</div>
+                  </div>
+                </div>
+                <div className="trd-hero-meta-item">
+                  <i className="fa-solid fa-user-group"></i>
+                  <div>
+                    <div className="opacity-50 small">Боломжит суудал</div>
+                    <div>{trip.seatsLabel || '30 суудал'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container trd-main-shell position-relative">
+        <div className="row g-4 g-lg-5 align-items-lg-start">
+          {/* Left Column */}
+          <div className="col-lg-8 order-2 order-lg-1">
+            
+            {/* Feature Grid */}
+            <div id="trd-section-brief" className="trd-grid-features mt-5 trd-scroll-anchor">
+              <div className="trd-feature-card">
+                <div className="trd-feature-icon"><i className="fa-solid fa-users"></i></div>
+                <div className="trd-feature-title">BNI networking</div>
+                <div className="trd-feature-desc">Дэлхийн бизнесийн хамгийн том сүлжээний арга хэмжээ.</div>
+              </div>
+              <div className="trd-feature-card">
+                <div className="trd-feature-icon"><i className="fa-solid fa-industry"></i></div>
+                <div className="trd-feature-title">Үйлдвэртэй танилцах</div>
+                <div className="trd-feature-desc">Тэргүүлэх үйлдвэрүүд, технологийн шийдэлтэй танилцана.</div>
+              </div>
+              <div className="trd-feature-card">
+                <div className="trd-feature-icon"><i className="fa-solid fa-handshake"></i></div>
+                <div className="trd-feature-title">B2B уулзалт</div>
+                <div className="trd-feature-desc">Үр дүнтэй уулзалтууд, хамтын ажиллагаа.</div>
+              </div>
+              <div className="trd-feature-card">
+                <div className="trd-feature-icon"><i className="fa-solid fa-landmark"></i></div>
+                <div className="trd-feature-title">Соёл, аялал</div>
+                <div className="trd-feature-desc">Түүхэн дурсгалт газрууд болон орчин үеийн соёл.</div>
+              </div>
+            </div>
+
+            {/* Tabs (scroll to sections) */}
+            <div className="trd-tabs" role="tablist">
+              <a href="#trd-section-brief" className="trd-tab active">Товч мэдээлэл</a>
+              <a href="#trd-section-itinerary" className="trd-tab">Хөтөлбөр</a>
+              <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
+              <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
+              <a href="#trd-section-location" className="trd-tab">Байршил</a>
+            </div>
+
+            {/* Itinerary Section */}
+            <div id="trd-section-itinerary" className="mb-5 trd-scroll-anchor">
+              <div className="trd-timeline-nav" role="tablist">
+                {scheduleDays.map((dayRow, ti) => {
+                  const dayDateFmt = formatMnDate(new Date(dayRow.date)).replace(/-/g, '.');
+                  const dayLabel = dayRow.label || `Өдөр ${ti + 1}`;
+                  return (
+                    <button key={ti} type="button" className={`trd-timeline-btn ${ti === 0 ? 'active' : ''}`} data-trd-day-index={ti} aria-selected={ti === 0 ? 'true' : 'false'}>
+                      {dayLabel}
+                      {dayDateFmt && <span className="opacity-50 ms-2">{dayDateFmt}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {scheduleDays.map((dayRow, pi) => {
+                const banner = dayRow.banner_image || tripCover;
+                const dayHeading = dayRow.heading || '';
+                const dayLabel = dayRow.label || `Өдөр ${pi + 1}`;
+                const items = dayRow.items || [];
+                
+                return (
+                  <div key={pi} className={`trd-day-panel ${pi === 0 ? 'is-active' : ''}`} data-trd-day-panel={pi} hidden={pi !== 0}>
+                    <div className="trd-day-detail">
+                      <div className="trd-day-img">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={banner} alt={dayLabel} />
+                        <div className="trd-day-label">
+                          <div className="fw-bold h4 mb-0">{dayLabel}</div>
+                          {dayHeading && <div className="small opacity-75">{dayHeading}</div>}
+                        </div>
+                      </div>
+                      <div className="trd-day-events">
+                        {items.map((it, idx) => {
+                          const tTime = it.time || '';
+                          const tTitle = it.title || '';
+                          const tDesc = it.description || '';
+                          if (!tTitle && !tDesc) return null;
+                          return (
+                            <div key={idx} className="trd-event">
+                              <div className="trd-event-time">{tTime || '—'}</div>
+                              <div className="trd-event-content">
+                                {tTitle && <div className="trd-event-title">{tTitle}</div>}
+                                {tDesc && <div className="trd-event-desc" dangerouslySetInnerHTML={{ __html: tDesc.replace(/\n/g, '<br/>') }}></div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* About Section */}
+            <div id="trd-section-about" className="trd-about-grid mb-5 trd-scroll-anchor">
+              <div>
+                <h2 className="fw-bold mb-4">Аяллын тухай</h2>
+                <p className="text-muted lead" dangerouslySetInnerHTML={{ __html: tripAbout.replace(/\n/g, '<br/>') }}></p>
+              </div>
+              <div className="trd-about-img">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80" alt="About" className="img-fluid" />
+              </div>
+            </div>
+
+            {/* Comparison */}
+            <div id="trd-section-included" className="trd-comp-grid trd-scroll-anchor">
+              <div className="trd-comp-box">
+                <h3 className="trd-comp-title">Юу багтсан</h3>
+                <ul className="trd-comp-list">
+                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>4-5 одтой зочид буудлын байр</div></li>
+                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Өглөө, оройн зоог</div></li>
+                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Бүх хотын тээвэр, даатгал</div></li>
+                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Үйлдвэр, компанийн зочлох үйлчилгээ</div></li>
+                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Орчуулга, бизнес зөвлөх үйлчилгээ</div></li>
+                </ul>
+              </div>
+              <div className="trd-comp-box">
+                <h3 className="trd-comp-title">Багтаагүй</h3>
+                <ul className="trd-comp-list">
+                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Олон улсын нислэгийн тийз</div></li>
+                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Хувийн хэрэгцээ, дэлгүүр хэсэх</div></li>
+                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Визийн хураамж</div></li>
+                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Аяллын даатгал (заавал биш)</div></li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column: sticky viewport stack */}
+          <div className="col-lg-4 order-1 order-lg-2 mb-4 mb-lg-0 trd-aside-col">
+            <div className="trd-aside-inner">
+              <div className="trd-book-panel">
+                <div className="trd-price-row">
+                  <div className="trd-price-tag">{tripPrice} <span className="trd-price-cur">₮</span></div>
+                  <div className="trd-price-sub">1 хүн · бүх төлбөр багтсан</div>
+                </div>
+
+                <div className="trd-summary-grid" role="list">
+                  <div className="trd-summary-cell" role="listitem">
+                    <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-regular fa-calendar-check"></i></span>
+                    <span className="trd-summary-label">Хугацаа</span>
+                    <span className="trd-summary-val">{tripDateRange}</span>
+                  </div>
+                  <div className="trd-summary-cell" role="listitem">
+                    <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-solid fa-couch"></i></span>
+                    <span className="trd-summary-label">Суудал</span>
+                    <span className="trd-summary-val">{trip.seatsLabel || '30 суудал'}</span>
+                  </div>
+                  <div className="trd-summary-cell trd-summary-cell--full" role="listitem">
+                    <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-solid fa-earth-asia"></i></span>
+                    <span className="trd-summary-label">Чиглэл</span>
+                    <span className="trd-summary-val">БНСУ – Бусан, Сеүл</span>
+                  </div>
+                </div>
+
+                <div className="trd-cta-grid trd-cta-grid--stacked">
+                  {isLoggedIn ? (
+                    <Link className="trd-btn-qpay" href={payTripUrl}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={qpayLogoUrl} alt="QPay" width="72" height="20" loading="lazy" decoding="async" />
+                      <span>Төлбөр төлөх</span>
+                    </Link>
+                  ) : (
+                    <Link className="trd-btn-trip-register" href={tripRegisterLoginUrl}>
+                      <i className="fa-solid fa-user-check" aria-hidden="true"></i>
+                      <span>Бүртгүүлэх</span>
+                    </Link>
+                  )}
+                  <button className="trd-btn-contact" type="button">
+                    <i className="fa-solid fa-headset"></i>
+                    <span>Зөвлөх</span>
+                  </button>
+                </div>
+
+                <div className="trd-trust-grid" aria-label="Давуу тал">
+                  <div className="trd-trust-chip"><i className="fa-solid fa-shield-halved"></i><span>Төлбөр</span></div>
+                  <div className="trd-trust-chip"><i className="fa-solid fa-file-signature"></i><span>Баталгаа</span></div>
+                  <div className="trd-trust-chip"><i className="fa-solid fa-clock"></i><span>24/7</span></div>
+                  <div className="trd-trust-chip"><i className="fa-solid fa-star"></i><span>Зэрэглэл</span></div>
+                </div>
+              </div>
+
+              <div id="trd-section-location" className="trd-map-card trd-aside-card trd-scroll-anchor">
+                <div className="trd-aside-card__title">Маршрут</div>
+                <Link href={mapHref} className="trd-map-static" target="_blank" rel="noopener noreferrer">
+                  <span className="trd-map-static__icon" aria-hidden="true"><i className="fa-solid fa-map-location-dot"></i></span>
+                  <span className="trd-map-static__text">
+                    <span className="trd-map-static__title">Газрын зураг нээх</span>
+                    <span className="trd-map-static__sub">Google Maps — чиглэл, замыг шууд харах</span>
+                  </span>
+                  <span className="trd-map-static__go" aria-hidden="true"><i className="fa-solid fa-arrow-up-right-from-square"></i></span>
+                </Link>
+                <p className="trd-map-note"><i className="fa-solid fa-train text-primary me-1"></i>KTX: Бусан — Сеүл</p>
+              </div>
+
+              <div id="trd-section-help" className="trd-help-card trd-aside-card trd-scroll-anchor">
+                <div className="trd-aside-card__title">Тусламж</div>
+                <p className="trd-help-lead">Зөвлөхүүд асуултад хариулна.</p>
+                <div className="trd-help-grid">
+                  <Link href="tel:+97677772828" className="trd-help-tile"><i className="fa-solid fa-phone"></i><span>+976 7777 2828</span></Link>
+                  <Link href="mailto:travel@busy.mn" className="trd-help-tile"><i className="fa-solid fa-envelope"></i><span>travel@busy.mn</span></Link>
+                  <Link href="#trd-section-help" className="trd-help-tile trd-help-tile--wide"><i className="fa-solid fa-comments"></i><span>Онлайн чат</span></Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div id="trd-section-faq" className="container mt-5 pt-5 pb-5 trd-scroll-anchor">
+        <h2 className="fw-bold mb-4">Түгээмэл асуултууд</h2>
+        <div className="row g-4">
+          <div className="col-md-6">
+            <div className="trd-faq-item">
+              <button className="trd-faq-trigger">Аяллын үнэ юунд багтсан бэ? <i className="fa-solid fa-chevron-down"></i></button>
+              <div className="trd-faq-content">Аяллын үнэнд олон улсын нислэгийн тийзнээс бусад бүх зардал багтсан болно. Үүнд зочид буудал, хоол, тээвэр, зөвлөх үйлчилгээ багтсан.</div>
+            </div>
+            <div className="trd-faq-item">
+              <button className="trd-faq-trigger">Виз мэдүүлэхэд туслах уу? <i className="fa-solid fa-chevron-down"></i></button>
+              <div className="trd-faq-content">Тийм ээ, манай баг таныг визний материал бүрдүүлэхэд зааварчилгаа өгч, туслах болно.</div>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="trd-faq-item">
+              <button className="trd-faq-trigger">Цуцлалтын нөхцөл ямар вэ? <i className="fa-solid fa-chevron-down"></i></button>
+              <div className="trd-faq-content">Аялал эхлэхээс 30 хоногийн өмнө цуцалбал 100% буцаан олголттой.</div>
+            </div>
+            <div className="trd-faq-item">
+              <button className="trd-faq-trigger">QPay-ээр хэрхэн төлөх вэ? <i className="fa-solid fa-chevron-down"></i></button>
+              <div className="trd-faq-content">«Баталгаажуулах» дээр дарсны дараа бүтэн төлбөр эсвэл урьдчилгаагаа сонгоно. Дараа нь QPay-ийн QR код гарч, апп эсвэл вэбээр төлнө. Төлбөр орсны дараа баталгаажуулах имэйл илгээгдэнэ.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Stats */}
+      <div className="trd-footer-stats">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-3 trd-stat-item">
+              <div className="trd-stat-val">12,500+</div>
+              <div className="trd-stat-lbl">Аяллын бизнес эрхлэгч</div>
+            </div>
+            <div className="col-md-3 trd-stat-item">
+              <div className="trd-stat-val">3,200+</div>
+              <div className="trd-stat-lbl">Итгэлтэй гишүүд</div>
+            </div>
+            <div className="col-md-2 trd-stat-item">
+              <div className="trd-stat-val">180+</div>
+              <div className="trd-stat-lbl">Бизнес уулзалт</div>
+            </div>
+            <div className="col-md-2 trd-stat-item">
+              <div className="trd-stat-val">98%</div>
+              <div className="trd-stat-lbl">Сэтгэл ханамж</div>
+            </div>
+            <div className="col-md-2 trd-stat-item">
+              <div className="trd-stat-val">24ц</div>
+              <div className="trd-stat-lbl">Түргэн дэмжлэг</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Required Script for toggling */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        document.querySelectorAll('.trd-faq-trigger').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                var item = trigger.closest('.trd-faq-item');
+                if (!item) return;
+                var wasOpen = item.classList.contains('is-open');
+                document.querySelectorAll('.trd-faq-item').forEach(function (other) {
+                    other.classList.remove('is-open');
+                    var oi = other.querySelector('.trd-faq-trigger i.fa-chevron-down');
+                    if (oi) oi.style.transform = 'rotate(0deg)';
+                });
+                if (!wasOpen) {
+                    item.classList.add('is-open');
+                    var icon = trigger.querySelector('i.fa-chevron-down');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        document.querySelectorAll('.trd-tab[data-trd-section]').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.trd-tab').forEach(function (t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                var id = tab.getAttribute('data-trd-section');
+                var el = id ? document.getElementById(id) : null;
+                if (el) {
+                    try {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (e) {
+                        el.scrollIntoView(true);
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.trd-timeline-btn[data-trd-day-index]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var ix = btn.getAttribute('data-trd-day-index');
+                document.querySelectorAll('.trd-timeline-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-trd-day-index') === ix);
+                    b.setAttribute('aria-selected', b.getAttribute('data-trd-day-index') === ix ? 'true' : 'false');
+                });
+                document.querySelectorAll('.trd-day-panel[data-trd-day-panel]').forEach(function (p) {
+                    var on = p.getAttribute('data-trd-day-panel') === ix;
+                    p.classList.toggle('is-active', on);
+                    p.hidden = !on;
+                });
+            });
+        });
+
+        var consult = document.querySelector('.trd-btn-contact');
+        if (consult) {
+            consult.addEventListener('click', function () {
+                var help = document.getElementById('trd-section-help');
+                if (help) {
+                    try {
+                        help.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } catch (e) {
+                        help.scrollIntoView(true);
+                    }
+                }
+            });
+        }
+      ` }} />
+    </div>
+  );
+}

@@ -1,0 +1,148 @@
+/* Admin Styles for BNI BUSINESS TRIP */
+
+:root {
+    --primary-color: #D10A11;
+    --primary-dark: #A70000;
+    --light-gray: #f8f9fa;
+    --border-color: #dee2e6;
+}
+
+body {
+    font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: var(--light-gray);
+    overflow-x: hidden;
+}
+
+/* Sidebar */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 250px;
+    margin-left: 0;
+    transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 0.875rem 1.25rem;
+    font-size: 1.2rem;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: -250px;
+}
+
+.list-group-item {
+    border: none;
+    padding: 15px 20px;
+    position: relative;
+    z-index: 1;
+    display: block;
+}
+
+.list-group-item.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.list-group-item:hover:not(.active) {
+    background-color: var(--light-gray);
+    color: var(--primary-color);
+}
+
+/* Page Content */
+#page-content-wrapper {
+    min-width: 100vw;
+    transition: margin-left 0.25s ease-out;
+}
+
+#wrapper.toggled #page-content-wrapper {
+    margin-left: -250px;
+}
+
+/* Navigation */
+.navbar {
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.navbar .dropdown-menu {
+    min-width: 200px;
+}
+
+/* Cards */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+}
+
+.dashboard-card {
+    border-top: 4px solid var(--primary-color);
+}
+
+/* Tables */
+.table thead th {
+    border-top: none;
+    border-bottom: 2px solid var(--border-color);
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(209, 10, 17, 0.05);
+}
+
+.table .actions {
+    width: 150px;
+}
+
+/* Forms */
+.form-label {
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: rgba(209, 10, 17, 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(209, 10, 17, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+    
+    #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+    }
+    
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -250px;
+    }
+}

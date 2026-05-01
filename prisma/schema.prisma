@@ -1,0 +1,299 @@
+// PostgreSQL schema for BUSY.mn / BNI (Next.js rewrite). Mirrors legacy MySQL `bni_*` names via @@map.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  visitor
+  member
+  director
+  admin
+}
+
+enum PlatformAccountStatus {
+  active
+  suspended
+  deleted
+}
+
+enum MembershipStatus {
+  pending
+  active
+  expired
+  transferred
+  left
+}
+
+model PlatformAccount {
+  id                    BigInt                 @id @default(autoincrement())
+  email                 String                 @unique @db.VarChar(255)
+  passwordHash          String?                @map("password_hash") @db.VarChar(255)
+  passwordResetToken    String?                @map("password_reset_token_hash") @db.Char(64)
+  passwordResetExpires  DateTime?              @map("password_reset_expires_at") @db.Timestamptz(6)
+  googleSub             String?                @unique @map("google_sub") @db.VarChar(64)
+  role                  PlatformRole           @default(visitor)
+  status                PlatformAccountStatus  @default(active)
+  emailVerifiedAt       DateTime?              @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt           DateTime?              @map("last_login_at") @db.Timestamptz(6)
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile     PlatformProfile?
+  memberships ChapterMembership[]
+
+  @@map("bni_platform_accounts")
+}
+
+model PlatformProfile {
+  accountId     BigInt   @id @map("account_id")
+  displayName   String   @default("") @map("display_name") @db.VarChar(255)
+  bio           String?  @db.Text
+  photoUrl      String?  @map("photo_url") @db.VarChar(512)
+  companyName   String?  @map("company_name") @db.VarChar(255)
+  businessPhone String?  @map("business_phone") @db.VarChar(64)
+  businessEmail String?  @map("business_email") @db.VarChar(255)
+  website       String?  @db.VarChar(512)
+  addressLine   String?  @map("address_line") @db.VarChar(512)
+  businessJson  Json?    @map("business_json")
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account PlatformAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("bni_platform_profiles")
+}
+
+model Region {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(190)
+  slug      String   @unique @db.VarChar(190)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  chapters Chapter[]
+
+  @@map("bni_regions")
+}
+
+model Chapter {
+  id         Int      @id @default(autoincrement())
+  regionId   Int      @map("region_id")
+  name       String   @db.VarChar(190)
+  slug       String   @db.VarChar(190)
+  maxMembers Int      @default(40) @map("max_members")
+  timezone   String   @default("Asia/Ulaanbaatar") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  region      Region                  @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  events      BniEvent[]
+  memberships ChapterMembership[]
+  curriculums Curriculum[]
+  schedules   ChapterWeeklySchedule[]
+
+  @@unique([regionId, slug])
+  @@map("bni_chapters")
+}
+
+model ChapterMembership {
+  id                 BigInt            @id @default(autoincrement())
+  accountId          BigInt            @map("account_id")
+  chapterId        Int               @map("chapter_id")
+  classificationId Int?              @map("classification_id")
+  joinDate         DateTime?         @map("join_date") @db.Date
+  expiryDate       DateTime?         @map("expiry_date") @db.Date
+  status           MembershipStatus  @default(pending)
+  notes            String?           @db.Text
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account PlatformAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  chapter Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, chapterId])
+  @@map("bni_chapter_memberships")
+}
+
+model Curriculum {
+  id         Int      @id @default(autoincrement())
+  chapterId  Int?     @map("chapter_id")
+  name       String   @db.VarChar(190)
+  agendaJson Json     @map("agenda_json")
+  version    Int      @default(1) @db.SmallInt
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  chapter   Chapter?                @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  schedules ChapterWeeklySchedule[]
+  events    BniEvent[]
+
+  @@map("bni_curriculums")
+}
+
+model ChapterWeeklySchedule {
+  id           Int      @id @default(autoincrement())
+  chapterId    Int      @map("chapter_id")
+  curriculumId Int      @map("curriculum_id")
+  dayOfWeek    Int      @map("day_of_week") @db.SmallInt
+  startTime    DateTime @map("start_time") @db.Time(0)
+  endTime      DateTime @map("end_time") @db.Time(0)
+  location     String?  @db.VarChar(512)
+  isOnline     Boolean  @default(false) @map("is_online")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  chapter    Chapter    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  events     BniEvent[]
+
+  @@map("bni_chapter_weekly_schedules")
+}
+
+model BniEvent {
+  id                      BigInt    @id @default(autoincrement())
+  chapterId               Int       @map("chapter_id")
+  scheduleId              Int?      @map("schedule_id")
+  // VARCHAR so migrated rows / pgloader mismatch never breaks reads (vs strict Prisma enum).
+  eventType               String    @default("weekly_meeting") @map("event_type") @db.VarChar(64)
+  startsAt                DateTime  @map("starts_at") @db.Timestamptz(6)
+  endsAt                  DateTime  @map("ends_at") @db.Timestamptz(6)
+  location                String?   @db.VarChar(512)
+  isOnline                Boolean   @default(false) @map("is_online")
+  curriculumId            Int?      @map("curriculum_id")
+  curriculumOverrideJson  Json?     @map("curriculum_override_json")
+  registrationFormJson    Json?     @map("registration_form_json")
+  title                   String?   @db.VarChar(255)
+  priceMnt                Decimal?  @map("price_mnt") @db.Decimal(12, 2)
+  advanceOrderMnt         Decimal?  @map("advance_order_mnt") @db.Decimal(12, 2)
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  chapter    Chapter                 @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  schedule   ChapterWeeklySchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  curriculum Curriculum?             @relation(fields: [curriculumId], references: [id], onDelete: SetNull)
+
+  @@index([chapterId, startsAt])
+  @@map("bni_events")
+}
+
+// --- Legacy public CMS tables (original MySQL schema.sql + migrations; target PostgreSQL via migrate / pgloader) ---
+
+model SiteSetting {
+  id           Int       @id @default(autoincrement())
+  settingName  String    @unique @map("setting_name") @db.VarChar(100)
+  settingValue String?   @map("setting_value") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_settings")
+}
+
+model LegacyMeeting {
+  id              Int       @id @default(autoincrement())
+  title           String    @db.VarChar(255)
+  meetingDate     DateTime  @map("meeting_date") @db.Date
+  startTime       DateTime  @map("start_time") @db.Time(0)
+  endTime         DateTime  @map("end_time") @db.Time(0)
+  location        String?   @db.VarChar(255)
+  maxAttendees    Int       @default(0) @map("max_attendees")
+  description     String?   @db.Text
+  status          String    @default("active") @db.VarChar(32)
+  bannerImage     String?   @map("banner_image") @db.VarChar(512)
+  agendaJson      String?   @map("agenda_json") @db.Text
+  priceMnt        Decimal?  @map("price_mnt") @db.Decimal(12, 2)
+  advanceOrderMnt Decimal?  @map("advance_order_mnt") @db.Decimal(12, 2)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("meetings")
+}
+
+model BusinessTrip {
+  id                     Int       @id @default(autoincrement())
+  destination            String    @db.VarChar(512)
+  startDate              DateTime  @map("start_date") @db.Date
+  endDate                DateTime  @map("end_date") @db.Date
+  focus                  String?   @db.Text
+  description            String?   @db.Text
+  statusLabel            String?   @map("status_label") @db.VarChar(255)
+  seatsLabel             String?   @map("seats_label") @db.VarChar(255)
+  managerAccountId       BigInt?   @map("manager_account_id")
+  coverImageUrl          String?   @map("cover_image_url") @db.VarChar(512)
+  heroSliderJson         String?   @map("hero_slider_json") @db.Text
+  priceMnt               Decimal?  @map("price_mnt") @db.Decimal(12, 2)
+  advanceOrderMnt        Decimal?  @map("advance_order_mnt") @db.Decimal(12, 2)
+  isFeatured             Int       @default(0) @map("is_featured")
+  registrationFormJson   Json?     @map("registration_form_json")
+  itineraryJson          Json?     @map("itinerary_json")
+  extrasJson             Json?     @map("extras_json")
+
+  @@map("business_trips")
+}
+
+model NewsArticle {
+  id          Int       @id @default(autoincrement())
+  category    Int?
+  type        Int?
+  createDate  DateTime? @map("create_date") @db.Date
+  title       String    @db.VarChar(512)
+  slug        String    @unique @db.VarChar(512)
+  excerpt     String?   @db.Text
+  content     String?   @db.Text
+  body        String?   @db.Text
+  image       String?   @db.VarChar(512)
+  images      String?   @db.VarChar(512)
+  authorId    Int       @map("author_id")
+  status      String    @default("draft") @db.VarChar(32)
+  featured    Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("news")
+}
+
+model LegacyMember {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  position  String?   @db.VarChar(100)
+  company   String?   @db.VarChar(150)
+  industry  String?   @db.VarChar(100)
+  bio       String?   @db.Text
+  email     String?   @db.VarChar(100)
+  phone     String?   @db.VarChar(50)
+  website   String?   @db.VarChar(255)
+  linkedin  String?   @db.VarChar(255)
+  facebook  String?   @db.VarChar(255)
+  photo     String?   @db.VarChar(255)
+  featured  Int       @default(0)
+  status    String    @default("active") @db.VarChar(32)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("members")
+}
+
+model PaymentOrder {
+  id                      BigInt    @id @default(autoincrement())
+  orderRef                String    @unique @map("order_ref") @db.VarChar(64)
+  targetType              String    @map("target_type") @db.VarChar(32)
+  targetId                BigInt    @map("target_id")
+  fullPriceMnt            Decimal?  @map("full_price_mnt") @db.Decimal(12, 2)
+  advancePercent          Int       @default(0) @map("advance_percent") @db.SmallInt
+  amountMnt               Int       @map("amount_mnt")
+  qpayInvoiceId           String?   @map("qpay_invoice_id") @db.VarChar(128)
+  status                  String    @default("pending") @db.VarChar(32)
+  qpayInvoiceResponseJson String?   @map("qpay_invoice_response_json") @db.Text
+  callbackJson            String?   @map("callback_json") @db.Text
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  paidAt                  DateTime? @map("paid_at") @db.Timestamptz(6)
+  baseAdvanceMnt          Int?      @map("base_advance_mnt")
+  memberDiscountPercent   Decimal?  @map("member_discount_percent") @db.Decimal(5, 2)
+
+  @@index([targetType, targetId])
+  @@map("payment_orders")
+}
