@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/platform/trips");
   revalidatePath("/trips");
+  revalidatePath("/");
   if (returnAdmin) {
     revalidatePath("/admin/trips");
   }

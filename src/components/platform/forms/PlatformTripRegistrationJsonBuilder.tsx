@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TripFormQuestionType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -145,8 +145,17 @@ type Props = {
 
 export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initialJson }: Props) {
   const [rows, setRows] = useState<TripFormBuilderQuestionRow[]>(() => parseLegacyRows(initialJson));
+  const [savedQuestionId, setSavedQuestionId] = useState<string | null>(null);
 
   const hiddenValue = useMemo(() => serialize(rows), [rows]);
+
+  useEffect(() => {
+    if (!savedQuestionId) return;
+    const t = window.setTimeout(() => {
+      setSavedQuestionId((cur) => (cur === savedQuestionId ? null : cur));
+    }, 3200);
+    return () => window.clearTimeout(t);
+  }, [savedQuestionId]);
 
   const applyQuestionSave = useCallback((id: string, draft: TripFormBuilderQuestionRow, optionsText: string) => {
     const opts = needsOptions(draft.type) ? optionsFromLines(optionsText) : [];
@@ -159,6 +168,7 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
     setRows((prev) =>
       prev.map((x) => (x.id === id ? { ...draft, options, sortOrder: x.sortOrder } : x)),
     );
+    setSavedQuestionId(id);
   }, []);
 
   const reorderDrag = useCallback((fromId: string, toId: string) => {
@@ -239,8 +249,8 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
               <CardTitle className="text-base font-semibold">Бүртгэлийн асуулга</CardTitle>
             </div>
             <CardDescription className="text-xs leading-snug">
-              Dashboard-ын форм бүтэцтэй ижил загвар. Сонголттой төрөлд сонголтуудыг мөр бүрт нэг бичнэ. Аяллыг
-              хадгалахад асуулгууд JSON хэлбэрээр хадгалагдана.
+              «Асуултыг хадгалах» нь энэ хуудасны төсөвт хадгална. Нүүрний бүртгэлийн drawer-д харагдахын тулд доорх аяллын
+              «Хадгалах» дарж серверт илгээнэ үү.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 p-4 sm:p-5">
@@ -272,6 +282,11 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
                       disabled={false}
                       dragQuestionId={q.id}
                     />
+                    {savedQuestionId === q.id ? (
+                      <p className="text-xs text-emerald-700 dark:text-emerald-400/90">
+                        Асуулт энэ хуудасны төсөвт хадгалагдлаа. Нийтийн drawer-д гаргахын тулд аяллын «Хадгалах» дарна уу.
+                      </p>
+                    ) : null}
                   </div>
                 ))}
               </div>

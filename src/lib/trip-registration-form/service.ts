@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { defaultBusinessTripRegistrationQuestions } from "@/lib/trip-registration-form/default-questions";
 import { newTripFormPublicSlug } from "@/lib/trip-registration-form/public-slug";
 import {
+  parseLegacyRegistrationArray,
+  stableLegacyQuestionId,
+  syncTripRegistrationFormFromLegacyJson,
+} from "@/lib/trip-registration-form/sync-registration-form-from-json";
+import {
   assertTripFormSubmissionValid,
   filterAnswersToFormQuestions,
   type TripFormSubmitAnswer,
@@ -205,6 +210,56 @@ function mapQuestionTypeToDrawer(
   }
 }
 
+/** Build drawer field list from `business_trips.registration_form_json` (legacy PHP / platform JSON builder). */
+function legacyRowsToHomeDrawerSchema(rows: ReturnType<typeof parseLegacyRegistrationArray>): HomeTripDrawerSchemaItem[] {
+  return rows
+    .filter((r) => r.label.trim())
+    .map((r, idx) => {
+      const typeStr = r.type || "text";
+      const required = r.required === 1;
+      const placeholder = r.placeholder ?? "";
+      const options = r.options;
+      let type: HomeTripDrawerSchemaItem["type"];
+      let opts: string[] | undefined;
+      switch (typeStr) {
+        case "textarea":
+          type = "textarea";
+          break;
+        case "email":
+          type = "email";
+          break;
+        case "tel":
+          type = "tel";
+          break;
+        case "number":
+          type = "number";
+          break;
+        case "select":
+          type = "select";
+          opts = options.length ? options : undefined;
+          break;
+        case "radio":
+          type = "radio";
+          opts = options.length ? options : undefined;
+          break;
+        case "checkbox":
+          type = "checkbox";
+          opts = options.length ? options : undefined;
+          break;
+        default:
+          type = "text";
+      }
+      return {
+        name: stableLegacyQuestionId(r.name, idx),
+        label: r.label.trim(),
+        required,
+        placeholder,
+        type,
+        ...(opts?.length ? { options: opts } : {}),
+      };
+    });
+}
+
 /** Published registration form for a trip (homepage / marketing drawer). */
 export async function getPublishedTripRegistrationDrawerSchema(tripId: number): Promise<
   { ok: true; tripTitle: string; schema: HomeTripDrawerSchemaItem[] } | { ok: false; message: string }
@@ -216,25 +271,41 @@ export async function getPublishedTripRegistrationDrawerSchema(tripId: number): 
       questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
     },
   });
-  if (!form) {
+  if (form) {
+    const schema: HomeTripDrawerSchemaItem[] = form.questions.map((q) => {
+      const mapped = mapQuestionTypeToDrawer(q.type, q.options, q.placeholder);
+      return {
+        name: q.id,
+        label: q.label,
+        required: q.isRequired,
+        placeholder: mapped.placeholder ?? "",
+        type: mapped.type,
+        ...(mapped.options?.length ? { options: mapped.options } : {}),
+      };
+    });
+    const tripTitle = form.trip.destination?.trim() || "Бизнес аялал";
+    return { ok: true, tripTitle, schema };
+  }
+
+  const trip = await prisma.businessTrip.findUnique({
+    where: { id: tripId },
+    select: { destination: true, registrationFormJson: true },
+  });
+  if (!trip) {
     return {
       ok: false,
       message: "Энэ аялалд нийтэд нээлттэй бүртгэлийн форм байхгүй байна. Зохион байгуулагчид хандана уу.",
     };
   }
-  const schema: HomeTripDrawerSchemaItem[] = form.questions.map((q) => {
-    const mapped = mapQuestionTypeToDrawer(q.type, q.options, q.placeholder);
+  const legacySchema = legacyRowsToHomeDrawerSchema(parseLegacyRegistrationArray(trip.registrationFormJson));
+  if (legacySchema.length === 0) {
     return {
-      name: q.id,
-      label: q.label,
-      required: q.isRequired,
-      placeholder: mapped.placeholder ?? "",
-      type: mapped.type,
-      ...(mapped.options?.length ? { options: mapped.options } : {}),
+      ok: false,
+      message: "Энэ аялалд нийтэд нээлттэй бүртгэлийн форм байхгүй байна. Зохион байгуулагчид хандана уу.",
     };
-  });
-  const tripTitle = form.trip.destination?.trim() || "Бизнес аялал";
-  return { ok: true, tripTitle, schema };
+  }
+  const tripTitle = trip.destination?.trim() || "Бизнес аялал";
+  return { ok: true, tripTitle, schema: legacySchema };
 }
 
 export async function submitPublicFormResponseByTripId(input: {
@@ -242,10 +313,23 @@ export async function submitPublicFormResponseByTripId(input: {
   answers: TripFormSubmitAnswer[];
   submittedByUserId?: bigint | null;
 }): Promise<{ responseId: string }> {
-  const form = await prisma.tripRegistrationForm.findFirst({
+  let form = await prisma.tripRegistrationForm.findFirst({
     where: { tripId: input.tripId, isPublished: true },
     select: { publicSlug: true },
   });
+  if (!form) {
+    const trip = await prisma.businessTrip.findUnique({
+      where: { id: input.tripId },
+      select: { registrationFormJson: true },
+    });
+    if (trip?.registrationFormJson) {
+      await syncTripRegistrationFormFromLegacyJson(input.tripId, trip.registrationFormJson);
+    }
+    form = await prisma.tripRegistrationForm.findFirst({
+      where: { tripId: input.tripId, isPublished: true },
+      select: { publicSlug: true },
+    });
+  }
   if (!form) {
     const e = new Error("NOT_FOUND");
     (e as Error & { status?: number }).status = 404;

@@ -1,6 +1,7 @@
 import { Prisma, type BusinessTrip } from "@prisma/client";
 import { writePlatformUploadImage } from "@/lib/platform-write-image";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
+import { syncTripRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-registration-form-from-json";
 
 async function persistBusinessTripJsonColumns(
   tripId: number,
@@ -214,6 +215,11 @@ export async function executeSaveTrip(
       },
     });
     await persistBusinessTripJsonColumns(tripId, tripExtras, registrationParsed, itineraryParsed);
+    try {
+      await syncTripRegistrationFormFromLegacyJson(tripId, registrationParsed);
+    } catch (e) {
+      console.error("[executeSaveTrip] syncTripRegistrationFormFromLegacyJson", e);
+    }
   } else {
     const created = await trips.create({
       data: {
@@ -223,6 +229,11 @@ export async function executeSaveTrip(
       },
     });
     await persistBusinessTripJsonColumns(created.id, tripExtras, registrationParsed, itineraryParsed);
+    try {
+      await syncTripRegistrationFormFromLegacyJson(created.id, registrationParsed);
+    } catch (e) {
+      console.error("[executeSaveTrip] syncTripRegistrationFormFromLegacyJson", e);
+    }
   }
 
   return { kind: "saved" };
