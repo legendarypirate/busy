@@ -120,7 +120,7 @@ export async function submitPublicFormResponse(input: {
           label: true,
           type: true,
           isRequired: true,
-          options: { orderBy: { sortOrder: "asc" }, select: { value: true } },
+          options: { orderBy: { sortOrder: "asc" }, select: { value: true, label: true } },
         },
       },
     },
@@ -136,7 +136,7 @@ export async function submitPublicFormResponse(input: {
     label: q.label,
     type: q.type,
     isRequired: q.isRequired,
-    options: q.options.map((o) => ({ value: o.value })),
+    options: q.options.map((o) => ({ value: o.value, label: o.label })),
   }));
 
   assertTripFormSubmissionValid(snapshots, input.answers);

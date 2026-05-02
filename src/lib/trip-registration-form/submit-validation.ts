@@ -13,7 +13,7 @@ export type TripFormQuestionSnapshot = {
   label: string;
   type: TripFormQuestionType;
   isRequired: boolean;
-  options: { value: string }[];
+  options: { value: string; label: string }[];
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,16 +22,38 @@ function norm(s: string | null | undefined): string {
   return (s ?? "").trim();
 }
 
+/** Normalize for option membership (trim + Unicode NFC so Cyrillic/Mongolian matches DB vs browser). */
+function normKey(s: string): string {
+  return norm(s).normalize("NFC");
+}
+
+function checkboxParts(val: string): string[] {
+  const t = norm(val);
+  if (!t) return [];
+  if (t.includes("\u0001")) {
+    return t.split("\u0001").map((x) => x.trim()).filter(Boolean);
+  }
+  return t.split(",").map((x) => x.trim()).filter(Boolean);
+}
+
+/** True if token equals some option's value or label (after normKey). */
+function isAllowedOptionToken(q: TripFormQuestionSnapshot, token: string): boolean {
+  const k = normKey(token);
+  if (!k) return false;
+  if (!q.options.length) return false;
+  for (const o of q.options) {
+    if (normKey(o.value) === k) return true;
+    if (normKey(o.label) === k) return true;
+  }
+  return false;
+}
+
 export function dedupeAnswersByQuestionId(answers: TripFormSubmitAnswer[]): TripFormSubmitAnswer[] {
   const map = new Map<string, TripFormSubmitAnswer>();
   for (const a of answers) {
     map.set(a.questionId, a);
   }
   return [...map.values()];
-}
-
-function allowedOptionValues(q: TripFormQuestionSnapshot): Set<string> {
-  return new Set(q.options.map((o) => o.value));
 }
 
 /**
@@ -67,18 +89,14 @@ export function assertTripFormSubmissionValid(questions: TripFormQuestionSnapsho
       if (q.type === "FILE_UPLOAD") {
         if (!file || !/^https?:\/\//i.test(file)) throwValidation();
       } else if (q.type === "CHECKBOXES") {
-        const parts = val
-          .split(",")
-          .map((x) => x.trim())
-          .filter(Boolean);
+        const parts = checkboxParts(val);
         if (parts.length === 0) throwValidation();
-        const allowed = allowedOptionValues(q);
         for (const p of parts) {
-          if (!allowed.has(p)) throwValidation();
+          if (!isAllowedOptionToken(q, p)) throwValidation();
         }
       } else if (q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") {
         if (!val) throwValidation();
-        if (!allowedOptionValues(q).has(val)) throwValidation();
+        if (!isAllowedOptionToken(q, val)) throwValidation();
       } else if (!textOrFile) {
         throwValidation();
       }
@@ -93,16 +111,12 @@ export function assertTripFormSubmissionValid(questions: TripFormQuestionSnapsho
       if (!Number.isFinite(Number(val))) throwValidation();
     }
     if ((q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") && val && !q.isRequired) {
-      if (!allowedOptionValues(q).has(val)) throwValidation();
+      if (!isAllowedOptionToken(q, val)) throwValidation();
     }
     if (q.type === "CHECKBOXES" && val && !q.isRequired) {
-      const parts = val
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean);
-      const allowed = allowedOptionValues(q);
+      const parts = checkboxParts(val);
       for (const p of parts) {
-        if (!allowed.has(p)) throwValidation();
+        if (!isAllowedOptionToken(q, p)) throwValidation();
       }
     }
     if (q.type === "FILE_UPLOAD" && file && !/^https?:\/\//i.test(file)) throwValidation();

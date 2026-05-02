@@ -11,6 +11,12 @@ export const ADMIN_NAV_MAIN: AdminNavItem[] = [
   { key: "dashboard", href: "/admin/dashboard", label: "Хяналтын самбар", iconClass: "fas fa-tachometer-alt" },
   { key: "meetings", href: "/admin/meetings", label: "Уулзалтууд", iconClass: "fas fa-calendar-alt" },
   { key: "trips", href: "/admin/trips", label: "Бизнес аялал", iconClass: "fas fa-plane-departure" },
+  {
+    key: "trip_registrations",
+    href: "/admin/trip-registrations",
+    label: "Аяллын формын бүртгэл",
+    iconClass: "fas fa-clipboard-list",
+  },
   { key: "payment_orders", href: "/admin/payment-orders", label: "QPay төлбөрүүд", iconClass: "fas fa-money-bill-wave" },
   { key: "members", href: "/admin/members", label: "Гишүүд", iconClass: "fas fa-users" },
   { key: "news", href: "/admin/news", label: "Мэдээ", iconClass: "fas fa-newspaper" },
