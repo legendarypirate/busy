@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { SiteHeaderNav } from "@/components/SiteHeaderNav";
+import { legacySameHostnameAsNextApp } from "@/lib/auth-public-origin";
 import { isBniLang } from "@/lib/nav-php-parity";
 
 function legacyBase(): string | undefined {
@@ -18,9 +19,19 @@ export async function SiteHeader() {
   const platformDisplay = jar.get("bni_platform_nav_display")?.value?.trim();
   const platformUser = platformDisplay ? { displayName: platformDisplay } : null;
 
+  const legacy = legacyBase();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  /** Same host as this Next app → use Next login/platform so Server Actions see platform cookies. */
+  const headerAuthUseNext = !legacy || legacySameHostnameAsNextApp(legacy, appUrl);
+
   return (
     <header className="site-header sticky-top border-bottom bg-white" style={{ zIndex: 1030 }}>
-      <SiteHeaderNav initialLang={lang} legacySiteUrl={legacyBase()} platformUser={platformUser} />
+      <SiteHeaderNav
+        initialLang={lang}
+        legacySiteUrl={legacy}
+        headerAuthUseNext={headerAuthUseNext}
+        platformUser={platformUser}
+      />
     </header>
   );
 }

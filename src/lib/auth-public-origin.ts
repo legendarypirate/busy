@@ -14,3 +14,24 @@ export function getPublicAppOrigin(request: NextRequest): string {
   }
   return new URL(request.url).origin;
 }
+
+/**
+ * True when the legacy PHP base URL is on the **same hostname** as `NEXT_PUBLIC_APP_URL`.
+ * In that case the marketing header should use Next `/auth/login` and `/platform` so Google/email
+ * set `bni_platform_account_id`; PHP-only `PHPSESSID` does not authorize Next Server Actions.
+ */
+export function legacySameHostnameAsNextApp(
+  legacyBase: string | undefined,
+  appUrl: string | undefined,
+): boolean {
+  const l = legacyBase?.trim().replace(/\/$/, "");
+  const a = appUrl?.trim().replace(/\/$/, "");
+  if (!l || !a) return false;
+  try {
+    const legacyUrl = new URL(l.includes("://") ? l : `https://${l}`);
+    const app = new URL(a.includes("://") ? a : `https://${a}`);
+    return legacyUrl.hostname === app.hostname;
+  } catch {
+    return false;
+  }
+}

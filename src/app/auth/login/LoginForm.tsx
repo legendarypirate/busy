@@ -19,6 +19,7 @@ const copy = {
   noAccount: "Бүртгэлгүй юу?",
   register: "Бүртгүүлэх",
   google: "Google-р нэвтрэх",
+  googlePlatform: "Google-р нэвтрэх (BUSY платформ)",
   errInvalid: "Имэйл эсвэл нууц үг буруу байна.",
   errGoogle: "Энэ бүртгэл Google-р нэвтэрдэг. Доорх товчийг ашиглана уу.",
 } as const;
@@ -38,9 +39,17 @@ type Props = {
   /** Next.js `/api/auth/google` эсвэл legacy `google-start.php`; null бол Google товч харагдахгүй. */
   googleHref: string | null;
   defaultEmail: string;
+  /** True when Google opens this app’s OAuth (`/api/auth/...`) — sets Next platform session cookies. */
+  googleUsesNextPlatformOAuth?: boolean;
 };
 
-export default function LoginForm({ nextPath, legacyBase, googleHref, defaultEmail }: Props) {
+export default function LoginForm({
+  nextPath,
+  legacyBase,
+  googleHref,
+  defaultEmail,
+  googleUsesNextPlatformOAuth = false,
+}: Props) {
   const [state, formAction] = useActionState(loginAction, { ...initial, email: defaultEmail });
 
   const registerHref = `/auth/register${nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : ""}`;
@@ -112,7 +121,7 @@ export default function LoginForm({ nextPath, legacyBase, googleHref, defaultEma
           </div>
           <a href={googleHref} className="bni-auth-btn-google">
             <i className="fa-brands fa-google" aria-hidden="true" />
-            {copy.google}
+            {googleUsesNextPlatformOAuth ? copy.googlePlatform : copy.google}
           </a>
         </>
       ) : null}

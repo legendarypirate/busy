@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { BUSY_ARCHITECTURE_RULE, BUSY_MISSION_LINES, BUSY_PLATFORM_GOAL } from "@/lib/busy-platform-vision";
 import LoginForm from "./LoginForm";
 
@@ -37,6 +38,11 @@ export default async function LoginView({ searchParams }: { searchParams: Search
   const nextPath =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext.slice(0, 512) : "/";
   const defaultEmail = firstString(sp.email);
+
+  const jar = await cookies();
+  const hasPhpSession = Boolean(jar.get("PHPSESSID")?.value);
+  const hasNextPlatform = Boolean(jar.get("bni_platform_account_id")?.value);
+  const showPhpLegacyHint = hasPhpSession && !hasNextPlatform;
 
   const legacyRaw = process.env.NEXT_PUBLIC_LEGACY_SITE_URL?.trim() ?? "";
   const legacyBase = legacyRaw ? legacyRaw.replace(/\/$/, "") : null;
@@ -100,11 +106,22 @@ export default async function LoginView({ searchParams }: { searchParams: Search
                 ) : null}
               </div>
             ) : null}
+            {showPhpLegacyHint ? (
+              <div className="alert alert-info bni-auth-alert mb-4" role="status">
+                <strong className="d-block mb-1">Платформын нэвтрэлт</strong>
+                <span className="small d-block" style={{ lineHeight: 1.55 }}>
+                  Хуучин вэбээр нэвтэрсэн бол түүний нэвтрэлт тусдаа хэвээр байж болно. Аялал үүсгэх, хадгалах зэрэг
+                  платформын үйлдлүүдэд доорх <strong>Google</strong> эсвэл <strong>имэйл</strong> товчоор энэ
+                  хуудаснаас нэг удаа дахин нэвтэрнэ үү.
+                </span>
+              </div>
+            ) : null}
             <LoginForm
               nextPath={nextPath}
               legacyBase={legacyBase}
               googleHref={googleHref}
               defaultEmail={defaultEmail}
+              googleUsesNextPlatformOAuth={Boolean(nextGoogleHref?.startsWith("/api"))}
             />
             <div className="text-center mt-3">
               <Link href="/" className="small text-decoration-none text-muted">

@@ -46,27 +46,42 @@ function navActive(pathname: string, href: string, pageId: string): boolean {
 export type SiteHeaderNavProps = {
   initialLang: string;
   legacySiteUrl?: string;
+  /**
+   * When true (default if no legacy URL), login/register/dashboard/logout use Next routes.
+   * When legacy is on the **same hostname** as `NEXT_PUBLIC_APP_URL`, this must be true so
+   * Google/email set Next platform cookies; PHP `auth/login.php` only sets `PHPSESSID`.
+   */
+  headerAuthUseNext?: boolean;
   /** Optional cookie-backed preview until Next auth — same menus as PHP logged-in navbar */
   platformUser?: { displayName: string } | null;
 };
 
-export function SiteHeaderNav({ initialLang, legacySiteUrl, platformUser }: SiteHeaderNavProps) {
+export function SiteHeaderNav({
+  initialLang,
+  legacySiteUrl,
+  headerAuthUseNext = true,
+  platformUser,
+}: SiteHeaderNavProps) {
   const pathname = usePathname() ?? "/";
   const navLang: BniLangCode = isBniLang(initialLang) ? initialLang : "mn";
   const curLang = BNI_LANGUAGES[navLang];
 
   const langHref = (code: BniLangCode) => {
-    if (legacySiteUrl) {
+    if (legacySiteUrl && !headerAuthUseNext) {
       return `${legacySiteUrl}/scripts/change-lang.php?lang=${encodeURIComponent(code)}`;
     }
     const next = encodeURIComponent(pathname || "/");
     return `/api/set-lang?lang=${encodeURIComponent(code)}&next=${next}`;
   };
 
-  const loginHref = legacySiteUrl ? `${legacySiteUrl}/auth/login.php` : "/auth/login";
-  const registerHref = legacySiteUrl ? `${legacySiteUrl}/auth/register.php` : "/auth/register";
-  const dashboardHref = legacySiteUrl ? `${legacySiteUrl}/platform-home.php` : "/platform";
-  const logoutHref = legacySiteUrl ? `${legacySiteUrl}/auth/platform-logout.php` : "/auth/logout";
+  const loginHref =
+    headerAuthUseNext || !legacySiteUrl ? "/auth/login" : `${legacySiteUrl}/auth/login.php`;
+  const registerHref =
+    headerAuthUseNext || !legacySiteUrl ? "/auth/register" : `${legacySiteUrl}/auth/register.php`;
+  const dashboardHref =
+    headerAuthUseNext || !legacySiteUrl ? "/platform" : `${legacySiteUrl}/platform-home.php`;
+  const logoutHref =
+    headerAuthUseNext || !legacySiteUrl ? "/auth/logout" : `${legacySiteUrl}/auth/platform-logout.php`;
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light navbar-custom">
