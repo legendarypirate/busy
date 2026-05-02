@@ -4,7 +4,8 @@ import crypto from "crypto";
 export const PLATFORM_TRIP_SAVE_TOKEN_FIELD = "bni_platform_trip_save_token";
 
 const AUD = "busy_trip_save_v1";
-const TTL_SEC = 45 * 60;
+/** Match platform session cookie max-age so long edits / tab idle do not drop token mid-save. */
+const TTL_SEC = 60 * 60 * 24 * 7;
 
 function secretKey(): Buffer | null {
   const s =

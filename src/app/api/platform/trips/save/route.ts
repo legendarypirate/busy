@@ -12,20 +12,18 @@ import { attachPlatformSessionToResponse } from "@/lib/platform-session-cookies"
 export const runtime = "nodejs";
 
 /**
- * If the POST was authorized only via `bni_platform_trip_save_token`, the browser may still lack
- * session cookies on the following GET. Re-set cookies on the same 303 so `/platform` loads.
+ * Always re-`Set-Cookie` on successful save so httpOnly + ref cookies stay aligned with login `Domain=`
+ * and long multipart saves do not leave the next GET without a usable session (prod “sometimes login”).
  */
 function redirectAfterSave(
   origin: string,
   path: string,
-  cookieUser: ApiPlatformUser | null,
+  _cookieUser: ApiPlatformUser | null,
   sessionUser: ApiPlatformUser,
   status = 303,
 ): NextResponse {
   const res = NextResponse.redirect(new URL(path, origin), status);
-  if (!cookieUser) {
-    attachPlatformSessionToResponse(res, sessionUser.id, sessionUser.displayName);
-  }
+  attachPlatformSessionToResponse(res, sessionUser.id, sessionUser.displayName);
   return res;
 }
 
