@@ -58,14 +58,10 @@ export async function getPlatformSession(): Promise<PlatformUser | null> {
   }
 
   let account;
-  try {
-    account = await prisma.platformAccount.findUnique({
-      where: { id },
-      include: { profile: { select: { displayName: true, photoUrl: true } } },
-    });
-  } catch {
-    return null;
-  }
+  account = await prisma.platformAccount.findUnique({
+    where: { id },
+    include: { profile: { select: { displayName: true, photoUrl: true } } },
+  });
 
   if (!account || account.status !== "active") {
     return null;

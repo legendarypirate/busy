@@ -2,7 +2,7 @@ import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const WEEK = 60 * 60 * 24 * 7;
-const secureCookie = process.env.NODE_ENV === "production";
+const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
 const rawDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
 /**
@@ -12,7 +12,9 @@ const rawDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
 export const platformSessionCookieDomain = (rawDomain?.startsWith(".") ? rawDomain.slice(1) : rawDomain) || undefined;
 
 function domainOpts(): { domain?: string } {
-  return platformSessionCookieDomain ? { domain: platformSessionCookieDomain } : {};
+  // If the domain starts with a dot, some browsers treat it differently on apex domains.
+  // Letting the browser default to the current host is often more reliable.
+  return {};
 }
 
 const sessionOpts = {
