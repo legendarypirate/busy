@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation";
 import type { TripFormQuestionType } from "@prisma/client";
 import { tripFormUi as ui } from "@/components/trip-registration/trip-form-ui";
 
+/** YYYY.MM.DD from trip ISO — identical on server and client (avoids `toLocaleDateString` hydration mismatch). */
+function formatTripDateLabel(iso: string): string {
+  const head = iso.slice(0, 10);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(head);
+  if (m) return `${m[1]}.${m[2]}.${m[3]}`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}.${mo}.${day}`;
+}
+
 export type PublicFormQuestion = {
   id: string;
   label: string;
@@ -177,8 +190,8 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
     }
   }
 
-  const start = new Date(form.trip.startDate).toLocaleDateString("mn-MN");
-  const end = new Date(form.trip.endDate).toLocaleDateString("mn-MN");
+  const start = formatTripDateLabel(form.trip.startDate);
+  const end = formatTripDateLabel(form.trip.endDate);
 
   return (
     <div className={`min-h-screen ${ui.pageBg} px-4 py-6 sm:py-10`}>
