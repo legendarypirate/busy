@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicAppOrigin } from "@/lib/auth-public-origin";
-import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { getApiPlatformUser, getApiPlatformUserFromTripSaveForm } from "@/lib/api-platform-session";
 import { executeSaveTrip } from "@/lib/platform-trip-save-core";
 
 export const runtime = "nodejs";
@@ -12,16 +12,20 @@ export const runtime = "nodejs";
  */
 export async function POST(request: NextRequest) {
   const origin = getPublicAppOrigin(request);
-  const user = await getApiPlatformUser(request);
-  if (!user) {
-    return NextResponse.redirect(new URL("/auth/login?next=/platform/trips", origin), 303);
-  }
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
     return NextResponse.redirect(new URL("/platform/trips?error=missing", origin), 303);
+  }
+
+  let user = await getApiPlatformUser(request);
+  if (!user) {
+    user = await getApiPlatformUserFromTripSaveForm(formData);
+  }
+  if (!user) {
+    return NextResponse.redirect(new URL("/auth/login?next=/platform/trips", origin), 303);
   }
 
   const result = await executeSaveTrip(user.id, formData);

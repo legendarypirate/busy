@@ -6,6 +6,10 @@ import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuild
 import { deleteTripAction, toggleTripFeaturedAction } from "@/app/platform/trips-actions";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
+import {
+  PLATFORM_TRIP_SAVE_TOKEN_FIELD,
+  issuePlatformTripSaveToken,
+} from "@/lib/platform-trip-save-token";
 
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop";
@@ -100,6 +104,7 @@ type Props = {
 
 export default async function TripsPanel({ searchParams }: Props) {
   const viewer = await getPlatformSession();
+  const tripSaveToken = viewer ? issuePlatformTripSaveToken(viewer.id) : null;
   const greetingName = viewer?.displayName?.trim() || "Та";
   const err = errorBanner(firstParam(searchParams?.error));
   const editRaw = firstParam(searchParams?.edit_trip) ?? firstParam(searchParams?.edit);
@@ -255,6 +260,7 @@ export default async function TripsPanel({ searchParams }: Props) {
 
       {/* --- Main trip editor form --- */}
       <form id="tripMainForm" action="/api/platform/trips/save" method="post" encType="multipart/form-data">
+        {tripSaveToken ? <input type="hidden" name={PLATFORM_TRIP_SAVE_TOKEN_FIELD} value={tripSaveToken} /> : null}
         <input type="hidden" name="trip_id" value={editTrip?.id ?? 0} />
 
         <div className="tps-header mb-4">

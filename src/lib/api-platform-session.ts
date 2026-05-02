@@ -2,6 +2,10 @@ import type { NextRequest } from "next/server";
 import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
+import {
+  PLATFORM_TRIP_SAVE_TOKEN_FIELD,
+  verifyPlatformTripSaveToken,
+} from "@/lib/platform-trip-save-token";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
 
@@ -42,11 +46,7 @@ function resolveAccountIdFromRequest(req: NextRequest): bigint | null {
   );
 }
 
-/** Resolve logged-in platform user from platform session cookies (same as `getPlatformSession`). */
-export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformUser | null> {
-  const id = resolveAccountIdFromRequest(req);
-  if (!id) return null;
-
+async function loadApiPlatformUserByAccountId(id: bigint): Promise<ApiPlatformUser | null> {
   let account: (PlatformAccount & { profile: PlatformProfile | null }) | null;
   try {
     account = await prisma.platformAccount.findUnique({
@@ -73,6 +73,20 @@ export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformU
       ? { displayName: account.profile.displayName, photoUrl: account.profile.photoUrl }
       : null,
   };
+}
+
+/** Resolve logged-in platform user from platform session cookies (same as `getPlatformSession`). */
+export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformUser | null> {
+  const id = resolveAccountIdFromRequest(req);
+  if (!id) return null;
+  return loadApiPlatformUserByAccountId(id);
+}
+
+/** Multipart trip save: signed token minted on `/platform/trips` when cookies are missing on POST. */
+export async function getApiPlatformUserFromTripSaveForm(formData: FormData): Promise<ApiPlatformUser | null> {
+  const id = verifyPlatformTripSaveToken(formData.get(PLATFORM_TRIP_SAVE_TOKEN_FIELD));
+  if (!id) return null;
+  return loadApiPlatformUserByAccountId(id);
 }
 
 export async function getApiPlatformUserWithBusyAuthz(req: NextRequest): Promise<ApiPlatformUserWithBusyAuthz | null> {
