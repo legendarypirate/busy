@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { BusinessTrip } from "@prisma/client";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import TripFormUploadPendingOverlay from "@/components/platform/forms/TripFormUploadPendingOverlay";
+import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEditorRegistrationQrAside";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
@@ -148,10 +149,21 @@ export default function TripEditorForm({
               <div className="tps-section-num">7</div>
               <span className="tps-section-title">Бүртгэлийн асуулгын форм</span>
             </div>
-            <PlatformTripRegistrationJsonBuilder
-              hiddenName="trip_registration_form_json"
-              initialJson={editTrip?.registrationFormJson ?? undefined}
-            />
+            <p className="small text-muted mb-3">
+              Нийтийн бүртгэл нь тусад <strong>/register/…</strong> хуудас (QR-аар нээгдэнэ). Нүүрний drawer-ын бүртгэлээс
+              тусдаа.
+            </p>
+            <div className="row g-3 align-items-start">
+              <div className="col-lg-8">
+                <PlatformTripRegistrationJsonBuilder
+                  hiddenName="trip_registration_form_json"
+                  initialJson={editTrip?.registrationFormJson ?? undefined}
+                />
+              </div>
+              <div className="col-lg-4">
+                <TripEditorRegistrationQrAside tripId={editTrip?.id ?? 0} />
+              </div>
+            </div>
           </div>
 
           <div className="row g-4">
