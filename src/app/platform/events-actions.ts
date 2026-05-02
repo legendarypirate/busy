@@ -3,20 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import { getPlatformSessionForAction } from "@/lib/platform-session";
-import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
+import { getPlatformSession } from "@/lib/platform-session";
 import { prisma } from "@/lib/prisma";
-
-async function requireEventSession(formData: FormData) {
-  const resolved = await getPlatformSessionForAction(formData);
-  if (!resolved) {
-    redirect("/auth/login?next=/platform/events");
-  }
-  if (!resolved.fromCookie) {
-    await setPlatformSessionCookies(resolved.user.id, resolved.user.displayName);
-  }
-  return resolved.user;
-}
 
 function parseDatetimeLocal(raw: string): Date | null {
   const t = raw.trim();
@@ -57,7 +45,10 @@ function parseSections(raw: string): Record<string, unknown>[] {
 }
 
 export async function saveEventAction(formData: FormData): Promise<void> {
-  const session = await requireEventSession(formData);
+  const session = await getPlatformSession();
+  if (!session) {
+    redirect("/auth/login?next=/platform/events");
+  }
 
   const eventIdRaw = String(formData.get("event_id") ?? "0").trim();
   let eventId = BigInt(0);
@@ -177,7 +168,9 @@ export async function saveEventAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteEventAction(formData: FormData): Promise<void> {
-  await requireEventSession(formData);
+  if (!(await getPlatformSession())) {
+    redirect("/auth/login?next=/platform/events");
+  }
 
   const raw = String(formData.get("event_id") ?? "0").trim();
   let eventId = BigInt(0);

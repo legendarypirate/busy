@@ -4,12 +4,10 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { saveCompanyProfileAction, type ProfileSaveState } from "@/app/platform/actions";
 import BankSelectClient from "@/components/platform/profile/BankSelectClient";
-import { PLATFORM_POST_TOKEN_FIELD } from "@/lib/platform-post-token-constants";
 import { mediaUrl } from "@/lib/media-url";
 import { MONGOLIA_BANKS_CATALOG, PROFILE_INDUSTRY_OPTIONS } from "@/lib/mongolia-banks";
 
 export type CompanyProfileFormProps = {
-  postToken: string | null;
   accountIdStr: string;
   email: string;
   completionPct: number;
@@ -32,7 +30,6 @@ function str(v: unknown): string {
 }
 
 export default function CompanyProfileForm({
-  postToken,
   accountIdStr,
   email,
   completionPct,
@@ -90,7 +87,6 @@ export default function CompanyProfileForm({
       ) : null}
 
       <form action={formAction} encType="multipart/form-data">
-        {postToken ? <input type="hidden" name={PLATFORM_POST_TOKEN_FIELD} value={postToken} /> : null}
         <div className="pm-layout">
           <div className="pm-main">
             <div className="pm-card">

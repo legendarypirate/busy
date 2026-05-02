@@ -10,7 +10,7 @@ function clampInt(n: number, min: number, max: number): number {
 export const PLATFORM_SESSION_BROWSER_MAX_DAYS = 400;
 
 /**
- * Platform session cookie + signed post-token TTL (days), capped at {@link PLATFORM_SESSION_BROWSER_MAX_DAYS}.
+ * Platform session cookie Max-Age (days), capped at {@link PLATFORM_SESSION_BROWSER_MAX_DAYS}.
  *
  * - **Unset**, **`0`**, or **`unlimited`** → {@link PLATFORM_SESSION_BROWSER_MAX_DAYS} (effectively limitless in browsers).
  * - Otherwise integer **1…400** via `PLATFORM_SESSION_MAX_DAYS`.

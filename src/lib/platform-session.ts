@@ -4,7 +4,6 @@ import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
-import { postTokenFromFormData, verifyPlatformPostToken } from "@/lib/platform-trip-save-token";
 
 export type PlatformUser = {
   id: bigint;
@@ -75,21 +74,6 @@ export async function getPlatformSession(): Promise<PlatformUser | null> {
   }
 
   return loadPlatformUserByAccountId(id);
-}
-
-/**
- * Server Actions: cookies first, then signed `bni_platform_post_token` (or legacy trip-save field) in `FormData`.
- */
-export async function getPlatformSessionForAction(
-  formData: FormData,
-): Promise<{ user: PlatformUser; fromCookie: boolean } | null> {
-  const fromCookie = await getPlatformSession();
-  if (fromCookie) return { user: fromCookie, fromCookie: true };
-  const id = verifyPlatformPostToken(postTokenFromFormData(formData));
-  if (!id) return null;
-  const user = await loadPlatformUserByAccountId(id);
-  if (!user) return null;
-  return { user, fromCookie: false };
 }
 
 export async function getPlatformSessionWithBusyAuthz(): Promise<PlatformUserWithBusyAuthz | null> {

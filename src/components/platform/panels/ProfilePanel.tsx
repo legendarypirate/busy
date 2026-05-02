@@ -3,7 +3,6 @@ import CompanyProfileForm from "@/components/platform/profile/CompanyProfileForm
 import { MONGOLIA_BANKS_CATALOG } from "@/lib/mongolia-banks";
 import { computeProfileCompletionPct } from "@/lib/platform-profile-completion";
 import { getPlatformSession } from "@/lib/platform-session";
-import { issuePlatformPostToken } from "@/lib/platform-trip-save-token";
 import { prisma } from "@/lib/prisma";
 
 function asRecord(json: unknown): Record<string, unknown> {
@@ -35,11 +34,9 @@ export default async function ProfilePanel() {
   }
 
   const pct = computeProfileCompletionPct(profile, biz);
-  const postToken = issuePlatformPostToken(session.id);
 
   return (
     <CompanyProfileForm
-      postToken={postToken}
       accountIdStr={session.id.toString()}
       email={session.email}
       completionPct={pct}

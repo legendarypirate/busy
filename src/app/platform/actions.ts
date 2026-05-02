@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { mongoliaBankByCode } from "@/lib/mongolia-banks";
 import { prisma } from "@/lib/prisma";
-import { getPlatformSessionForAction } from "@/lib/platform-session";
+import { getPlatformSession } from "@/lib/platform-session";
 import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
 import { writePlatformUploadImage } from "@/lib/platform-write-image";
 
@@ -31,17 +31,8 @@ function asRecord(json: unknown): Record<string, unknown> {
   return {};
 }
 
-async function requireProfileSession(formData: FormData) {
-  const resolved = await getPlatformSessionForAction(formData);
-  if (!resolved) return null;
-  if (!resolved.fromCookie) {
-    await setPlatformSessionCookies(resolved.user.id, resolved.user.displayName);
-  }
-  return resolved.user;
-}
-
 export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, formData: FormData): Promise<ProfileSaveState> {
-  const session = await requireProfileSession(formData);
+  const session = await getPlatformSession();
   if (!session) {
     return { ok: false, message: "Нэвтэрнэ үү." };
   }
@@ -198,7 +189,7 @@ export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, f
 }
 
 export async function saveHeroSlidesAction(_prev: ProfileSaveState | null, formData: FormData): Promise<ProfileSaveState> {
-  const session = await requireProfileSession(formData);
+  const session = await getPlatformSession();
   if (!session) {
     return { ok: false, message: "Нэвтэрнэ үү." };
   }
