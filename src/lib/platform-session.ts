@@ -1,8 +1,7 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
-import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 
 export type PlatformUser = {
@@ -47,21 +46,12 @@ export async function loadPlatformUserByAccountId(id: bigint): Promise<PlatformU
   };
 }
 
-/** Cookie-based session (matches login / Google callback cookies). */
+/** Cookie-based session via Next `cookies()` only (same cookies as login / Google callback). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
-  const h = await headers();
-  const rawCookie = h.get("cookie");
-  /** Prefer raw `Cookie` first: some proxies / full refreshes surface values here before `cookies()` merges. */
-  const fromHeader =
-    readCookieValueFromHeader(rawCookie, "bni_platform_account_id")?.trim() ||
-    readCookieValueFromHeader(rawCookie, PLATFORM_ACCOUNT_REF_COOKIE)?.trim();
-
   const jar = await cookies();
-  const fromJar =
+  const idRaw =
     jar.get("bni_platform_account_id")?.value?.trim() ||
     jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value?.trim();
-
-  const idRaw = fromHeader || fromJar;
 
   if (!idRaw) {
     return null;
@@ -90,6 +80,19 @@ export async function requirePlatformUser(nextPath = "/platform"): Promise<Platf
     redirect(`/auth/login${q}`);
   }
   return u;
+}
+
+/**
+ * Path to pass as `next` when redirecting unauthenticated users to login.
+ * Prefer `x-pathname` from `src/middleware.ts` (current `/platform/...` URL); otherwise `/platform`.
+ */
+export function getPlatformLoginNextPath(h: Headers): string {
+  const raw = h.get("x-pathname")?.trim() ?? "";
+  if (raw.startsWith("/platform") && !raw.startsWith("//")) {
+    const sliced = raw.slice(0, 512);
+    return sliced === "" ? "/platform" : sliced;
+  }
+  return "/platform";
 }
 
 /** PHP `bni_platform_login_redirect_url`: хоосон `next` үед платформын нүүр. */

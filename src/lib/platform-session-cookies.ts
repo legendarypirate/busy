@@ -7,7 +7,11 @@ import { platformSessionMaxAgeSeconds } from "@/lib/platform-session-ttl";
  */
 export const PLATFORM_ACCOUNT_REF_COOKIE = "bni_platform_account_ref";
 
-const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+const publicAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() ?? "";
+const secureCookie =
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL === "1" ||
+  publicAppUrl.startsWith("https://");
 
 function parsePlatformSessionCookieDomainHost(): string | undefined {
   const raw = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
@@ -84,4 +88,26 @@ export async function clearPlatformSessionCookies(): Promise<void> {
   jar.set("bni_platform_account_id", "", { ...clearCookieOpts, httpOnly: true });
   jar.set(PLATFORM_ACCOUNT_REF_COOKIE, "", { ...clearCookieOpts, httpOnly: false });
   jar.set("bni_platform_nav_display", "", { ...clearCookieOpts, httpOnly: false });
+}
+
+/** Parse one cookie value from a raw `Cookie` header (Route Handlers / API where `cookies()` is not used). */
+export function readCookieValueFromHeader(cookieHeader: string | null | undefined, name: string): string | undefined {
+  if (!cookieHeader) return undefined;
+  for (const seg of cookieHeader.split(";")) {
+    const trimmed = seg.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const k = trimmed.slice(0, eq).trim();
+    if (k !== name) continue;
+    let v = trimmed.slice(eq + 1).trim();
+    if (v.startsWith('"') && v.endsWith('"') && v.length >= 2) {
+      v = v.slice(1, -1);
+    }
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  }
+  return undefined;
 }

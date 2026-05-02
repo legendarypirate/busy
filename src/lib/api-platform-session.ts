@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
-import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
+import { PLATFORM_ACCOUNT_REF_COOKIE, readCookieValueFromHeader } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
-import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
 

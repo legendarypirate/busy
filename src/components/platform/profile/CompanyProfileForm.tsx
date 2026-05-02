@@ -86,7 +86,7 @@ export default function CompanyProfileForm({
         </div>
       ) : null}
 
-      <form action={formAction} encType="multipart/form-data">
+      <form action={formAction}>
         <div className="pm-layout">
           <div className="pm-main">
             <div className="pm-card">

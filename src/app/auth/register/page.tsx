@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { BUSY_PLATFORM_GOAL } from "@/lib/busy-platform-vision";
+import RegisterForm from "./RegisterForm";
 
 export const metadata: Metadata = {
   title: "Бүртгүүлэх | BUSY.mn",
-  description: "Платформын данс нээх заавар",
+  description: "Имэйл, нууц үгээр платформын данс нээх",
 };
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,25 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
   const rawNext = firstString(sp.next);
   const nextPath =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext.slice(0, 512) : "/";
-  const loginHref = `/auth/login${nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : ""}`;
+
+  const nextGoogleReady =
+    Boolean(process.env.GOOGLE_CLIENT_ID?.trim()) && Boolean(process.env.GOOGLE_CLIENT_SECRET?.trim());
+  const dbReady = Boolean(process.env.DATABASE_URL?.trim());
+
+  const nextGoogleHref =
+    nextGoogleReady && dbReady
+      ? `/api/auth/google${nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : ""}`
+      : null;
+  const legacyRaw = process.env.NEXT_PUBLIC_LEGACY_SITE_URL?.trim() ?? "";
+  const legacyBase = legacyRaw ? legacyRaw.replace(/\/$/, "") : null;
+  const appOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const legacyGoogleHref =
+    legacyBase && nextPath !== "/" && appOrigin
+      ? `${legacyBase}/auth/google-start.php?next=${encodeURIComponent(`${appOrigin}${nextPath}`)}`
+      : legacyBase
+        ? `${legacyBase}/auth/google-start.php`
+        : null;
+  const googleHref = nextGoogleHref ?? legacyGoogleHref;
 
   return (
     <section className="bni-auth-shell">
@@ -36,35 +55,24 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
               </div>
               <h1 className="bni-auth-title">Бүртгүүлэх</h1>
               <p className="bni-auth-lead text-muted mb-0">
-                Платформын данс нээгдсэнээр та аялал, хурал, эвент зохион байгуулах болон бүртгэлээ нэг дор удирдах
-                боломжтой.
+                Имэйл, нууц үгээр платформын дансаа үүсгээд аялал, хурал, эвент зохион байгуулах болон бүртгэлээ нэг дор
+                удирдана уу.
               </p>
             </div>
 
-            <div className="text-start small text-muted mb-4" style={{ lineHeight: 1.55 }}>
-              <p className="mb-3">
-                <span className="fw-semibold text-body-secondary">Шинээр эхэлж байна уу?</span>{" "}
-                <Link href={loginHref} className="fw-semibold text-primary text-decoration-none">
-                  Нэвтрэх
-                </Link>{" "}
-                хуудас руу орж, <span className="fw-semibold text-body-secondary">Google-р нэвтрэх</span> товчийг дарна уу.
-                Имэйлээр баталгаажсан данс автоматаар үүснэ.
-              </p>
-              <p className="mb-0">
-                <span className="fw-semibold text-body-secondary">Нууц үгтэй данс</span> танд олгогдсон бол мөн
-                нэвтрэх хуудаас имэйл болон нууцаа ашиглана уу.
-              </p>
-            </div>
+            <RegisterForm
+              nextPath={nextPath}
+              googleHref={googleHref}
+              googleUsesNextPlatformOAuth={Boolean(nextGoogleHref?.startsWith("/api"))}
+            />
 
-            <p className="small text-muted text-center mb-4 px-1" style={{ lineHeight: 1.45 }}>
+            <p className="small text-muted text-center mt-4 mb-0 px-1" style={{ lineHeight: 1.45 }}>
               {BUSY_PLATFORM_GOAL}
             </p>
 
-            <div className="d-grid gap-2">
-              <Link href={loginHref} className="btn btn-primary rounded-pill py-2 fw-semibold">
-                Нэвтрэх хуудас руу орох
-              </Link>
-              <Link href="/" className="btn btn-outline-secondary rounded-pill py-2">
+            <div className="text-center mt-3">
+              <Link href="/" className="small text-decoration-none text-muted">
+                <i className="fas fa-arrow-left me-1" aria-hidden="true" />
                 Нүүр руу буцах
               </Link>
             </div>
