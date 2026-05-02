@@ -29,17 +29,17 @@ function parseAccountId(raw: string | undefined): bigint | null {
   }
 }
 
-/** Same resolution order as `getPlatformSession` (parsed jar + raw `Cookie` header). */
+/** Same resolution order as `getPlatformSession` (raw `Cookie` header, then parsed jar). */
 function resolveAccountIdFromRequest(req: NextRequest): bigint | null {
-  const fromJar =
-    parseAccountId(req.cookies.get("bni_platform_account_id")?.value) ??
-    parseAccountId(req.cookies.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value);
-  if (fromJar) return fromJar;
-
   const raw = req.headers.get("cookie");
-  return (
+  const fromHeader =
     parseAccountId(readCookieValueFromHeader(raw, "bni_platform_account_id")) ??
-    parseAccountId(readCookieValueFromHeader(raw, PLATFORM_ACCOUNT_REF_COOKIE))
+    parseAccountId(readCookieValueFromHeader(raw, PLATFORM_ACCOUNT_REF_COOKIE));
+  if (fromHeader) return fromHeader;
+
+  return (
+    parseAccountId(req.cookies.get("bni_platform_account_id")?.value) ??
+    parseAccountId(req.cookies.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value)
   );
 }
 

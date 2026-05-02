@@ -4,6 +4,9 @@ import DashboardSidebarNav from "./DashboardSidebarNav";
 import DashboardSidebarToggle from "./DashboardSidebarToggle";
 import "@/styles/dashboard-shell.css";
 
+/** Session reads must not be served from the full-route cache without the real request cookies. */
+export const dynamic = "force-dynamic";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <>

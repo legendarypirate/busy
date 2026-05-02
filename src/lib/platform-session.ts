@@ -50,19 +50,19 @@ export async function loadPlatformUserByAccountId(id: bigint): Promise<PlatformU
 
 /** Cookie-based session (matches login / Google callback cookies). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
+  const h = await headers();
+  const rawCookie = h.get("cookie");
+  /** Prefer raw `Cookie` first: some proxies / full refreshes surface values here before `cookies()` merges. */
+  const fromHeader =
+    readCookieValueFromHeader(rawCookie, "bni_platform_account_id")?.trim() ||
+    readCookieValueFromHeader(rawCookie, PLATFORM_ACCOUNT_REF_COOKIE)?.trim();
+
   const jar = await cookies();
-  const idValue =
+  const fromJar =
     jar.get("bni_platform_account_id")?.value?.trim() ||
     jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value?.trim();
 
-  const h = await headers();
-  const rawCookie = h.get("cookie");
-
-  // httpOnly + non-httpOnly ref + raw Cookie header (multipart Server Actions)
-  const idRaw =
-    idValue ||
-    readCookieValueFromHeader(rawCookie, "bni_platform_account_id") ||
-    readCookieValueFromHeader(rawCookie, PLATFORM_ACCOUNT_REF_COOKIE);
+  const idRaw = fromHeader || fromJar;
 
   if (!idRaw) {
     return null;
