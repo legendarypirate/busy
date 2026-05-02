@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { BUSY_ARCHITECTURE_RULE, BUSY_MISSION_LINES, BUSY_PLATFORM_GOAL } from "@/lib/busy-platform-vision";
 import LoginForm from "./LoginForm";
 
@@ -41,7 +42,9 @@ export default async function LoginView({ searchParams }: { searchParams: Search
 
   const jar = await cookies();
   const hasPhpSession = Boolean(jar.get("PHPSESSID")?.value);
-  const hasNextPlatform = Boolean(jar.get("bni_platform_account_id")?.value);
+  const hasNextPlatform = Boolean(
+    jar.get("bni_platform_account_id")?.value || jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value,
+  );
   const showPhpLegacyHint = hasPhpSession && !hasNextPlatform;
 
   const legacyRaw = process.env.NEXT_PUBLIC_LEGACY_SITE_URL?.trim() ?? "";

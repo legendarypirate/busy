@@ -6,6 +6,7 @@ import {
   BusyMeetingAttendanceStatus,
   BusyMeetingPaymentStatus,
 } from "@prisma/client";
+import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { accountCanManageWeeklyMeeting, canAccountCreateWeeklyMeeting } from "@/lib/busy-rbac";
 import {
@@ -28,7 +29,9 @@ function parseAccountId(raw: string | undefined): bigint | null {
 
 async function requireAccountIdFromCookie(): Promise<bigint> {
   const jar = await cookies();
-  const id = parseAccountId(jar.get("bni_platform_account_id")?.value);
+  const id = parseAccountId(
+    jar.get("bni_platform_account_id")?.value ?? jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value,
+  );
   if (!id) throw new Error("UNAUTHORIZED");
   const acc = await prisma.platformAccount.findUnique({ where: { id }, select: { id: true, status: true } });
   if (!acc || acc.status !== "active") throw new Error("UNAUTHORIZED");

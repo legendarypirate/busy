@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
@@ -26,9 +27,11 @@ function parseAccountId(raw: string | undefined): bigint | null {
   }
 }
 
-/** Resolve logged-in platform user from `bni_platform_account_id` cookie (same as `getPlatformSession`). */
+/** Resolve logged-in platform user from platform session cookies (same as `getPlatformSession`). */
 export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformUser | null> {
-  const id = parseAccountId(req.cookies.get("bni_platform_account_id")?.value);
+  const id = parseAccountId(
+    req.cookies.get("bni_platform_account_id")?.value ?? req.cookies.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value,
+  );
   if (!id) return null;
 
   let account: (PlatformAccount & { profile: PlatformProfile | null }) | null;

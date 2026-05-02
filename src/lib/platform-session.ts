@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 
@@ -39,13 +40,18 @@ export type PlatformUserWithBusyAuthz = PlatformUser & {
 /** Cookie-based session (matches login / Google callback cookies). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
   const jar = await cookies();
-  const idValue = jar.get("bni_platform_account_id")?.value;
+  const idValue =
+    jar.get("bni_platform_account_id")?.value?.trim() ||
+    jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value?.trim();
 
   const h = await headers();
   const rawCookie = h.get("cookie");
 
-  // Prioritize headers fallback for Server Actions / multipart, or use jar value
-  const idRaw = idValue || readCookieFromHeader(rawCookie, "bni_platform_account_id");
+  // httpOnly + non-httpOnly ref + raw Cookie header (multipart Server Actions)
+  const idRaw =
+    idValue ||
+    readCookieFromHeader(rawCookie, "bni_platform_account_id") ||
+    readCookieFromHeader(rawCookie, PLATFORM_ACCOUNT_REF_COOKIE);
 
   if (!idRaw) {
     return null;

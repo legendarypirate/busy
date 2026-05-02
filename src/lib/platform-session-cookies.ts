@@ -1,6 +1,13 @@
 import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+/**
+ * Non-httpOnly mirror of `bni_platform_account_id` (same digits). Some browsers / multipart Server Action
+ * POSTs omit the httpOnly session cookie on the wire; this cookie is readable by JS (XSS trade-off) but
+ * the server still loads the account from DB — treat like a session handle, not a secret.
+ */
+export const PLATFORM_ACCOUNT_REF_COOKIE = "bni_platform_account_ref";
+
 const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
@@ -38,13 +45,17 @@ export const googleOAuthCookieBase = {
 /** Server actions: mutate Next cookie store (not during RSC render). */
 export async function setPlatformSessionCookies(accountId: bigint, display: string): Promise<void> {
   const jar = await cookies();
-  jar.set("bni_platform_account_id", accountId.toString(), { ...sessionOpts, httpOnly: true });
+  const idStr = accountId.toString();
+  jar.set("bni_platform_account_id", idStr, { ...sessionOpts, httpOnly: true });
+  jar.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...sessionOpts, httpOnly: false });
   jar.set("bni_platform_nav_display", display, { ...sessionOpts, httpOnly: false });
 }
 
 /** Route handlers: attach to redirect response. */
 export function attachPlatformSessionToResponse(res: NextResponse, accountId: bigint, display: string): void {
-  res.cookies.set("bni_platform_account_id", accountId.toString(), { ...sessionOpts, httpOnly: true });
+  const idStr = accountId.toString();
+  res.cookies.set("bni_platform_account_id", idStr, { ...sessionOpts, httpOnly: true });
+  res.cookies.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...sessionOpts, httpOnly: false });
   res.cookies.set("bni_platform_nav_display", display, { ...sessionOpts, httpOnly: false });
 }
 
@@ -59,6 +70,7 @@ const clearCookieOpts = {
 /** Clear session cookies (route handlers). */
 export function attachClearPlatformSessionToResponse(res: NextResponse): void {
   res.cookies.set("bni_platform_account_id", "", { ...clearCookieOpts, httpOnly: true });
+  res.cookies.set(PLATFORM_ACCOUNT_REF_COOKIE, "", { ...clearCookieOpts, httpOnly: false });
   res.cookies.set("bni_platform_nav_display", "", { ...clearCookieOpts, httpOnly: false });
 }
 
@@ -69,5 +81,6 @@ export function attachClearPlatformSessionToResponse(res: NextResponse): void {
 export async function clearPlatformSessionCookies(): Promise<void> {
   const jar = await cookies();
   jar.set("bni_platform_account_id", "", { ...clearCookieOpts, httpOnly: true });
+  jar.set(PLATFORM_ACCOUNT_REF_COOKIE, "", { ...clearCookieOpts, httpOnly: false });
   jar.set("bni_platform_nav_display", "", { ...clearCookieOpts, httpOnly: false });
 }
