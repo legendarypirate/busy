@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { BusinessTrip } from "@prisma/client";
-import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
+import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
@@ -144,14 +144,11 @@ export default function TripEditorForm({
           <div className="tps-form-section mt-4">
             <div className="tps-section-head">
               <div className="tps-section-num">7</div>
-              <span className="tps-section-title">Бүртгэлийн асуулгын форм (Dynamic)</span>
+              <span className="tps-section-title">Бүртгэлийн асуулгын форм</span>
             </div>
-            <div className="small text-muted mb-2">Аялал тус бүр өөрийн Google Form шиг асуулгатай байж болно.</div>
-            <DynamicQuestionBuilder
+            <PlatformTripRegistrationJsonBuilder
               hiddenName="trip_registration_form_json"
               initialJson={editTrip?.registrationFormJson ?? undefined}
-              listId="tripQuestionBuilderList"
-              addBtnId="tripQuestionAddBtn"
             />
           </div>
 
