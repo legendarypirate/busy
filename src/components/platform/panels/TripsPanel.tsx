@@ -3,11 +3,7 @@ import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionB
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
-import {
-  deleteTripAction,
-  saveTripAction,
-  toggleTripFeaturedAction,
-} from "@/app/platform/trips-actions";
+import { deleteTripAction, toggleTripFeaturedAction } from "@/app/platform/trips-actions";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
@@ -258,7 +254,7 @@ export default async function TripsPanel({ searchParams }: Props) {
       </div>
 
       {/* --- Main trip editor form --- */}
-      <form id="tripMainForm" action={saveTripAction}>
+      <form id="tripMainForm" action="/api/platform/trips/save" method="post" encType="multipart/form-data">
         <input type="hidden" name="trip_id" value={editTrip?.id ?? 0} />
 
         <div className="tps-header mb-4">
