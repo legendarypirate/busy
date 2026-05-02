@@ -28,8 +28,9 @@ function parsePlatformSessionCookieDomainHost(): string | undefined {
 export const platformSessionCookieDomain = parsePlatformSessionCookieDomainHost();
 
 function domainOpts(): { domain?: string } {
-  if (!platformSessionCookieDomain) return {};
-  return { domain: `.${platformSessionCookieDomain}`.replace(/^\.+/, ".") };
+  // If the domain starts with a dot, some browsers treat it differently on apex domains.
+  // Letting the browser default to the current host is often more reliable and mirrors localhost behavior.
+  return {};
 }
 
 const sessionOpts = {
