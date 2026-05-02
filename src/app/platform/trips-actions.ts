@@ -112,7 +112,7 @@ export async function saveTripAction(formData: FormData): Promise<void> {
   await connection();
   const session = await getPlatformSession();
   if (!session) {
-    throw new Error("DEBUG: Session missing in saveTripAction. Check cookies.");
+    redirect("/auth/login?next=/platform/trips");
   }
 
   const tripId = Math.max(0, Number(String(formData.get("trip_id") ?? "0")));
