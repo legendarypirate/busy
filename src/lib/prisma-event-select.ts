@@ -20,4 +20,13 @@ export const bniEventPublicListSelect = {
 
 export const bniEventPublicDetailSelect = {
   ...bniEventPublicListSelect,
+  chapterId: true,
+  curriculumId: true,
+  curriculumOverrideJson: true,
+  priceMnt: true,
+  advanceOrderMnt: true,
+  isOnline: true,
+  curriculum: {
+    select: { name: true, agendaJson: true },
+  },
 } as const;

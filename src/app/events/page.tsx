@@ -1,9 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 
 export const dynamic = "force-dynamic";
+
+const EVENT_CARD_IMG =
+  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80";
+const EVENT_FEATURED_IMG =
+  "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=800&q=80";
 
 type SearchParams = {
   chapter?: string;
@@ -184,7 +188,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
           {featuredEvents.map((fe) => (
             <div className="featured-trip-card featured-trip-card-stack" key={fe.id.toString()}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/img/meeting-hero.png" alt="" className="featured-trip-img" onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=800&q=80'; }} />
+              <img src={EVENT_FEATURED_IMG} alt="" className="featured-trip-img" />
               <div className="featured-trip-content">
                 <div className="featured-trip-header">
                   <div>
@@ -230,7 +234,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
                 <div className="trip-card-v4" key={evRow.id.toString()}>
                   <div className="trip-img-wrap">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/assets/img/meeting-hero.png" alt="" onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80'; }} />
+                    <img src={EVENT_CARD_IMG} alt="" />
                     <div className="trip-date-overlay"><i className="fa-regular fa-calendar me-1"></i> {formatMnDate(evRow.startsAt).slice(0, 10)}</div>
                   </div>
                   <div className="trip-card-body">
