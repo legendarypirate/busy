@@ -22,7 +22,8 @@ function clearOAuthCookies(res: NextResponse) {
 
 /** Redirect to login with error; keep `next` from OAuth cookie so user can retry Google sign-in. */
 function redirectLoginOAuthError(request: NextRequest, error: string, detail?: string) {
-  const url = new URL("/auth/login", request.url);
+  const base = getPublicAppOrigin(request);
+  const url = new URL("/auth/login", base);
   url.searchParams.set("error", error);
   const preserved = safeNextPath(request.cookies.get(NEXT_COOKIE)?.value);
   if (preserved !== "/") url.searchParams.set("next", preserved);
