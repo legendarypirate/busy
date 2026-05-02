@@ -14,15 +14,14 @@ function safeNextPath(raw: string | null): string {
 }
 
 export async function GET(request: NextRequest) {
+  const origin = getPublicAppOrigin(request);
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(new URL("/auth/login?error=google_config", request.url));
+    return NextResponse.redirect(new URL("/auth/login?error=google_config", origin));
   }
 
-  const origin = getPublicAppOrigin(request);
   const redirectUri = `${origin}/api/auth/google/callback`;
-
   const state = crypto.randomBytes(16).toString("hex");
   const next = safeNextPath(request.nextUrl.searchParams.get("next"));
 

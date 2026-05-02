@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
       ? account.profile.displayName.trim()
       : account.email;
 
-  const dest = new URL(defaultPostLoginPath(nextPath), request.url);
+  const dest = new URL(defaultPostLoginPath(nextPath), origin);
   const res = NextResponse.redirect(dest);
   clearOAuthCookies(res);
   attachPlatformSessionToResponse(res, account.id, display);
