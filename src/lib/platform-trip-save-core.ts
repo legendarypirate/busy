@@ -1,5 +1,5 @@
 import { Prisma, type BusinessTrip } from "@prisma/client";
-import { writePlatformUploadImage } from "@/lib/platform-write-image";
+import { destroyCloudinaryBySecureUrl, writePlatformUploadImage } from "@/lib/platform-write-image";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { syncTripRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-registration-form-from-json";
 
@@ -156,7 +156,10 @@ export async function executeSaveTrip(
     }
   }
 
-  let coverImageUrl = existing?.coverImageUrl?.trim() || null;
+  const previousCoverUrl = existing?.coverImageUrl?.trim() || null;
+  const previousHeroUrls = existing?.heroSliderJson ? parseHeroUrls(existing.heroSliderJson) : [];
+
+  let coverImageUrl = previousCoverUrl;
   const coverFile = formData.get("trip_cover_file");
   if (coverFile instanceof File && coverFile.size > 0) {
     const up = await writePlatformUploadImage(accountId, coverFile, 10 * 1024 * 1024);
@@ -187,6 +190,23 @@ export async function executeSaveTrip(
   }
 
   const heroSliderJson = slides.length > 0 ? JSON.stringify(slides) : null;
+
+  if (tripId > 0 && existing) {
+    const coverReplaced =
+      coverFile instanceof File &&
+      coverFile.size > 0 &&
+      coverImageUrl &&
+      previousCoverUrl &&
+      coverImageUrl !== previousCoverUrl;
+    if (coverReplaced) {
+      await destroyCloudinaryBySecureUrl(previousCoverUrl);
+    }
+    for (const u of previousHeroUrls) {
+      if (!slides.includes(u)) {
+        await destroyCloudinaryBySecureUrl(u);
+      }
+    }
+  }
 
   const registrationParsed = parseJsonRegistration(regRaw);
   const itineraryParsed = parseItinerary(itineraryRaw);

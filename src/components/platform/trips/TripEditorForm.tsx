@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { BusinessTrip } from "@prisma/client";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
+import TripFormUploadPendingOverlay from "@/components/platform/forms/TripFormUploadPendingOverlay";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
@@ -38,6 +39,7 @@ export default function TripEditorForm({
 
   return (
     <form id="tripMainForm" action={formAction} method="post" encType="multipart/form-data">
+      <TripFormUploadPendingOverlay formId="tripMainForm" />
       <input type="hidden" name="trip_id" value={editTrip?.id ?? 0} />
 
       <div className="tps-header mb-4">

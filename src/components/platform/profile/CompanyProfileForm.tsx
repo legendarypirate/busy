@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { saveCompanyProfileAction, type ProfileSaveState } from "@/app/platform/actions";
+import { FormPendingBackdrop, PendingSubmitButton } from "@/components/platform/FormPendingControls";
 import BankSelectClient from "@/components/platform/profile/BankSelectClient";
 import { mediaUrl } from "@/lib/media-url";
 import { MONGOLIA_BANKS_CATALOG, PROFILE_INDUSTRY_OPTIONS } from "@/lib/mongolia-banks";
@@ -87,6 +88,7 @@ export default function CompanyProfileForm({
       ) : null}
 
       <form action={formAction}>
+        <FormPendingBackdrop />
         <div className="pm-layout">
           <div className="pm-main">
             <div className="pm-card">
@@ -562,9 +564,9 @@ export default function CompanyProfileForm({
               <div className="pm-card-title mb-1">Өөрчлөлтүүдээ хадгалах</div>
               <div className="pm-card-subtitle mb-4">Өөрчлөлтүүд автоматаар хадгалагдахгүй.</div>
               <div className="d-grid gap-2">
-                <button type="submit" className="pm-btn-primary">
+                <PendingSubmitButton className="pm-btn-primary" labelPending="Хадгалж байна…">
                   <i className="fa-solid fa-floppy-disk" /> Хадгалах
-                </button>
+                </PendingSubmitButton>
                 <button type="button" className="pm-btn-secondary" onClick={() => window.location.reload()}>
                   Цуцлах
                 </button>

@@ -6,7 +6,7 @@ import { mongoliaBankByCode } from "@/lib/mongolia-banks";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
-import { writePlatformUploadImage } from "@/lib/platform-write-image";
+import { destroyCloudinaryBySecureUrl, writePlatformUploadImage } from "@/lib/platform-write-image";
 
 export type ProfileSaveState = {
   ok: boolean;
@@ -89,6 +89,9 @@ export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, f
   });
 
   const existingBiz = asRecord(existing?.businessJson);
+  const previousPhotoUrl = existing?.photoUrl?.trim() ?? "";
+  const previousMemberPhoto = String(existingBiz.member_photo_url ?? "").trim();
+  const previousProfileCover = String(existingBiz.profile_cover_url ?? "").trim();
   const mergedBusiness: Record<string, unknown> = {
     ...existingBiz,
     industry,
@@ -123,6 +126,9 @@ export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, f
   if (memberFile instanceof File && memberFile.size > 0) {
     const up = await writePlatformUploadImage(session.id, memberFile, 5 * 1024 * 1024);
     if (up.ok) {
+      if (previousMemberPhoto && previousMemberPhoto !== up.url) {
+        await destroyCloudinaryBySecureUrl(previousMemberPhoto);
+      }
       mergedBusiness.member_photo_url = up.url;
     } else if (up.error !== "empty") {
       msgs.push(up.error);
@@ -133,6 +139,9 @@ export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, f
   if (coverFile instanceof File && coverFile.size > 0) {
     const up = await writePlatformUploadImage(session.id, coverFile, 10 * 1024 * 1024);
     if (up.ok) {
+      if (previousProfileCover && previousProfileCover !== up.url) {
+        await destroyCloudinaryBySecureUrl(previousProfileCover);
+      }
       mergedBusiness.profile_cover_url = up.url;
     } else if (up.error !== "empty") {
       msgs.push(up.error);
@@ -144,6 +153,9 @@ export async function saveCompanyProfileAction(_prev: ProfileSaveState | null, f
   if (logoFile instanceof File && logoFile.size > 0) {
     const up = await writePlatformUploadImage(session.id, logoFile, 10 * 1024 * 1024);
     if (up.ok) {
+      if (previousPhotoUrl && previousPhotoUrl !== up.url) {
+        await destroyCloudinaryBySecureUrl(previousPhotoUrl);
+      }
       photoUrl = up.url;
     } else if (up.error !== "empty") {
       msgs.push(up.error);
@@ -202,6 +214,8 @@ export async function saveHeroSlidesAction(_prev: ProfileSaveState | null, formD
     ? biz.hero_slides.filter((u): u is string => typeof u === "string")
     : [];
 
+  const slidesBeforeMutation = [...slides];
+
   const removeRaw = formData.getAll("remove_slide");
   if (removeRaw.length > 0) {
     const removeSet = new Set(removeRaw.map((v) => String(v)));
@@ -235,6 +249,12 @@ export async function saveHeroSlidesAction(_prev: ProfileSaveState | null, formD
       businessJson: biz as Prisma.InputJsonValue,
     },
   });
+
+  for (const u of slidesBeforeMutation) {
+    if (!slides.includes(u)) {
+      await destroyCloudinaryBySecureUrl(u);
+    }
+  }
 
   revalidatePath("/platform/media");
   return { ok: true, message: "Hero зураг шинэчлэгдлээ." };

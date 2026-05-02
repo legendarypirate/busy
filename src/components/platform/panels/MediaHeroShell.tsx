@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { saveHeroSlidesAction, type ProfileSaveState } from "@/app/platform/actions";
+import { FormPendingBackdrop, PendingSubmitButton } from "@/components/platform/FormPendingControls";
 
 type Props = {
   slides: string[];
@@ -29,6 +30,7 @@ export default function MediaHeroShell({ slides: initialSlides }: Props) {
       ) : null}
 
       <form action={formAction} encType="multipart/form-data">
+        <FormPendingBackdrop />
         <div className="med-grid">
           <div className="med-main">
             <div className="med-card">
@@ -164,9 +166,9 @@ export default function MediaHeroShell({ slides: initialSlides }: Props) {
             <i className="fa-solid fa-arrow-left" /> Буцах
           </button>
           <div className="d-flex gap-2">
-            <button type="submit" className="med-btn med-btn-primary">
+            <PendingSubmitButton className="med-btn med-btn-primary" labelPending="Илгээж байна…">
               <i className="fa-solid fa-floppy-disk" /> Хадгалах
-            </button>
+            </PendingSubmitButton>
           </div>
         </div>
       </form>

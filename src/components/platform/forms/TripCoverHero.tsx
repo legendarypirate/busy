@@ -13,6 +13,8 @@ export default function TripCoverHero({ existingSlides, coverPreviewUrl }: Props
   const [keptSlides, setKeptSlides] = useState<string[]>(() =>
     existingSlides.map((u) => u.trim()).filter(Boolean),
   );
+  const [coverFileHint, setCoverFileHint] = useState("");
+  const [heroFileHint, setHeroFileHint] = useState("");
 
   return (
     <>
@@ -33,7 +35,19 @@ export default function TripCoverHero({ existingSlides, coverPreviewUrl }: Props
             <div className="small fw-bold">Файл сонгох эсвэл чирч оруулна уу</div>
             <div className="pm-upload-info">JPG, PNG, WEBP • Дээд хэмжээ 10MB</div>
           </button>
-          <input ref={coverRef} type="file" name="trip_cover_file" id="coverInput" className="d-none" accept="image/*" />
+          <input
+            ref={coverRef}
+            type="file"
+            name="trip_cover_file"
+            id="coverInput"
+            className="d-none"
+            accept="image/*"
+            onChange={() => {
+              const f = coverRef.current?.files?.[0];
+              setCoverFileHint(f ? `${f.name} — «Хадгалах» дарвал Cloudinary руу илгээнэ` : "");
+            }}
+          />
+          {coverFileHint ? <div className="small text-primary mt-2">{coverFileHint}</div> : null}
           {coverPreviewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -73,9 +87,22 @@ export default function TripCoverHero({ existingSlides, coverPreviewUrl }: Props
             ))}
             <div className="tps-gallery-add" onClick={() => heroRef.current?.click()} role="button" tabIndex={0}>
               <i className="fa-solid fa-plus" />
-              <input ref={heroRef} type="file" name="trip_hero_files" id="sliderInput" className="d-none" multiple accept="image/*" />
+              <input
+                ref={heroRef}
+                type="file"
+                name="trip_hero_files"
+                id="sliderInput"
+                className="d-none"
+                multiple
+                accept="image/*"
+                onChange={() => {
+                  const n = heroRef.current?.files?.length ?? 0;
+                  setHeroFileHint(n > 0 ? `${n} файл — «Хадгалах» дарвал Cloudinary руу илгээнэ` : "");
+                }}
+              />
             </div>
           </div>
+          {heroFileHint ? <div className="small text-primary mt-2">{heroFileHint}</div> : null}
           <div className="small text-muted mt-2">Шинэ файлууд хадгалахад автоматаар нэмэгдэнэ.</div>
         </div>
       </div>
