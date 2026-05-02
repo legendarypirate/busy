@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
+import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
 
@@ -27,11 +28,23 @@ function parseAccountId(raw: string | undefined): bigint | null {
   }
 }
 
+/** Same resolution order as `getPlatformSession` (parsed jar + raw `Cookie` header). */
+function resolveAccountIdFromRequest(req: NextRequest): bigint | null {
+  const fromJar =
+    parseAccountId(req.cookies.get("bni_platform_account_id")?.value) ??
+    parseAccountId(req.cookies.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value);
+  if (fromJar) return fromJar;
+
+  const raw = req.headers.get("cookie");
+  return (
+    parseAccountId(readCookieValueFromHeader(raw, "bni_platform_account_id")) ??
+    parseAccountId(readCookieValueFromHeader(raw, PLATFORM_ACCOUNT_REF_COOKIE))
+  );
+}
+
 /** Resolve logged-in platform user from platform session cookies (same as `getPlatformSession`). */
 export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformUser | null> {
-  const id = parseAccountId(
-    req.cookies.get("bni_platform_account_id")?.value ?? req.cookies.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value,
-  );
+  const id = resolveAccountIdFromRequest(req);
   if (!id) return null;
 
   let account: (PlatformAccount & { profile: PlatformProfile | null }) | null;
