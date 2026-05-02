@@ -9,23 +9,31 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const origin = getPublicAppOrigin(request);
   const user = await getApiPlatformUser(request);
+  const returnAdmin = request.nextUrl.searchParams.get("return") === "admin";
+  const afterSavePath = returnAdmin ? "/admin/trips" : "/platform/trips";
+  const errBase = returnAdmin ? "/admin/trips" : "/platform/trips";
+
   if (!user) {
-    return NextResponse.redirect(new URL("/auth/login?next=/platform/trips", origin), 303);
+    const next = encodeURIComponent(returnAdmin ? "/admin/trips" : "/platform/trips");
+    return NextResponse.redirect(new URL(`/auth/login?next=${next}`, origin), 303);
   }
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.redirect(new URL("/platform/trips?error=missing", origin), 303);
+    return NextResponse.redirect(new URL(`${errBase}?error=missing`, origin), 303);
   }
 
-  const result = await executeSaveTrip(user.id, formData);
+  const result = await executeSaveTrip(user.id, formData, { errorRedirectBase: errBase });
   if (result.kind === "redirect") {
     return NextResponse.redirect(new URL(result.to, origin), 303);
   }
 
   revalidatePath("/platform/trips");
   revalidatePath("/trips");
-  return NextResponse.redirect(new URL("/platform/trips", origin), 303);
+  if (returnAdmin) {
+    revalidatePath("/admin/trips");
+  }
+  return NextResponse.redirect(new URL(afterSavePath, origin), 303);
 }

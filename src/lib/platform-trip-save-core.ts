@@ -102,13 +102,21 @@ export type SaveTripCoreResult =
   | { kind: "saved" }
   | { kind: "redirect"; to: string };
 
+export type ExecuteSaveTripOptions = {
+  /** Base path for validation/error redirects (no query). Default `/platform/trips`. */
+  errorRedirectBase?: string;
+};
+
 /**
  * Shared trip upsert used by Server Action and `POST /api/platform/trips/save` (multipart + cookies).
  */
 export async function executeSaveTrip(
   accountId: bigint,
   formData: FormData,
+  options?: ExecuteSaveTripOptions,
 ): Promise<SaveTripCoreResult> {
+  const errBase = (options?.errorRedirectBase ?? "/platform/trips").replace(/\/$/, "") || "/platform/trips";
+
   const tripId = Math.max(0, Number(String(formData.get("trip_id") ?? "0")));
 
   const destination = String(formData.get("trip_destination") ?? "").trim();
@@ -132,10 +140,10 @@ export async function executeSaveTrip(
   const itineraryRaw = String(formData.get("trip_itinerary_json") ?? "");
 
   if (destination === "" || !start || !end) {
-    return { kind: "redirect", to: "/platform/trips?error=missing" };
+    return { kind: "redirect", to: `${errBase}?error=missing` };
   }
   if (end < start) {
-    return { kind: "redirect", to: "/platform/trips?error=dates" };
+    return { kind: "redirect", to: `${errBase}?error=dates` };
   }
 
   let existing: BusinessTrip | null = null;
@@ -143,7 +151,7 @@ export async function executeSaveTrip(
   if (tripId > 0) {
     existing = await trips.findUnique({ where: { id: tripId } });
     if (!existing) {
-      return { kind: "redirect", to: "/platform/trips?error=notfound" };
+      return { kind: "redirect", to: `${errBase}?error=notfound` };
     }
   }
 
