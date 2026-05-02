@@ -6,15 +6,17 @@ const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL
 
 const rawDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
 /**
- * Optional parent domain for cookies (e.g. `busy.mn`). Must NOT be a full URL.
- * Standardized to remove leading dot for better apex domain compatibility.
+ * Optional parent domain host **without** leading dot (e.g. `busy.mn`). Must NOT be a full URL.
+ * Set-Cookie uses `Domain=.{host}` so apex and subdomains share the cookie.
  */
-export const platformSessionCookieDomain = (rawDomain?.startsWith(".") ? rawDomain.slice(1) : rawDomain) || undefined;
+export const platformSessionCookieDomain =
+  rawDomain && !rawDomain.includes("://")
+    ? (rawDomain.startsWith(".") ? rawDomain.slice(1) : rawDomain)
+    : undefined;
 
 function domainOpts(): { domain?: string } {
-  // If the domain starts with a dot, some browsers treat it differently on apex domains.
-  // Letting the browser default to the current host is often more reliable.
-  return {};
+  if (!platformSessionCookieDomain) return {};
+  return { domain: `.${platformSessionCookieDomain}`.replace(/^\.+/, ".") };
 }
 
 const sessionOpts = {
