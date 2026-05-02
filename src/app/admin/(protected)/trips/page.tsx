@@ -1,5 +1,7 @@
 import Link from "next/link";
+import AdminTripDeleteButton from "@/components/admin/AdminTripDeleteButton";
 import TripEditorForm from "@/components/platform/trips/TripEditorForm";
+import { adminDeleteTripAction } from "@/app/admin/(protected)/trips/actions";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 import {
@@ -85,7 +87,7 @@ export default async function AdminTripsPage({ searchParams }: Props) {
               <th>Дуусах</th>
               <th>Төлөв</th>
               <th>Үнэ</th>
-              <th />
+              <th className="text-end">Үйлдэл</th>
             </tr>
           </thead>
           <tbody>
@@ -97,10 +99,13 @@ export default async function AdminTripsPage({ searchParams }: Props) {
                 <td className="small">{toInputDate(r.endDate)}</td>
                 <td className="small">{r.statusLabel ?? "—"}</td>
                 <td>{fmtMoney(r.priceMnt)}</td>
-                <td>
-                  <Link href={`/admin/trips?edit_trip=${r.id}`} className="btn btn-sm btn-outline-primary">
-                    Засах
-                  </Link>
+                <td className="text-end">
+                  <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
+                    <Link href={`/admin/trips?edit_trip=${r.id}`} className="btn btn-sm btn-outline-primary">
+                      Засах
+                    </Link>
+                    <AdminTripDeleteButton action={adminDeleteTripAction} tripId={r.id} destination={r.destination} />
+                  </div>
                 </td>
               </tr>
             ))}
