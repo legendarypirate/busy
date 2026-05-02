@@ -1,4 +1,4 @@
-import type { BusinessTrip, LegacyMeeting, LegacyMember, NewsArticle } from "@prisma/client";
+import type { BusinessTrip, LegacyMember, NewsArticle } from "@prisma/client";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { mediaUrl } from "@/lib/media-url";
 
@@ -7,6 +7,15 @@ type PartnerProfileRow = { accountId: bigint; companyName: string | null; photoU
 type PartnerMemberRow = { id: number; name: string; company: string | null; photo: string | null };
 
 export type HomePartner = { name: string; logo: string; href: string };
+
+/** Upcoming BNI events for home «Үндсэн үйл ажиллагаа» (from `bni_events`). */
+export type HomeCoreEvent = {
+  id: string;
+  title: string;
+  startsAt: Date;
+  location: string | null;
+  bannerImage: string | null;
+};
 
 export type HomePayload = {
   stats: {
@@ -20,7 +29,7 @@ export type HomePayload = {
   };
   /** Prefer concrete Prisma models — `Awaited<ReturnType<typeof prisma.*.findMany>>` can degrade to `any[]` in some setups. */
   heroTrip: BusinessTrip | null;
-  coreMeetings: LegacyMeeting[];
+  coreEvents: HomeCoreEvent[];
   businessTrips: BusinessTrip[];
   latestNews: NewsArticle[];
   featuredMembers: LegacyMember[];
@@ -39,7 +48,7 @@ const empty: HomePayload = {
     revenueMonth: 0,
   },
   heroTrip: null,
-  coreMeetings: [],
+  coreEvents: [],
   businessTrips: [],
   latestNews: [],
   featuredMembers: [],
@@ -58,14 +67,14 @@ export async function loadHomeData(): Promise<HomePayload> {
     const [
       tripTotal,
       tripActive,
-      eventTotal,
-      eventActive,
+      eventTotalBni,
+      eventActiveBni,
       registrationTotal,
       registrationNew,
       revenueAgg,
       recentOrders,
       businessTrips,
-      coreMeetings,
+      coreEventsRows,
       latestNews,
       featuredMembers,
       profileRows,
@@ -73,8 +82,8 @@ export async function loadHomeData(): Promise<HomePayload> {
     ] = await Promise.all([
       tripDb.count().catch(() => 0),
       tripDb.count({ where: { startDate: { gte: today } } }).catch(() => 0),
-      prisma.legacyMeeting.count().catch(() => 0),
-      prisma.legacyMeeting.count({ where: { status: "active" } }).catch(() => 0),
+      prisma.bniEvent.count().catch(() => 0),
+      prisma.bniEvent.count({ where: { endsAt: { gte: new Date() } } }).catch(() => 0),
       prisma.paymentOrder.count({ where: { status: { in: ["paid", "success"] } } }).catch(() => 0),
       prisma.paymentOrder
         .count({
@@ -103,13 +112,14 @@ export async function loadHomeData(): Promise<HomePayload> {
           take: 3,
         })
         .catch((): BusinessTrip[] => []),
-      prisma.legacyMeeting
+      prisma.bniEvent
         .findMany({
-          where: { status: "active", meetingDate: { gte: today } },
-          orderBy: [{ meetingDate: "asc" }, { startTime: "asc" }],
+          where: { endsAt: { gte: new Date() } },
+          orderBy: [{ startsAt: "asc" }, { id: "asc" }],
           take: 6,
+          select: { id: true, title: true, startsAt: true, location: true },
         })
-        .catch((): LegacyMeeting[] => []),
+        .catch((): { id: bigint; title: string | null; startsAt: Date; location: string | null }[] => []),
       prisma.newsArticle
         .findMany({
           where: { status: "published" },
@@ -142,6 +152,14 @@ export async function loadHomeData(): Promise<HomePayload> {
     ]);
 
     const shuffledMembers = [...featuredMembers].sort(() => Math.random() - 0.5).slice(0, 6);
+
+    const coreEvents: HomeCoreEvent[] = coreEventsRows.map((e) => ({
+      id: e.id.toString(),
+      title: (e.title ?? "").trim() || "Хурал / эвент",
+      startsAt: e.startsAt,
+      location: e.location,
+      bannerImage: null,
+    }));
 
     const partners: HomePartner[] = [];
     const seen = new Set<string>();
@@ -180,14 +198,14 @@ export async function loadHomeData(): Promise<HomePayload> {
       stats: {
         tripTotal,
         tripActive,
-        eventTotal,
-        eventActive,
+        eventTotal: eventTotalBni,
+        eventActive: eventActiveBni,
         registrationTotal,
         registrationNew,
         revenueMonth: Number(revenueAgg._sum.amountMnt ?? 0),
       },
       heroTrip: businessTrips[0] ?? null,
-      coreMeetings,
+      coreEvents,
       businessTrips,
       latestNews,
       featuredMembers: shuffledMembers,

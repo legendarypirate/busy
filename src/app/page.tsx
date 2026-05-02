@@ -28,7 +28,7 @@ export default async function HomePage() {
   const registrationNew = data.stats.registrationNew || 0;
   const revenueMonth = data.stats.revenueMonth || 0;
 
-  const primaryCoreEvent = data.coreMeetings?.[0];
+  const primaryCoreEvent = data.coreEvents?.[0];
   const coreEventBannerUrl = primaryCoreEvent?.bannerImage ? mediaUrl(primaryCoreEvent.bannerImage) : PLACEHOLDER_EVENT;
 
   return (
@@ -277,19 +277,29 @@ export default async function HomePage() {
                   <div className="text-muted small mb-2">Ирэх эвент</div>
                   <h3 className="meeting-card-title">{primaryCoreEvent?.title || "Ирэх эвент зарлагдаагүй"}</h3>
                   <div className="meeting-card-meta">
-                    <span><i className="fa-regular fa-calendar me-2"></i> {primaryCoreEvent?.meetingDate ? formatMnDate(primaryCoreEvent.meetingDate) : "Тун удахгүй"}</span>
-                    <span><i className="fa-solid fa-location-dot me-2"></i> {primaryCoreEvent?.location || "Байршил шинэчлэгдэнэ"}</span>
+                    <span>
+                      <i className="fa-regular fa-calendar me-2"></i>{" "}
+                      {primaryCoreEvent?.startsAt ? formatMnDate(primaryCoreEvent.startsAt) : "Тун удахгүй"}
+                    </span>
+                    <span>
+                      <i className="fa-solid fa-location-dot me-2"></i> {primaryCoreEvent?.location || "Байршил шинэчлэгдэнэ"}
+                    </span>
                   </div>
                   <div className="mb-3">
                     <div className="d-flex justify-content-between small mb-1">
-                      <span className="text-muted">Идэвхтэй уулзалт {data.coreMeetings?.length || 0}</span>
-                      <span className="text-muted">{data.coreMeetings?.length ? "100%" : "0%"}</span>
+                      <span className="text-muted">Ирэх эвент {data.coreEvents?.length || 0}</span>
+                      <span className="text-muted">{data.coreEvents?.length ? "100%" : "0%"}</span>
                     </div>
                     <div className="progress" style={{ height: 6, borderRadius: 3 }}>
-                      <div className="progress-bar bg-primary" style={{ width: data.coreMeetings?.length ? "100%" : "0%" }}></div>
+                      <div className="progress-bar bg-primary" style={{ width: data.coreEvents?.length ? "100%" : "0%" }}></div>
                     </div>
                   </div>
-                  <Link href="/events" className="btn btn-outline-primary btn-sm rounded-pill px-4">Дэлгэрэнгүй</Link>
+                  <Link
+                    href={primaryCoreEvent ? `/events/${primaryCoreEvent.id}` : "/events"}
+                    className="btn btn-outline-primary btn-sm rounded-pill px-4"
+                  >
+                    Дэлгэрэнгүй
+                  </Link>
                 </div>
               </div>
 
@@ -299,15 +309,19 @@ export default async function HomePage() {
                   <Link href="/events" className="small text-primary text-decoration-none">Бүгдийг харах</Link>
                 </div>
                 <div className="event-mini-list">
-                  {data.coreMeetings && data.coreMeetings.length > 0 ? (
-                    data.coreMeetings.map((evt) => (
-                      <div className="event-mini-item" key={evt.id}>
+                  {data.coreEvents && data.coreEvents.length > 0 ? (
+                    data.coreEvents.map((evt) => (
+                      <Link href={`/events/${evt.id}`} className="event-mini-item text-decoration-none text-reset" key={evt.id}>
                         <div className="event-mini-title">{evt.title}</div>
                         <div className="event-mini-meta">
-                          <span><i className="fa-regular fa-calendar me-1"></i> {formatMnDate(evt.meetingDate)}</span>
-                          <span><i className="fa-solid fa-location-dot me-1"></i> {evt.location || "Байршил шинэчлэгдэнэ"}</span>
+                          <span>
+                            <i className="fa-regular fa-calendar me-1"></i> {formatMnDate(evt.startsAt)}
+                          </span>
+                          <span>
+                            <i className="fa-solid fa-location-dot me-1"></i> {evt.location || "Байршил шинэчлэгдэнэ"}
+                          </span>
                         </div>
-                      </div>
+                      </Link>
                     ))
                   ) : (
                     <div className="event-mini-empty">Одоогоор эвент бүртгэгдээгүй байна.</div>
