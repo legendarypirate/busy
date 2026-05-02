@@ -11,15 +11,21 @@ export const PLATFORM_ACCOUNT_REF_COOKIE = "bni_platform_account_ref";
 const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
-const rawDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
 /**
- * Optional parent domain host **without** leading dot (e.g. `busy.mn`). Must NOT be a full URL.
+ * Optional parent domain host **without** leading dot (e.g. `busy.mn`). Must NOT be a full URL or port.
  * Set-Cookie uses `Domain=.{host}` so apex and subdomains share the cookie.
+ * A mistaken `busy.mn:443` env would otherwise emit an invalid Domain attribute and browsers drop the cookie.
  */
-export const platformSessionCookieDomain =
-  rawDomain && !rawDomain.includes("://")
-    ? (rawDomain.startsWith(".") ? rawDomain.slice(1) : rawDomain)
-    : undefined;
+function parsePlatformSessionCookieDomainHost(): string | undefined {
+  const raw = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
+  if (!raw || raw.includes("://")) return undefined;
+  const withoutDot = raw.startsWith(".") ? raw.slice(1) : raw;
+  const hostOnly = withoutDot.split(":")[0]?.trim();
+  if (!hostOnly || hostOnly.includes("/") || hostOnly.includes(" ")) return undefined;
+  return hostOnly;
+}
+
+export const platformSessionCookieDomain = parsePlatformSessionCookieDomainHost();
 
 function domainOpts(): { domain?: string } {
   if (!platformSessionCookieDomain) return {};
