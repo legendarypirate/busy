@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
+import SpeakerPhotoUrlField from "@/components/platform/forms/SpeakerPhotoUrlField";
 import EventManageForm from "@/components/platform/panels/EventManageForm";
 import { deleteEventAction } from "@/app/platform/events-actions";
 import { prisma } from "@/lib/prisma";
@@ -136,12 +137,18 @@ function fmtMoney(mnt: unknown): string {
 
 type Props = {
   searchParams?: Record<string, string | string[] | undefined>;
+  /** `admin`: same CRUD under `/admin/meetings` (BNI events only; not business trips). */
+  venue?: "platform" | "admin";
 };
 
-export default async function EventsPanel({ searchParams }: Props) {
+export default async function EventsPanel({ searchParams, venue = "platform" }: Props) {
+  const basePath = venue === "admin" ? "/admin/meetings" : "/platform/events";
   const session = await getPlatformSession();
   if (!session) {
-    redirect("/auth/login?next=/platform/events");
+    redirect(venue === "admin" ? "/admin/login?next=/admin/meetings" : "/auth/login?next=/platform/events");
+  }
+  if (venue === "admin" && session.role !== "admin") {
+    redirect(`/admin/login?next=${encodeURIComponent("/admin/meetings")}`);
   }
 
   const err = errorBanner(firstParam(searchParams?.error));
@@ -178,7 +185,7 @@ export default async function EventsPanel({ searchParams }: Props) {
     return (
       <div className="pl-panel-inner px-3 py-4">
         <div className="alert alert-warning">{errorBanner("notfound")}</div>
-        <Link href="/platform/events">Жагсаалт руу</Link>
+        <Link href={basePath}>Жагсаалт руу</Link>
       </div>
     );
   }
@@ -229,10 +236,19 @@ export default async function EventsPanel({ searchParams }: Props) {
       <div className="pm-card mb-4" id="managedEventsCard">
         <div className="pm-card-header d-flex justify-content-between align-items-center">
           <div>
-            <div className="pm-card-title">Бүх эвентүүд</div>
-            <div className="pm-card-subtitle">Системд бүртгэлтэй нийт арга хэмжээ</div>
+            <div className="pm-card-title d-flex flex-wrap align-items-center gap-2">
+              {venue === "admin" ? "BNI хурал, эвент" : "Бүх эвентүүд"}
+              {venue === "admin" ? (
+                <span className="badge rounded-pill text-bg-secondary small fw-normal">Админ</span>
+              ) : null}
+            </div>
+            <div className="pm-card-subtitle">
+              {venue === "admin"
+                ? "Бизнес аяллаас тусдаа — идэвхтэй эвентүүдийн жагсаалт"
+                : "Системд бүртгэлтэй нийт арга хэмжээ"}
+            </div>
           </div>
-          <Link href="/platform/events" className="btn btn-sm btn-outline-primary">
+          <Link href={basePath} className="btn btn-sm btn-outline-primary">
             <i className="fa-solid fa-plus me-1" />
             Шинэ эвент
           </Link>
@@ -276,10 +292,11 @@ export default async function EventsPanel({ searchParams }: Props) {
                         <Link href={`/events/${ev.id}`} target="_blank" className="btn btn-sm btn-outline-secondary" title="Бүртгэл">
                           <i className="fa-solid fa-user-plus" />
                         </Link>
-                        <Link href={`/platform/events?edit_event=${ev.id}`} className="btn btn-sm btn-outline-secondary">
+                        <Link href={`${basePath}?edit_event=${ev.id}`} className="btn btn-sm btn-outline-secondary">
                           Засах
                         </Link>
                         <form action={deleteEventAction} className="d-inline">
+                          {venue === "admin" ? <input type="hidden" name="return_context" value="admin" /> : null}
                           <input type="hidden" name="event_id" value={ev.id.toString()} />
                           <button type="submit" className="btn btn-sm btn-outline-danger">
                             <i className="fa-solid fa-trash" />
@@ -295,22 +312,35 @@ export default async function EventsPanel({ searchParams }: Props) {
         </div>
       </div>
 
-      <EventManageForm>
+      <EventManageForm returnContext={venue === "admin" ? "admin" : undefined}>
         <input type="hidden" name="event_id" value={eventForm.id.toString()} />
 
         <div className="tps-header mb-4">
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb mb-2" style={{ fontSize: "0.7rem" }}>
               <li className="breadcrumb-item">
-                <Link href="/platform" className="text-decoration-none">
-                  Үндсэн
+                <Link href={venue === "admin" ? "/admin/dashboard" : "/platform"} className="text-decoration-none">
+                  {venue === "admin" ? "Админ" : "Үндсэн"}
                 </Link>
               </li>
-              <li className="breadcrumb-item active">Хурал / Эвент менежмент</li>
+              {venue === "admin" ? (
+                <li className="breadcrumb-item">
+                  <Link href={basePath} className="text-decoration-none">
+                    Хурал / Эвент
+                  </Link>
+                </li>
+              ) : null}
+              <li className="breadcrumb-item active">
+                {venue === "admin" ? (existing ? "Засах" : "Шинэ") : "Хурал / Эвент менежмент"}
+              </li>
             </ol>
           </nav>
           <h1 className="tps-greeting">Арга хэмжээний менежмент</h1>
-          <p className="text-muted small mb-0">Шинэ эвент үүсгэх эсвэл байгаа эвентийг засна уу.</p>
+          <p className="text-muted small mb-0">
+            {venue === "admin"
+              ? "Админаар BNI хурал, эвент үүсгэх / засах (аяллаас тусдаа)."
+              : "Шинэ эвент үүсгэх эсвэл байгаа эвентийг засна уу."}
+          </p>
         </div>
 
         <div className="tps-grid">
@@ -474,10 +504,14 @@ export default async function EventsPanel({ searchParams }: Props) {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="pm-label d-block mb-2">Илтгэгчид (5 хүртэл)</label>
+                <label className="pm-label d-block mb-1">Илтгэгчид (5 хүртэл)</label>
+                <p className="small text-muted mb-2">
+                  «Зураг оруулах» нь Cloudinary руу хадгална (JPG, PNG, WebP, GIF, хамгийн ихдээ 5MB). Хүссэн бол URL-аар
+                  оруулж болно.
+                </p>
                 {speakersForm.map((spRow, sidx) => (
-                  <div key={sidx} className="row g-2 mb-2 align-items-end">
-                    <div className="col-md-4">
+                  <div key={sidx} className="row g-2 mb-3 align-items-start">
+                    <div className="col-md-3">
                       <input
                         type="text"
                         className="pm-input"
@@ -486,7 +520,7 @@ export default async function EventsPanel({ searchParams }: Props) {
                         defaultValue={spRow.name}
                       />
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-md-3">
                       <input
                         type="text"
                         className="pm-input"
@@ -495,14 +529,8 @@ export default async function EventsPanel({ searchParams }: Props) {
                         defaultValue={spRow.role}
                       />
                     </div>
-                    <div className="col-md-4">
-                      <input
-                        type="text"
-                        className="pm-input"
-                        name="speaker_photo_url"
-                        placeholder="Зургийн URL"
-                        defaultValue={spRow.photo_url}
-                      />
+                    <div className="col-md-6">
+                      <SpeakerPhotoUrlField key={`${eventForm.id.toString()}-${sidx}`} defaultUrl={spRow.photo_url} />
                     </div>
                   </div>
                 ))}
@@ -594,7 +622,7 @@ export default async function EventsPanel({ searchParams }: Props) {
                     {existing ? "Шинэчлэх" : "Үүсгэх"}
                   </button>
                   {existing ? (
-                    <Link href="/platform/events" className="pm-btn-secondary text-decoration-none">
+                    <Link href={basePath} className="pm-btn-secondary text-decoration-none">
                       Цуцлах
                     </Link>
                   ) : null}

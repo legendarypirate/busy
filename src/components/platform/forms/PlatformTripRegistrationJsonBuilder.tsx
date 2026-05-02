@@ -342,10 +342,14 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
             <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 sm:p-4">
               <p className="text-xs font-semibold text-foreground">Google Form-оос импорт</p>
               <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                Холбоосыг буулгаад «Нэмж оруулах» эсвэл «Бүгдийг солих» дарна. Серверт{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_IMPORT_SA_JSON</code> (service
-                account JSON) тохируулсан, мөн тухайн form-ыг тэр service account-ын имэйлд Viewer-ээр хуваалцсан байх
-                ёстой.
+                Холбоосыг буулгаад «Нэмж оруулах» эсвэл «Бүгдийг солих» дарна. Серверт OAuth:{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_REFRESH_TOKEN</code> +{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_CLIENT_JSON</code> (эсвэл
+                CLIENT_ID/SECRET) + ижил{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_REDIRECT_URI</code>.
+                Refresh token: <code className="text-[10px]">node scripts/google-forms-oauth-refresh-token.cjs …json</code>.
+                Формонд OAuth-оор нэвтэрсэн Google дансны хандах эрх шаардлагатай. Хуучин арга: service account{" "}
+                <code className="text-[10px]">GOOGLE_FORMS_IMPORT_SA_JSON</code>.
               </p>
               <div className="mt-3 space-y-2">
                 <Label htmlFor="google-form-url" className="text-xs">

@@ -9,7 +9,7 @@ export type AdminNavItem = {
 
 export const ADMIN_NAV_MAIN: AdminNavItem[] = [
   { key: "dashboard", href: "/admin/dashboard", label: "Хяналтын самбар", iconClass: "fas fa-tachometer-alt" },
-  { key: "meetings", href: "/admin/meetings", label: "Уулзалтууд", iconClass: "fas fa-calendar-alt" },
+  { key: "meetings", href: "/admin/meetings", label: "Хурал / Эвент", iconClass: "fas fa-calendar-alt" },
   { key: "trips", href: "/admin/trips", label: "Бизнес аялал", iconClass: "fas fa-plane-departure" },
   {
     key: "trip_registrations",

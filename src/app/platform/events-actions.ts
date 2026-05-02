@@ -6,6 +6,23 @@ import { Prisma } from "@prisma/client";
 import { getPlatformSession } from "@/lib/platform-session";
 import { prisma } from "@/lib/prisma";
 
+const ADMIN_EVENTS_PATH = "/admin/meetings";
+const PLATFORM_EVENTS_PATH = "/platform/events";
+
+function eventListPathFromFormData(formData: FormData): typeof ADMIN_EVENTS_PATH | typeof PLATFORM_EVENTS_PATH {
+  return String(formData.get("return_context") ?? "").trim() === "admin" ? ADMIN_EVENTS_PATH : PLATFORM_EVENTS_PATH;
+}
+
+async function assertAdminForEventCrud(accountId: bigint): Promise<void> {
+  const row = await prisma.platformAccount.findUnique({
+    where: { id: accountId },
+    select: { role: true, status: true },
+  });
+  if (!row || row.status !== "active" || row.role !== "admin") {
+    redirect(`/admin/login?next=${encodeURIComponent(ADMIN_EVENTS_PATH)}`);
+  }
+}
+
 function parseDatetimeLocal(raw: string): Date | null {
   const t = raw.trim();
   if (!t) {
@@ -45,9 +62,17 @@ function parseSections(raw: string): Record<string, unknown>[] {
 }
 
 export async function saveEventAction(formData: FormData): Promise<void> {
+  const listPath = eventListPathFromFormData(formData);
   const session = await getPlatformSession();
   if (!session) {
-    redirect("/auth/login?next=/platform/events");
+    redirect(
+      listPath === ADMIN_EVENTS_PATH
+        ? `/admin/login?next=${encodeURIComponent(ADMIN_EVENTS_PATH)}`
+        : "/auth/login?next=/platform/events",
+    );
+  }
+  if (listPath === ADMIN_EVENTS_PATH) {
+    await assertAdminForEventCrud(session.id);
   }
 
   const eventIdRaw = String(formData.get("event_id") ?? "0").trim();
@@ -128,7 +153,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   const advanceOrderMnt = parseMoney(String(formData.get("advance_order_mnt") ?? ""));
 
   if (!startsAt || !endsAt || endsAt <= startsAt || chapterId < 1 || title === "") {
-    redirect("/platform/events?error=missing");
+    redirect(`${listPath}?error=missing`);
   }
 
   const row = {
@@ -150,7 +175,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   if (eventId > BigInt(0)) {
     const exists = await prisma.bniEvent.findUnique({ where: { id: eventId } });
     if (!exists) {
-      redirect("/platform/events?error=notfound");
+      redirect(`${listPath}?error=notfound`);
     }
     await prisma.bniEvent.update({
       where: { id: eventId },
@@ -163,13 +188,23 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/platform/events");
+  revalidatePath(ADMIN_EVENTS_PATH);
   revalidatePath("/events");
-  redirect("/platform/events");
+  redirect(listPath);
 }
 
 export async function deleteEventAction(formData: FormData): Promise<void> {
-  if (!(await getPlatformSession())) {
-    redirect("/auth/login?next=/platform/events");
+  const listPath = eventListPathFromFormData(formData);
+  const session = await getPlatformSession();
+  if (!session) {
+    redirect(
+      listPath === ADMIN_EVENTS_PATH
+        ? `/admin/login?next=${encodeURIComponent(ADMIN_EVENTS_PATH)}`
+        : "/auth/login?next=/platform/events",
+    );
+  }
+  if (listPath === ADMIN_EVENTS_PATH) {
+    await assertAdminForEventCrud(session.id);
   }
 
   const raw = String(formData.get("event_id") ?? "0").trim();
@@ -177,16 +212,17 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
   try {
     eventId = BigInt(raw === "" ? "0" : raw);
   } catch {
-    redirect("/platform/events");
+    redirect(listPath);
   }
 
   if (eventId < BigInt(1)) {
-    redirect("/platform/events");
+    redirect(listPath);
   }
 
   await prisma.bniEvent.delete({ where: { id: eventId } }).catch(() => null);
 
   revalidatePath("/platform/events");
+  revalidatePath(ADMIN_EVENTS_PATH);
   revalidatePath("/events");
-  redirect("/platform/events");
+  redirect(listPath);
 }

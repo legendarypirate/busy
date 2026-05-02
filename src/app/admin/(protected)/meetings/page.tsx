@@ -1,52 +1,31 @@
+import "@/styles/platform-home-panels.css";
+import { connection } from "next/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import EventsPanel from "@/components/platform/panels/EventsPanel";
 
-export const metadata = { title: "Уулзалтууд | Админ" };
+export const metadata = { title: "Хурал, эвент | Админ" };
+export const dynamic = "force-dynamic";
 
-export default async function AdminMeetingsPage() {
-  let rows: { id: number; title: string; meetingDate: Date; status: string }[] = [];
-  try {
-    rows = await prisma.legacyMeeting.findMany({
-      orderBy: { id: "desc" },
-      take: 200,
-      select: { id: true, title: true, meetingDate: true, status: true },
-    });
-  } catch {
-    /* */
-  }
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
+export default async function AdminMeetingsPage({ searchParams }: Props) {
+  await connection();
+  noStore();
+  const sp = await searchParams;
   return (
     <div>
-      <h1 className="h4 fw-bold mb-3">Уулзалтууд</h1>
-      <p className="text-muted small mb-3">
-        Legacy <code>meetings</code> хүснэгт. Засварын UI дараа нь нэмэгдэнэ — одоогоор жагсаалт.
-      </p>
-      <div className="table-responsive">
-        <table className="table table-hover">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Гарчиг</th>
-              <th>Огноо</th>
-              <th>Төлөв</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{r.title}</td>
-                <td>{r.meetingDate.toISOString().slice(0, 10)}</td>
-                <td>{r.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mb-4">
+        <h1 className="h4 fw-bold mb-1">Хурал ба эвент</h1>
+        <p className="text-muted small mb-2">
+          BNI хурал, эвент үүсгэх / засах — платформын{" "}
+          <Link href="/platform/events" className="text-decoration-none">
+            «Хурал / Эвент»
+          </Link>{" "}
+          хэсэгтэй ижил форм. <strong>Бизнес аяллаас тусдаа</strong> (зөвхөн chapter-той холбоотой эвентүүд).
+        </p>
       </div>
-      {rows.length === 0 ? <p className="text-muted small">Мөр байхгүй.</p> : null}
-      <p className="small text-muted mt-2">
-        Платформын шинэ уулзалт: <Link href="/platform">/platform</Link>
-      </p>
+      <EventsPanel searchParams={sp} venue="admin" />
     </div>
   );
 }

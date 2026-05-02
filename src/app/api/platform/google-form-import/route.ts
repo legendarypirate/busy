@@ -37,11 +37,13 @@ export async function POST(req: NextRequest) {
   }
 
   let token: string;
-  let clientEmail: string;
+  let shareHint: string | null;
+  let authMode: "oauth" | "service_account";
   try {
     const t = await getGoogleFormsAccessToken();
     token = t.token;
-    clientEmail = t.clientEmail;
+    shareHint = t.shareHint;
+    authMode = t.authMode;
   } catch (e) {
     const code = e instanceof Error ? (e as Error & { code?: string }).code : "";
     if (code === "NO_CREDENTIALS") {
@@ -49,12 +51,15 @@ export async function POST(req: NextRequest) {
         {
           error: "not_configured",
           message:
-            "Серверт GOOGLE_FORMS_IMPORT_SA_JSON тохируулаагүй байна. Service account JSON-оо .env-д нэмээд, Google Form-оо тухайн service account-ын имэйлд Viewer эрхээр хуваалцана уу.",
+            "Серверт Google Forms API тохиргоо байхгүй. OAuth: GOOGLE_FORMS_OAUTH_REFRESH_TOKEN + (GOOGLE_FORMS_OAUTH_CLIENT_JSON эсвэл CLIENT_ID/SECRET) + GOOGLE_FORMS_OAUTH_REDIRECT_URI (refresh token авах үед ашигласантай ижил). Эсвэл service account: GOOGLE_FORMS_IMPORT_SA_JSON. scripts/google-forms-oauth-refresh-token.cjs тайлбар үзнэ үү.",
         },
         { status: 503 },
       );
     }
-    return NextResponse.json({ error: "credentials", message: "Service account тохиргоо буруу байна." }, { status: 500 });
+    return NextResponse.json(
+      { error: "credentials", message: "Google Forms нэвтрэх тохиргоо буруу эсвэл refresh token хүчингүй." },
+      { status: 500 },
+    );
   }
 
   let formJson: unknown;
@@ -64,12 +69,14 @@ export async function POST(req: NextRequest) {
     const status = e instanceof Error ? (e as Error & { status?: number }).status : undefined;
     const bodySnip = e instanceof Error ? (e as Error & { body?: string }).body : "";
     if (status === 403 || status === 404) {
+      const oauthMsg =
+        "Формыг уншиж чадсангүй. OAuth ашиглаж байгаа бол тухайн Google дансаар (consent өгсөн хэрэглэгч) формонд хандах эрхтэй эсэхийг шалгана уу (Share).";
+      const saMsg = `Формыг уншиж чадсангүй. Service account руу Viewer-ээр хуваалцсан эсэхийг шалгана уу.`;
       return NextResponse.json(
         {
           error: "form_inaccessible",
-          message:
-            "Формыг уншиж чадсангүй. Form-ыг доорх service account руу Viewer-ээр хуваалцсан эсэхийг шалгана уу.",
-          shareWithEmail: clientEmail,
+          message: authMode === "oauth" ? oauthMsg : saMsg,
+          ...(authMode === "service_account" && shareHint ? { shareWithEmail: shareHint } : {}),
         },
         { status: 502 },
       );
@@ -90,6 +97,6 @@ export async function POST(req: NextRequest) {
     formTitle,
     legacy,
     importedCount: legacy.length,
-    shareWithEmail: clientEmail,
+    ...(authMode === "service_account" && shareHint ? { shareWithEmail: shareHint } : { authMode: "oauth" as const }),
   });
 }
