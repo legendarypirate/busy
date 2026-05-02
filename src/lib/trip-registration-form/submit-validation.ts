@@ -1,5 +1,22 @@
 import type { TripFormQuestionType } from "@prisma/client";
 
+/** Sub-reason for 400 validation (safe to expose to clients). */
+export type TripFormValidationCode =
+  | "required"
+  | "email"
+  | "phone"
+  | "number"
+  | "choice"
+  | "file_url";
+
+export class TripFormValidationError extends Error {
+  readonly status = 400;
+  constructor(public readonly code: TripFormValidationCode) {
+    super("VALIDATION");
+    this.name = "TripFormValidationError";
+  }
+}
+
 /** Incoming row from public POST (before persistence). */
 export type TripFormSubmitAnswer = {
   questionId: string;
@@ -18,8 +35,19 @@ export type TripFormQuestionSnapshot = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Trim, strip ZWSP/BOM (common in pasted labels/phones), then trim again. */
 function norm(s: string | null | undefined): string {
-  return (s ?? "").trim();
+  const raw = s == null ? "" : typeof s === "string" ? s : String(s);
+  return raw.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+}
+
+function countDecimalDigits(s: string): number {
+  const m = s.match(/\p{Nd}/gu);
+  return m ? m.length : 0;
+}
+
+function throwV(code: TripFormValidationCode): never {
+  throw new TripFormValidationError(code);
 }
 
 /** Normalize for option membership (trim + Unicode NFC so Cyrillic/Mongolian matches DB vs browser). */
@@ -73,12 +101,6 @@ export function assertTripFormSubmissionValid(questions: TripFormQuestionSnapsho
     }
   }
 
-  const throwValidation = () => {
-    const e = new Error("VALIDATION");
-    (e as Error & { status?: number }).status = 400;
-    throw e;
-  };
-
   for (const q of questions) {
     const a = byQ.get(q.id);
     const val = norm(a?.value);
@@ -87,39 +109,38 @@ export function assertTripFormSubmissionValid(questions: TripFormQuestionSnapsho
 
     if (q.isRequired) {
       if (q.type === "FILE_UPLOAD") {
-        if (!file || !/^https?:\/\//i.test(file)) throwValidation();
+        if (!file || !/^https?:\/\//i.test(file)) throwV("file_url");
       } else if (q.type === "CHECKBOXES") {
         const parts = checkboxParts(val);
-        if (parts.length === 0) throwValidation();
+        if (parts.length === 0) throwV("required");
         for (const p of parts) {
-          if (!isAllowedOptionToken(q, p)) throwValidation();
+          if (!isAllowedOptionToken(q, p)) throwV("choice");
         }
       } else if (q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") {
-        if (!val) throwValidation();
-        if (!isAllowedOptionToken(q, val)) throwValidation();
+        if (!val) throwV("required");
+        if (!isAllowedOptionToken(q, val)) throwV("choice");
       } else if (!textOrFile) {
-        throwValidation();
+        throwV("required");
       }
     }
 
-    if (q.type === "EMAIL" && val && !EMAIL_RE.test(val)) throwValidation();
+    if (q.type === "EMAIL" && val && !EMAIL_RE.test(val)) throwV("email");
     if (q.type === "PHONE" && val) {
-      const digits = val.replace(/\D/g, "");
-      if (digits.length < 8) throwValidation();
+      if (countDecimalDigits(val) < 8) throwV("phone");
     }
     if (q.type === "NUMBER" && val) {
-      if (!Number.isFinite(Number(val))) throwValidation();
+      if (!Number.isFinite(Number(val))) throwV("number");
     }
     if ((q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") && val && !q.isRequired) {
-      if (!isAllowedOptionToken(q, val)) throwValidation();
+      if (!isAllowedOptionToken(q, val)) throwV("choice");
     }
     if (q.type === "CHECKBOXES" && val && !q.isRequired) {
       const parts = checkboxParts(val);
       for (const p of parts) {
-        if (!isAllowedOptionToken(q, p)) throwValidation();
+        if (!isAllowedOptionToken(q, p)) throwV("choice");
       }
     }
-    if (q.type === "FILE_UPLOAD" && file && !/^https?:\/\//i.test(file)) throwValidation();
+    if (q.type === "FILE_UPLOAD" && file && !/^https?:\/\//i.test(file)) throwV("file_url");
   }
 }
 

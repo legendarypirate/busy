@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { TripFormValidationError } from "@/lib/trip-registration-form/submit-validation";
 import { submitPublicFormResponse } from "@/lib/trip-registration-form/service";
 
 type Ctx = { params: Promise<{ publicSlug: string }> };
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     });
     return NextResponse.json({ ok: true, responseId: out.responseId });
   } catch (e) {
+    if (e instanceof TripFormValidationError) {
+      return NextResponse.json({ error: "validation", code: e.code }, { status: e.status });
+    }
     const msg = e instanceof Error ? e.message : "";
     const code =
       msg === "UNKNOWN_QUESTION" ? "unknown_question" : msg === "VALIDATION" ? "validation" : "submit_failed";

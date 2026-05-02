@@ -58,10 +58,19 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
     });
   }
 
+  function stripFormText(s: string): string {
+    return s.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+  }
+
+  function countPhoneDigits(s: string): number {
+    const m = s.match(/\p{Nd}/gu);
+    return m ? m.length : 0;
+  }
+
   function validate(): string | null {
     for (const q of sorted) {
       if (!q.isRequired) continue;
-      const v = (values[q.id] ?? "").trim();
+      const v = stripFormText(values[q.id] ?? "");
       if (q.type === "CHECKBOXES") {
         if (!v) return `"${q.label}" заавал бөглөнө үү`;
       } else if (q.type === "FILE_UPLOAD") {
@@ -74,12 +83,11 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `"${q.label}" зөв имэйл оруулна уу`;
       }
       if (q.type === "PHONE" && v) {
-        const digits = v.replace(/\D/g, "");
-        if (digits.length < 8) return `"${q.label}" зөв утас оруулна уу`;
+        if (countPhoneDigits(v) < 8) return `"${q.label}" зөв утас оруулна уу`;
       }
     }
     for (const q of sorted) {
-      const v = (values[q.id] ?? "").trim();
+      const v = stripFormText(values[q.id] ?? "");
       if (q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") {
         if (v && !q.options.some((o) => o.value === v)) return `"${q.label}" сонголтыг зөв сонгоно уу`;
       }
@@ -130,12 +138,30 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; responseId?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        responseId?: string;
+        error?: string;
+        code?: string;
+      };
       if (!res.ok) {
         const err = data.error;
+        const vCode = data.code;
         setError(
           err === "validation"
-            ? "Мэдээллээ шалгана уу (заавал талбар, имэйл/утас, сонголт)."
+            ? vCode === "phone"
+              ? "Утасны дугаар хамгийн багадаа 8 оронтой тоо байх ёстой (улсын код оруулсан бол тохирно)."
+              : vCode === "email"
+                ? "Имэйл хаягаа шалгана уу."
+                : vCode === "choice"
+                  ? "Сонголтоо шалгана уу (хуудсыг дахин ачаалж дахин сонгоно уу)."
+                  : vCode === "required"
+                    ? "Заавал талбаруудыг бөглөнө үү."
+                    : vCode === "number"
+                      ? "Тоо талбарыг зөв бөглөнө үү."
+                      : vCode === "file_url"
+                        ? "Файлын холбоосыг (https…) зөв оруулна уу."
+                        : "Мэдээллээ шалгана уу (заавал талбар, имэйл/утас, сонголт)."
             : err === "unknown_question"
               ? "Форм шинэчлэгдсэн байж магадгүй. Хуудсыг дахин ачаална уу."
               : err === "submit_failed"

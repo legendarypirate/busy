@@ -4,7 +4,10 @@ import {
   getPublishedTripRegistrationDrawerSchema,
   submitPublicFormResponseByTripId,
 } from "@/lib/trip-registration-form/service";
-import type { TripFormSubmitAnswer } from "@/lib/trip-registration-form/submit-validation";
+import {
+  TripFormValidationError,
+  type TripFormSubmitAnswer,
+} from "@/lib/trip-registration-form/submit-validation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -73,6 +76,17 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       });
       return NextResponse.json({ success: true, message: "Таны бүртгэлийг амжилттай хүлээн авлаа." });
     } catch (e) {
+      if (e instanceof TripFormValidationError) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Заавал талбаруудыг бөглөж, зөв форматаар оруулна уу.",
+            code: "validation",
+            validationCode: e.code,
+          },
+          { status: e.status },
+        );
+      }
       const msg = e instanceof Error ? e.message : "Алдаа";
       const code =
         msg === "UNKNOWN_QUESTION"
