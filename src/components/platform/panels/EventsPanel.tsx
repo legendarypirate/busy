@@ -29,7 +29,7 @@ function errorBanner(code: string | undefined): string | null {
     return null;
   }
   if (code === "missing") {
-    return "Гарчиг, chapter, хугацаа зөв бөглөнө үү.";
+    return "Гарчиг, хугацаа зөв бөглөнө үү.";
   }
   if (code === "notfound") {
     return "Эвент олдсонгүй.";
@@ -195,12 +195,12 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
   const defaultStarts = new Date();
   const defaultEnds = new Date(defaultStarts.getTime() + 2 * 60 * 60 * 1000);
 
-  const chapterIdDefault = chapters[0]?.id ?? 0;
+  const chapterIdDefault = chapters[0]?.id ?? null;
   const eventForm = existing
     ? {
         id: existing.id,
         title: existing.title ?? "",
-        chapterId: existing.chapterId,
+        chapterId: existing.chapterId ?? null,
         eventType: EVENT_TYPES.some((t) => t === existing.eventType) ? existing.eventType : "weekly_meeting",
         startsAt: existing.startsAt,
         endsAt: existing.endsAt,
@@ -214,7 +214,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
     : {
         id: BigInt(0),
         title: "",
-        chapterId: chapterIdDefault,
+        chapterId: chapterIdDefault ?? null,
         eventType: "weekly_meeting",
         startsAt: defaultStarts,
         endsAt: defaultEnds,
@@ -279,7 +279,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                       <div className="small text-muted">{ev.location?.trim() || "Байршилгүй"}</div>
                     </td>
                     <td>
-                      <div className="small fw-bold">{ev.chapter.name}</div>
+                      <div className="small fw-bold">{ev.chapter?.name ?? "—"}</div>
                       <div className="smaller text-muted">{EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType}</div>
                     </td>
                     <td className="small text-muted">{toDatetimeLocal(new Date(ev.startsAt))}</td>
@@ -365,7 +365,12 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                   </div>
                   <div className="mb-3">
                     <label className="pm-label">Бүлэг</label>
-                    <select className="pm-select" name="chapter_id" required defaultValue={eventForm.chapterId}>
+                    <select
+                      className="pm-select"
+                      name="chapter_id"
+                      defaultValue={eventForm.chapterId != null && eventForm.chapterId > 0 ? String(eventForm.chapterId) : ""}
+                    >
+                      <option value="">— Сонгохгүй —</option>
                       {chapters.map((ch) => (
                         <option key={ch.id} value={ch.id}>
                           {ch.name}

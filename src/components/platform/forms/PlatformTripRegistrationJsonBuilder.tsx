@@ -346,7 +346,8 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
                 <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_REFRESH_TOKEN</code> +{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_CLIENT_JSON</code> (эсвэл
                 CLIENT_ID/SECRET) + ижил{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_REDIRECT_URI</code>.
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_OAUTH_REDIRECT_URI</code> (ихэвчлэн
+                http://localhost:3333/oauth2callback — GCP-д яг ижил бүртгэ).
                 Refresh token: <code className="text-[10px]">node scripts/google-forms-oauth-refresh-token.cjs …json</code>.
                 Формонд OAuth-оор нэвтэрсэн Google дансны хандах эрх шаардлагатай. Хуучин арга: service account{" "}
                 <code className="text-[10px]">GOOGLE_FORMS_IMPORT_SA_JSON</code>.

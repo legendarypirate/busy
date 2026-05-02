@@ -160,7 +160,7 @@ model ChapterWeeklySchedule {
 
 model BniEvent {
   id                      BigInt    @id @default(autoincrement())
-  chapterId               Int       @map("chapter_id")
+  chapterId               Int?      @map("chapter_id")
   scheduleId              Int?      @map("schedule_id")
   // VARCHAR so migrated rows / pgloader mismatch never breaks reads (vs strict Prisma enum).
   eventType               String    @default("weekly_meeting") @map("event_type") @db.VarChar(64)
@@ -176,7 +176,7 @@ model BniEvent {
   advanceOrderMnt         Decimal?  @map("advance_order_mnt") @db.Decimal(12, 2)
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  chapter    Chapter                 @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapter    Chapter?                @relation(fields: [chapterId], references: [id], onDelete: SetNull)
   schedule   ChapterWeeklySchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   curriculum Curriculum?             @relation(fields: [curriculumId], references: [id], onDelete: SetNull)
 

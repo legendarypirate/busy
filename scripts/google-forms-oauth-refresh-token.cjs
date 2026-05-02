@@ -5,11 +5,12 @@
  * Google Cloud Console (same project as OAuth client):
  *  - Enable "Google Forms API"
  *  - OAuth consent screen: add scope https://www.googleapis.com/auth/forms.body.readonly
- *  - OAuth client (Desktop or Web): Authorized redirect URIs MUST include:
- *        http://127.0.0.1:3333/oauth2callback
+ *  - OAuth client (Desktop or Web): Authorized redirect URIs MUST include the SAME URI this script uses
+ *    (default below). Google treats localhost vs 127.0.0.1 as different — register the exact string.
  *
  * Usage:
- *   node scripts/google-forms-oauth-refresh-token.cjs /path/to/client_secret_....apps.googleusercontent.com.json
+ *   node scripts/google-forms-oauth-refresh-token.cjs /path/to/client_secret_....json
+ *   node scripts/google-forms-oauth-refresh-token.cjs /path/to/client_secret_....json "http://127.0.0.1:3333/oauth2callback"
  *
  * Then set printed env vars on your server (.env not committed). GOOGLE_FORMS_OAUTH_REDIRECT_URI must match
  * the value printed here (same as used when exchanging the code).
@@ -22,7 +23,8 @@ const { OAuth2Client } = require("google-auth-library");
 
 const PORT = 3333;
 const REDIRECT_PATH = "/oauth2callback";
-const REDIRECT_URI = `http://127.0.0.1:${PORT}${REDIRECT_PATH}`;
+/** Default: many GCP "Web" clients already allow http://localhost — add this exact URI if missing. */
+const DEFAULT_REDIRECT_URI = `http://localhost:${PORT}${REDIRECT_PATH}`;
 
 function loadClient(jsonPath) {
   const raw = fs.readFileSync(path.resolve(jsonPath), "utf8");
@@ -35,11 +37,15 @@ function loadClient(jsonPath) {
 }
 
 const jsonPath = process.argv[2];
+const redirectOverride = (process.argv[3] || "").trim();
 if (!jsonPath) {
-  console.error("Usage: node scripts/google-forms-oauth-refresh-token.cjs path/to/client_secret....json\n");
-  console.error("Add this Authorized redirect URI to your OAuth client:\n  ", REDIRECT_URI, "\n");
+  console.error("Usage: node scripts/google-forms-oauth-refresh-token.cjs path/to/client_secret....json [redirect_uri]\n");
+  console.error("Default redirect_uri:", DEFAULT_REDIRECT_URI);
+  console.error("GCP → Credentials → OAuth 2.0 Client → Authorized redirect URIs → add that exact line.\n");
   process.exit(1);
 }
+
+const REDIRECT_URI = redirectOverride || DEFAULT_REDIRECT_URI;
 
 const { clientId, clientSecret } = loadClient(jsonPath);
 const oauth2 = new OAuth2Client(clientId, clientSecret, REDIRECT_URI);
@@ -52,7 +58,7 @@ const authUrl = oauth2.generateAuthUrl({
 
 const server = http.createServer(async (req, res) => {
   try {
-    const u = new URL(req.url || "/", `http://127.0.0.1:${PORT}`);
+    const u = new URL(req.url || "/", `http://localhost:${PORT}`);
     if (u.pathname !== REDIRECT_PATH) {
       res.writeHead(404);
       res.end("Not found");
@@ -103,9 +109,14 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, () => {
   console.log("\n1) Google Cloud Console → APIs & Services → Credentials → your OAuth 2.0 Client ID");
-  console.log("   Authorized redirect URIs → add exactly:\n     ", REDIRECT_URI);
-  console.log("\n2) Open this URL, sign in as the Google user that should access forms to import:\n\n", authUrl);
+  console.log("   Application type should be \"Web application\" (or add URI to Desktop client list).");
+  console.log("   Authorized redirect URIs → Add URI → paste exactly this line (character-for-character):");
+  console.log("\n     ", REDIRECT_URI, "\n");
+  console.log("   If you still see redirect_uri_mismatch, also add the other loopback variant:");
+  console.log("     http://127.0.0.1:3333/oauth2callback");
+  console.log("   then run: node scripts/google-forms-oauth-refresh-token.cjs <json> \"http://127.0.0.1:3333/oauth2callback\"\n");
+  console.log("2) Open this URL, sign in as the Google user that should access forms to import:\n\n", authUrl);
   console.log("\nWaiting for redirect on", REDIRECT_URI, "…\n");
 });

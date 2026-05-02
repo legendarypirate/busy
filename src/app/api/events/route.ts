@@ -20,9 +20,9 @@ export async function GET() {
       startsAt: e.startsAt.toISOString(),
       endsAt: e.endsAt.toISOString(),
       eventType: e.eventType,
-      chapterName: e.chapter.name,
-      chapterSlug: e.chapter.slug,
-      regionName: e.chapter.region.name,
+      chapterName: e.chapter?.name ?? null,
+      chapterSlug: e.chapter?.slug ?? null,
+      regionName: e.chapter?.region?.name ?? null,
     })),
   });
 }

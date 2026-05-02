@@ -83,7 +83,9 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     eventId = BigInt(0);
   }
 
-  const chapterId = Math.max(0, Number(String(formData.get("chapter_id") ?? "0")));
+  const chapterIdRaw = String(formData.get("chapter_id") ?? "").trim();
+  const chapterIdNum = Math.max(0, Number(chapterIdRaw === "" ? "0" : chapterIdRaw));
+  const chapterId = chapterIdNum > 0 ? chapterIdNum : null;
   const eventType = String(formData.get("event_type") ?? "weekly_meeting").trim() || "weekly_meeting";
   const title = String(formData.get("title") ?? "").trim();
   const startsAt = parseDatetimeLocal(String(formData.get("starts_at") ?? ""));
@@ -152,7 +154,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   const priceMnt = parseMoney(String(formData.get("price_mnt") ?? ""));
   const advanceOrderMnt = parseMoney(String(formData.get("advance_order_mnt") ?? ""));
 
-  if (!startsAt || !endsAt || endsAt <= startsAt || chapterId < 1 || title === "") {
+  if (!startsAt || !endsAt || endsAt <= startsAt || title === "") {
     redirect(`${listPath}?error=missing`);
   }
 

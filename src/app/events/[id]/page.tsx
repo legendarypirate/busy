@@ -32,7 +32,7 @@ export default async function EventDetailPage({ params }: Props) {
     notFound();
   }
 
-  const title = ev.title ?? ev.chapter.name;
+  const title = ev.title?.trim() || ev.chapter?.name || "Хурал / эвент";
   const whenLine = `${formatMnDate(ev.startsAt)} · ${ev.startsAt.toLocaleTimeString("mn-MN", {
     hour: "2-digit",
     minute: "2-digit",
@@ -72,9 +72,11 @@ export default async function EventDetailPage({ params }: Props) {
           <p className="small mb-2">
             <span className="badge bg-light text-dark border">{ev.eventType.replace(/_/g, " ")}</span>
           </p>
-          <p className="text-muted small mb-3">
-            {ev.chapter.region.name} · {ev.chapter.name}
-          </p>
+          {ev.chapter ? (
+            <p className="text-muted small mb-3">
+              {ev.chapter.region.name} · {ev.chapter.name}
+            </p>
+          ) : null}
           {ev.location ? (
             <p className="fw-semibold mb-0">
               <i className="fa-solid fa-location-dot me-1" />

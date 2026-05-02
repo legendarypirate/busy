@@ -45,11 +45,20 @@ export async function getGoogleFormsAccessToken(): Promise<GoogleFormsAuthResult
 
   if (refresh && clientId && clientSecret) {
     const redirectUri =
-      process.env.GOOGLE_FORMS_OAUTH_REDIRECT_URI?.trim() || "http://127.0.0.1:3333/oauth2callback";
+      process.env.GOOGLE_FORMS_OAUTH_REDIRECT_URI?.trim() || "http://localhost:3333/oauth2callback";
     const oauth2 = new OAuth2Client(clientId, clientSecret, redirectUri);
     oauth2.setCredentials({ refresh_token: refresh });
-    const tok = await oauth2.getAccessToken();
-    const token = typeof tok === "string" ? tok : tok?.token;
+    let tok: string | null | undefined;
+    try {
+      const res = await oauth2.getAccessToken();
+      tok = typeof res === "string" ? res : res?.token;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const e = new Error(msg.includes("invalid_grant") ? "OAUTH_INVALID_GRANT" : `OAUTH_TOKEN: ${msg}`);
+      (e as Error & { code?: string }).code = "OAUTH_REFRESH_FAILED";
+      throw e;
+    }
+    const token = tok;
     if (!token) {
       const e = new Error("NO_ACCESS_TOKEN");
       (e as Error & { code?: string }).code = "NO_ACCESS_TOKEN";

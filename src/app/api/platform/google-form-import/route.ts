@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     authMode = t.authMode;
   } catch (e) {
     const code = e instanceof Error ? (e as Error & { code?: string }).code : "";
+    const msg = e instanceof Error ? e.message : "";
     if (code === "NO_CREDENTIALS") {
       return NextResponse.json(
         {
@@ -54,6 +55,16 @@ export async function POST(req: NextRequest) {
             "Серверт Google Forms API тохиргоо байхгүй. OAuth: GOOGLE_FORMS_OAUTH_REFRESH_TOKEN + (GOOGLE_FORMS_OAUTH_CLIENT_JSON эсвэл CLIENT_ID/SECRET) + GOOGLE_FORMS_OAUTH_REDIRECT_URI (refresh token авах үед ашигласантай ижил). Эсвэл service account: GOOGLE_FORMS_IMPORT_SA_JSON. scripts/google-forms-oauth-refresh-token.cjs тайлбар үзнэ үү.",
         },
         { status: 503 },
+      );
+    }
+    if (code === "OAUTH_REFRESH_FAILED" && msg === "OAUTH_INVALID_GRANT") {
+      return NextResponse.json(
+        {
+          error: "credentials",
+          message:
+            "Refresh token хүчингүй эсвэл тохирохгүй байна. Шалгах: (1) CLIENT_ID/SECRET нь refresh token үүссэн OAuth client-той ижил эсэх, (2) GOOGLE_FORMS_OAUTH_REDIRECT_URI нь token авах үед ашигласан redirect-тай яг ижил (localhost болон 127.0.0.1 өөр!), (3) GCP-д тэр redirect URI Authorized redirect URIs-д бүртгэгдсэн эсэх. Дахин: node scripts/google-forms-oauth-refresh-token.cjs …json",
+        },
+        { status: 500 },
       );
     }
     return NextResponse.json(

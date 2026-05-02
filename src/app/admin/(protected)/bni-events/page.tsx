@@ -30,7 +30,7 @@ export default async function AdminBniEventsPage() {
             {rows.map((r) => (
               <tr key={String(r.id)}>
                 <td>{String(r.id)}</td>
-                <td>{r.chapter.name}</td>
+                <td>{r.chapter?.name ?? "—"}</td>
                 <td className="small">{r.eventType}</td>
                 <td className="small">{r.startsAt.toISOString().slice(0, 16)}</td>
                 <td className="small">{r.endsAt.toISOString().slice(0, 16)}</td>
