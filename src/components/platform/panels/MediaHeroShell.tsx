@@ -2,12 +2,14 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { saveHeroSlidesAction, type ProfileSaveState } from "@/app/platform/actions";
+import { PLATFORM_POST_TOKEN_FIELD } from "@/lib/platform-post-token-constants";
 
 type Props = {
   slides: string[];
+  postToken: string | null;
 };
 
-export default function MediaHeroShell({ slides: initialSlides }: Props) {
+export default function MediaHeroShell({ slides: initialSlides, postToken }: Props) {
   const [state, formAction] = useActionState(saveHeroSlidesAction, null as ProfileSaveState | null);
   const slides = initialSlides;
   const [previewIdx, setPreviewIdx] = useState(0);
@@ -29,6 +31,7 @@ export default function MediaHeroShell({ slides: initialSlides }: Props) {
       ) : null}
 
       <form action={formAction} encType="multipart/form-data">
+        {postToken ? <input type="hidden" name={PLATFORM_POST_TOKEN_FIELD} value={postToken} /> : null}
         <div className="med-grid">
           <div className="med-main">
             <div className="med-card">

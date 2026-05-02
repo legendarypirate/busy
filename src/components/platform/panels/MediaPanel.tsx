@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import MediaHeroShell from "@/components/platform/panels/MediaHeroShell";
 import { mediaUrl } from "@/lib/media-url";
 import { getPlatformSession } from "@/lib/platform-session";
+import { issuePlatformPostToken } from "@/lib/platform-trip-save-token";
 import { prisma } from "@/lib/prisma";
 
 function heroSlidesFromBiz(json: unknown): string[] {
@@ -27,6 +28,7 @@ export default async function MediaPanel() {
   });
 
   const slides = heroSlidesFromBiz(profile?.businessJson ?? null);
+  const postToken = issuePlatformPostToken(session.id);
 
-  return <MediaHeroShell slides={slides} />;
+  return <MediaHeroShell slides={slides} postToken={postToken} />;
 }

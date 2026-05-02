@@ -2,10 +2,7 @@ import type { NextRequest } from "next/server";
 import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { readCookieValueFromHeader } from "@/lib/read-cookie-from-header";
-import {
-  PLATFORM_TRIP_SAVE_TOKEN_FIELD,
-  verifyPlatformTripSaveToken,
-} from "@/lib/platform-trip-save-token";
+import { postTokenFromFormData, verifyPlatformPostToken } from "@/lib/platform-trip-save-token";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
 
@@ -84,7 +81,7 @@ export async function getApiPlatformUser(req: NextRequest): Promise<ApiPlatformU
 
 /** Multipart trip save: signed token minted on `/platform/trips` when cookies are missing on POST. */
 export async function getApiPlatformUserFromTripSaveForm(formData: FormData): Promise<ApiPlatformUser | null> {
-  const id = verifyPlatformTripSaveToken(formData.get(PLATFORM_TRIP_SAVE_TOKEN_FIELD));
+  const id = verifyPlatformPostToken(postTokenFromFormData(formData));
   if (!id) return null;
   return loadApiPlatformUserByAccountId(id);
 }

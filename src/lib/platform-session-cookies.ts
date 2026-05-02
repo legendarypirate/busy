@@ -1,5 +1,6 @@
 import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { platformSessionMaxAgeSeconds } from "@/lib/platform-session-ttl";
 
 /**
  * Non-httpOnly mirror of `bni_platform_account_id` (same digits). Some browsers / multipart Server Action
@@ -8,7 +9,6 @@ import { cookies } from "next/headers";
  */
 export const PLATFORM_ACCOUNT_REF_COOKIE = "bni_platform_account_ref";
 
-const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
 /**
@@ -33,13 +33,21 @@ function domainOpts(): { domain?: string } {
   return { domain: `.${platformSessionCookieDomain}`.replace(/^\.+/, ".") };
 }
 
-const sessionOpts = {
-  path: "/",
-  maxAge: WEEK,
-  sameSite: "lax" as const,
-  secure: secureCookie,
-  ...domainOpts(),
-};
+function sessionCookieOpts(): {
+  path: string;
+  maxAge: number;
+  sameSite: "lax";
+  secure: boolean;
+  domain?: string;
+} {
+  return {
+    path: "/",
+    maxAge: platformSessionMaxAgeSeconds(),
+    sameSite: "lax",
+    secure: secureCookie,
+    ...domainOpts(),
+  };
+}
 
 /** Shared attributes for Google OAuth start/callback cookies (state, next). */
 export const googleOAuthCookieBase = {
@@ -53,17 +61,19 @@ export const googleOAuthCookieBase = {
 export async function setPlatformSessionCookies(accountId: bigint, display: string): Promise<void> {
   const jar = await cookies();
   const idStr = accountId.toString();
-  jar.set("bni_platform_account_id", idStr, { ...sessionOpts, httpOnly: true });
-  jar.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...sessionOpts, httpOnly: false });
-  jar.set("bni_platform_nav_display", display, { ...sessionOpts, httpOnly: false });
+  const so = sessionCookieOpts();
+  jar.set("bni_platform_account_id", idStr, { ...so, httpOnly: true });
+  jar.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...so, httpOnly: false });
+  jar.set("bni_platform_nav_display", display, { ...so, httpOnly: false });
 }
 
 /** Route handlers: attach to redirect response. */
 export function attachPlatformSessionToResponse(res: NextResponse, accountId: bigint, display: string): void {
   const idStr = accountId.toString();
-  res.cookies.set("bni_platform_account_id", idStr, { ...sessionOpts, httpOnly: true });
-  res.cookies.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...sessionOpts, httpOnly: false });
-  res.cookies.set("bni_platform_nav_display", display, { ...sessionOpts, httpOnly: false });
+  const so = sessionCookieOpts();
+  res.cookies.set("bni_platform_account_id", idStr, { ...so, httpOnly: true });
+  res.cookies.set(PLATFORM_ACCOUNT_REF_COOKIE, idStr, { ...so, httpOnly: false });
+  res.cookies.set("bni_platform_nav_display", display, { ...so, httpOnly: false });
 }
 
 const clearCookieOpts = {

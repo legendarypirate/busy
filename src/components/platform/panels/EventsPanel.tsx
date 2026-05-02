@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
 import EventManageForm from "@/components/platform/panels/EventManageForm";
+import PlatformPostTokenHidden from "@/components/platform/PlatformPostTokenHidden";
 import { deleteEventAction } from "@/app/platform/events-actions";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
+import { issuePlatformPostToken } from "@/lib/platform-trip-save-token";
 
 const EVENT_TYPES = ["weekly_meeting", "visitor_day", "training", "social"] as const;
 
@@ -144,6 +146,8 @@ export default async function EventsPanel({ searchParams }: Props) {
     redirect("/auth/login?next=/platform/events");
   }
 
+  const postToken = issuePlatformPostToken(session.id);
+
   const err = errorBanner(firstParam(searchParams?.error));
   const editRaw = firstParam(searchParams?.edit_event);
   let editEventId = BigInt(0);
@@ -280,6 +284,7 @@ export default async function EventsPanel({ searchParams }: Props) {
                           Засах
                         </Link>
                         <form action={deleteEventAction} className="d-inline">
+                          <PlatformPostTokenHidden token={postToken} />
                           <input type="hidden" name="event_id" value={ev.id.toString()} />
                           <button type="submit" className="btn btn-sm btn-outline-danger">
                             <i className="fa-solid fa-trash" />
@@ -295,7 +300,7 @@ export default async function EventsPanel({ searchParams }: Props) {
         </div>
       </div>
 
-      <EventManageForm>
+      <EventManageForm postToken={postToken}>
         <input type="hidden" name="event_id" value={eventForm.id.toString()} />
 
         <div className="tps-header mb-4">

@@ -3,13 +3,11 @@ import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionB
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
+import PlatformPostTokenHidden from "@/components/platform/PlatformPostTokenHidden";
 import { deleteTripAction, toggleTripFeaturedAction } from "@/app/platform/trips-actions";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
-import {
-  PLATFORM_TRIP_SAVE_TOKEN_FIELD,
-  issuePlatformTripSaveToken,
-} from "@/lib/platform-trip-save-token";
+import { issuePlatformPostToken } from "@/lib/platform-trip-save-token";
 
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop";
@@ -104,7 +102,7 @@ type Props = {
 
 export default async function TripsPanel({ searchParams }: Props) {
   const viewer = await getPlatformSession();
-  const tripSaveToken = viewer ? issuePlatformTripSaveToken(viewer.id) : null;
+  const postToken = viewer ? issuePlatformPostToken(viewer.id) : null;
   const greetingName = viewer?.displayName?.trim() || "Та";
   const err = errorBanner(firstParam(searchParams?.error));
   const editRaw = firstParam(searchParams?.edit_trip) ?? firstParam(searchParams?.edit);
@@ -199,6 +197,7 @@ export default async function TripsPanel({ searchParams }: Props) {
                     <td className="text-end">
                       <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
                         <form action={toggleTripFeaturedAction}>
+                          <PlatformPostTokenHidden token={postToken} />
                           <input type="hidden" name="trip_id" value={mt.id} />
                           <input type="hidden" name="is_featured" value={mt.isFeatured === 1 ? "0" : "1"} />
                           <button
@@ -212,6 +211,7 @@ export default async function TripsPanel({ searchParams }: Props) {
                           Засах
                         </Link>
                         <form action={deleteTripAction} className="d-inline">
+                          <PlatformPostTokenHidden token={postToken} />
                           <input type="hidden" name="trip_id" value={mt.id} />
                           <button type="submit" className="btn btn-sm btn-outline-danger">
                             <i className="fa-solid fa-trash" />
@@ -260,7 +260,7 @@ export default async function TripsPanel({ searchParams }: Props) {
 
       {/* --- Main trip editor form --- */}
       <form id="tripMainForm" action="/api/platform/trips/save" method="post" encType="multipart/form-data">
-        {tripSaveToken ? <input type="hidden" name={PLATFORM_TRIP_SAVE_TOKEN_FIELD} value={tripSaveToken} /> : null}
+        <PlatformPostTokenHidden token={postToken} />
         <input type="hidden" name="trip_id" value={editTrip?.id ?? 0} />
 
         <div className="tps-header mb-4">

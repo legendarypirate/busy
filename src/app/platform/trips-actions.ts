@@ -3,16 +3,25 @@
 import { connection } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getPlatformSession } from "@/lib/platform-session";
+import { getPlatformSessionForAction } from "@/lib/platform-session";
+import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
 import { executeSaveTrip } from "@/lib/platform-trip-save-core";
 import { dbBusinessTrip } from "@/lib/prisma";
 
-export async function saveTripAction(formData: FormData): Promise<void> {
-  await connection();
-  const session = await getPlatformSession();
-  if (!session) {
+async function requireTripSession(formData: FormData) {
+  const resolved = await getPlatformSessionForAction(formData);
+  if (!resolved) {
     redirect("/auth/login?next=/platform/trips");
   }
+  if (!resolved.fromCookie) {
+    await setPlatformSessionCookies(resolved.user.id, resolved.user.displayName);
+  }
+  return resolved.user;
+}
+
+export async function saveTripAction(formData: FormData): Promise<void> {
+  await connection();
+  const session = await requireTripSession(formData);
 
   const result = await executeSaveTrip(session.id, formData);
   if (result.kind === "redirect") {
@@ -26,10 +35,7 @@ export async function saveTripAction(formData: FormData): Promise<void> {
 
 export async function deleteTripAction(formData: FormData): Promise<void> {
   await connection();
-  const session = await getPlatformSession();
-  if (!session) {
-    redirect("/auth/login?next=/platform/trips");
-  }
+  const session = await requireTripSession(formData);
 
   const tripId = Math.max(0, Number(String(formData.get("trip_id") ?? "0")));
   if (tripId < 1) {
@@ -46,10 +52,7 @@ export async function deleteTripAction(formData: FormData): Promise<void> {
 
 export async function toggleTripFeaturedAction(formData: FormData): Promise<void> {
   await connection();
-  const session = await getPlatformSession();
-  if (!session) {
-    redirect("/auth/login?next=/platform/trips");
-  }
+  const session = await requireTripSession(formData);
 
   const tripId = Math.max(0, Number(String(formData.get("trip_id") ?? "0")));
   const makeFeatured = Number(String(formData.get("is_featured") ?? "0")) === 1;
