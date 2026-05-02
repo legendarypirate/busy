@@ -4,6 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
 import type { TripFormSubmitAnswer } from "@/lib/trip-registration-form/submit-validation";
 
+async function readResponseJson<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error(`Сервер хоосон хариу илгээсэн (HTTP ${res.status}). API / nginx тохиргоо шалгана уу.`);
+  }
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch {
+    throw new Error(`JSON биш хариу (HTTP ${res.status}).`);
+  }
+}
+
 function buildAnswersFromForm(
   schema: HomeTripDrawerSchemaItem[],
   form: HTMLFormElement,
@@ -53,12 +66,12 @@ export default function HomeTripRegisterDrawer() {
     setFeedback({ text: "", kind: "" });
     try {
       const res = await fetch(`/api/public/trips/${id}/registration`, { cache: "no-store" });
-      const data = (await res.json()) as {
+      const data = await readResponseJson<{
         success?: boolean;
         tripTitle?: string;
         schema?: HomeTripDrawerSchemaItem[];
         message?: string;
-      };
+      }>(res);
       if (!res.ok || !data.success || !Array.isArray(data.schema)) {
         throw new Error(data.message || "Формын асуулга ачаалж чадсангүй.");
       }
@@ -130,7 +143,7 @@ export default function HomeTripRegisterDrawer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      const data = (await res.json()) as { success?: boolean; message?: string };
+      const data = await readResponseJson<{ success?: boolean; message?: string }>(res);
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Бүртгэл хадгалах үед алдаа гарлаа.");
       }
