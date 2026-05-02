@@ -1,9 +1,11 @@
 import "@/styles/platform-home-panels.css";
 import { connection } from "next/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 import PlatformBodyClass from "@/components/platform/PlatformBodyClass";
 import PlatformSidebar from "@/components/platform/PlatformSidebar";
 import PlatformTopNav from "@/components/platform/PlatformTopNav";
+import { getPlatformLoginNextPath } from "@/lib/platform-login-next-path";
 import { requirePlatformUser } from "@/lib/platform-session";
 
 /** Session + `cookies()` must not be served from segment/prefetch cache without the real request. */
@@ -15,9 +17,9 @@ export default async function PlatformLayout({
   children: React.ReactNode;
 }>) {
   await connection();
+  noStore();
   const h = await headers();
-  const pathname = h.get("x-busy-pathname")?.trim() || "/platform";
-  const user = await requirePlatformUser(pathname);
+  const user = await requirePlatformUser(getPlatformLoginNextPath(h));
 
   return (
     <>
