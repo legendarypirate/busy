@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import HomeTripRegisterDrawer from "@/components/home/HomeTripRegisterDrawer";
 import type { HomePayload } from "@/lib/home-data";
 import { loadHomeData } from "@/lib/home-data";
 import { formatClockUtc, formatMnDate } from "@/lib/format-date";
@@ -233,8 +234,15 @@ export default async function HomePage() {
                       <div className="trip-exact-date text-primary">{tDate}</div>
                       <p className="trip-exact-desc">{tDesc.slice(0, 120)}...</p>
                       <div className="trip-exact-btns">
-                        <button className="btn-qpay js-trip-register-btn">Захиалах</button>
-                        <Link href={`/trips/${trip.id}`} className="btn-exact-outline text-center">Дэлгэрэнгүй</Link>
+                        <button
+                          type="button"
+                          className="btn-qpay js-trip-register-btn"
+                          data-trip-id={String(trip.id)}
+                          data-trip-title={tTitle}
+                        >
+                          Захиалах
+                        </button>
+                        <Link href={`/trip-details/${trip.id}`} className="btn-exact-outline text-center">Дэлгэрэнгүй</Link>
                       </div>
                     </div>
                   </div>
@@ -442,6 +450,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeTripRegisterDrawer />
     </main>
   );
 }

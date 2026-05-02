@@ -28,6 +28,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/css/busy-pages-v2.css" />
         <link rel="stylesheet" href="/assets/css/index-v3.css" />
         <link rel="stylesheet" href="/assets/css/trips-v3.css" />
+        <link rel="stylesheet" href="/assets/css/trip-details-v3.css" />
         <link rel="stylesheet" href="/assets/css/factories-v3.css" />
         <link rel="stylesheet" href="/assets/css/investments-v3.css" />
         <link rel="stylesheet" href="/assets/css/members-v3.css" />

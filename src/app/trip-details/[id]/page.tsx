@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import TripDetailsEffects from "@/components/trip-details/TripDetailsEffects";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
@@ -88,6 +89,7 @@ export default async function TripDetailsPage({ params }: Props) {
 
   return (
     <div className="trd-body">
+      <TripDetailsEffects />
       {/* Hero Section */}
       <div className="trd-hero">
         <div className="trd-hero-img" style={{ backgroundImage: `url('${tripCover}')` }}></div>
@@ -180,7 +182,13 @@ export default async function TripDetailsPage({ params }: Props) {
                   const dayDateFmt = formatMnDate(new Date(dayRow.date)).replace(/-/g, '.');
                   const dayLabel = dayRow.label || `Өдөр ${ti + 1}`;
                   return (
-                    <button key={ti} type="button" className={`trd-timeline-btn ${ti === 0 ? 'active' : ''}`} data-trd-day-index={ti} aria-selected={ti === 0 ? 'true' : 'false'}>
+                    <button
+                      key={ti}
+                      type="button"
+                      className={`trd-timeline-btn ${ti === 0 ? "active" : ""}`}
+                      data-trd-day-index={String(ti)}
+                      aria-selected={ti === 0 ? "true" : "false"}
+                    >
                       {dayLabel}
                       {dayDateFmt && <span className="opacity-50 ms-2">{dayDateFmt}</span>}
                     </button>
@@ -195,7 +203,12 @@ export default async function TripDetailsPage({ params }: Props) {
                 const items = dayRow.items || [];
                 
                 return (
-                  <div key={pi} className={`trd-day-panel ${pi === 0 ? 'is-active' : ''}`} data-trd-day-panel={pi} hidden={pi !== 0}>
+                  <div
+                    key={pi}
+                    className={`trd-day-panel ${pi === 0 ? "is-active" : ""}`}
+                    data-trd-day-panel={String(pi)}
+                    hidden={pi !== 0}
+                  >
                     <div className="trd-day-detail">
                       <div className="trd-day-img">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -401,71 +414,6 @@ export default async function TripDetailsPage({ params }: Props) {
         </div>
       </div>
       
-      {/* Required Script for toggling */}
-      <script dangerouslySetInnerHTML={{ __html: `
-        document.querySelectorAll('.trd-faq-trigger').forEach(function (trigger) {
-            trigger.addEventListener('click', function () {
-                var item = trigger.closest('.trd-faq-item');
-                if (!item) return;
-                var wasOpen = item.classList.contains('is-open');
-                document.querySelectorAll('.trd-faq-item').forEach(function (other) {
-                    other.classList.remove('is-open');
-                    var oi = other.querySelector('.trd-faq-trigger i.fa-chevron-down');
-                    if (oi) oi.style.transform = 'rotate(0deg)';
-                });
-                if (!wasOpen) {
-                    item.classList.add('is-open');
-                    var icon = trigger.querySelector('i.fa-chevron-down');
-                    if (icon) icon.style.transform = 'rotate(180deg)';
-                }
-            });
-        });
-
-        document.querySelectorAll('.trd-tab[data-trd-section]').forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                document.querySelectorAll('.trd-tab').forEach(function (t) { t.classList.remove('active'); });
-                tab.classList.add('active');
-                var id = tab.getAttribute('data-trd-section');
-                var el = id ? document.getElementById(id) : null;
-                if (el) {
-                    try {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    } catch (e) {
-                        el.scrollIntoView(true);
-                    }
-                }
-            });
-        });
-
-        document.querySelectorAll('.trd-timeline-btn[data-trd-day-index]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var ix = btn.getAttribute('data-trd-day-index');
-                document.querySelectorAll('.trd-timeline-btn').forEach(function (b) {
-                    b.classList.toggle('active', b.getAttribute('data-trd-day-index') === ix);
-                    b.setAttribute('aria-selected', b.getAttribute('data-trd-day-index') === ix ? 'true' : 'false');
-                });
-                document.querySelectorAll('.trd-day-panel[data-trd-day-panel]').forEach(function (p) {
-                    var on = p.getAttribute('data-trd-day-panel') === ix;
-                    p.classList.toggle('is-active', on);
-                    p.hidden = !on;
-                });
-            });
-        });
-
-        var consult = document.querySelector('.trd-btn-contact');
-        if (consult) {
-            consult.addEventListener('click', function () {
-                var help = document.getElementById('trd-section-help');
-                if (help) {
-                    try {
-                        help.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } catch (e) {
-                        help.scrollIntoView(true);
-                    }
-                }
-            });
-        }
-      ` }} />
     </div>
   );
 }

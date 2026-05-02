@@ -89,7 +89,7 @@ export default function TripsDashboardTable({ trips, currentUserId }: { trips: T
                   </TableCell>
                   <TableCell className="text-end">
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/trips/${t.id}`}>Дэлгэрэнгүй</Link>
+                      <Link href={`/trip-details/${t.id}`}>Дэлгэрэнгүй</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
