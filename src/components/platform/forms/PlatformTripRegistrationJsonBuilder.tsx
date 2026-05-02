@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TripFormQuestionType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import TripFormQuestionCardEditor, {
   needsOptions,
   type TripFormBuilderOption,
@@ -84,7 +86,7 @@ function legacyNeedsOptions(t: string) {
   return t === "select" || t === "radio" || t === "checkbox";
 }
 
-function parseLegacyRows(raw: unknown): TripFormBuilderQuestionRow[] {
+export function parseLegacyRows(raw: unknown): TripFormBuilderQuestionRow[] {
   if (!Array.isArray(raw)) {
     return [];
   }
@@ -146,6 +148,9 @@ type Props = {
 export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initialJson }: Props) {
   const [rows, setRows] = useState<TripFormBuilderQuestionRow[]>(() => parseLegacyRows(initialJson));
   const [savedQuestionId, setSavedQuestionId] = useState<string | null>(null);
+  const [googleUrl, setGoogleUrl] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   const hiddenValue = useMemo(() => serialize(rows), [rows]);
 
@@ -237,6 +242,86 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
     });
   }, []);
 
+  const rowsFromImportedLegacy = useCallback((legacy: unknown[]) => {
+    const parsed = parseLegacyRows(legacy);
+    return parsed.map((row) => {
+      const nid = newQuestionId();
+      return {
+        ...row,
+        id: nid,
+        sortOrder: 0,
+        options: row.options.map((o, j) => ({
+          ...o,
+          id: `opt-${nid}-${j}`,
+          sortOrder: j,
+        })),
+      } satisfies TripFormBuilderQuestionRow;
+    });
+  }, []);
+
+  const runGoogleImport = useCallback(
+    async (mode: "append" | "replace") => {
+      const url = googleUrl.trim();
+      if (!url) {
+        setImportMsg("Google Form-ын холбоосыг оруулна уу.");
+        return;
+      }
+      if (mode === "replace" && rows.length > 0) {
+        if (!window.confirm("Одоогийн бүх асуулгыг устгаж Google Form-ын асуулгаар солих уу?")) return;
+      }
+      setImportBusy(true);
+      setImportMsg(null);
+      try {
+        const res = await fetch("/api/platform/google-form-import", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          legacy?: unknown[];
+          importedCount?: number;
+          formTitle?: string;
+          message?: string;
+          error?: string;
+          shareWithEmail?: string;
+        };
+        if (!res.ok) {
+          const hint =
+            data.shareWithEmail && (data.error === "form_inaccessible" || res.status === 502)
+              ? ` Хуваалцах имэйл: ${data.shareWithEmail}`
+              : "";
+          setImportMsg((data.message || data.error || "Алдаа") + hint);
+          return;
+        }
+        const legacy = Array.isArray(data.legacy) ? data.legacy : [];
+        const withIds = rowsFromImportedLegacy(legacy);
+        if (withIds.length === 0) {
+          setImportMsg("Оруулах асуулт олдсонгүй (зөвхөн дэмжигдсэн төрлүүд).");
+          return;
+        }
+        if (mode === "replace") {
+          setRows(withIds.map((r, i) => ({ ...r, sortOrder: i })));
+        } else {
+          setRows((prev) => {
+            const qs = [...prev].sort((a, b) => a.sortOrder - b.sortOrder);
+            const start = qs.length;
+            return [...qs, ...withIds.map((r, i) => ({ ...r, sortOrder: start + i }))];
+          });
+        }
+        const title = data.formTitle?.trim() ? ` «${data.formTitle}»` : "";
+        setImportMsg(
+          `Амжилттай орууллаа: ${data.importedCount ?? withIds.length} асуулт${title}. Аяллын «Хадгалах» дарж серверт илгээнэ үү.`,
+        );
+        setGoogleUrl("");
+      } finally {
+        setImportBusy(false);
+      }
+    },
+    [googleUrl, rows.length, rowsFromImportedLegacy],
+  );
+
   const sorted = [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
@@ -249,11 +334,48 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
               <CardTitle className="text-base font-semibold">Бүртгэлийн асуулга</CardTitle>
             </div>
             <CardDescription className="text-xs leading-snug">
-              «Асуултыг хадгалах» нь энэ хуудасны төсөвт хадгална. Нүүрний бүртгэлийн drawer-д харагдахын тулд доорх аяллын
-              «Хадгалах» дарж серверт илгээнэ үү.
+              Асуултыг нэг нэгээр нэмэх эсвэл Google Form-оос оруулж болно. «Асуултыг хадгалах» нь энэ хуудасны төсөвт
+              хадгална; нийтийн drawer болон /register холбоосын өгөгдөлд орохын тулд аяллын «Хадгалах» дарна уу.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 p-4 sm:p-5">
+            <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 sm:p-4">
+              <p className="text-xs font-semibold text-foreground">Google Form-оос импорт</p>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                Холбоосыг буулгаад «Нэмж оруулах» эсвэл «Бүгдийг солих» дарна. Серверт{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">GOOGLE_FORMS_IMPORT_SA_JSON</code> (service
+                account JSON) тохируулсан, мөн тухайн form-ыг тэр service account-ын имэйлд Viewer-ээр хуваалцсан байх
+                ёстой.
+              </p>
+              <div className="mt-3 space-y-2">
+                <Label htmlFor="google-form-url" className="text-xs">
+                  Google Form холбоос
+                </Label>
+                <Input
+                  id="google-form-url"
+                  type="url"
+                  autoComplete="off"
+                  placeholder="https://docs.google.com/forms/d/..."
+                  value={googleUrl}
+                  disabled={importBusy}
+                  onChange={(e) => setGoogleUrl(e.target.value)}
+                  className="text-sm"
+                />
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button type="button" size="sm" variant="secondary" disabled={importBusy} onClick={() => void runGoogleImport("append")}>
+                    Нэмж оруулах
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" disabled={importBusy} onClick={() => void runGoogleImport("replace")}>
+                    Бүгдийг солих
+                  </Button>
+                </div>
+                {importMsg ? (
+                  <p className={`text-xs ${importMsg.includes("Амжилттай") ? "text-emerald-700 dark:text-emerald-400" : "text-destructive"}`}>
+                    {importMsg}
+                  </p>
+                ) : null}
+              </div>
+            </div>
             {sorted.length === 0 ? (
               <p className="text-sm text-muted-foreground">Одоогоор асуулт алга. &quot;+ Асуулт нэмэх&quot; дарна уу.</p>
             ) : (
