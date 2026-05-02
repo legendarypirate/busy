@@ -4,11 +4,12 @@ import { cookies } from "next/headers";
 const WEEK = 60 * 60 * 24 * 7;
 const secureCookie = process.env.NODE_ENV === "production";
 
+const rawDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim();
 /**
- * Optional parent domain for cookies (e.g. `.busy.mn`). Must NOT be a full URL.
- * Leave unset on localhost; set in production only if both apex and www serve this app.
+ * Optional parent domain for cookies (e.g. `busy.mn`). Must NOT be a full URL.
+ * Standardized to remove leading dot for better apex domain compatibility.
  */
-export const platformSessionCookieDomain = process.env.PLATFORM_SESSION_COOKIE_DOMAIN?.trim() || undefined;
+export const platformSessionCookieDomain = (rawDomain?.startsWith(".") ? rawDomain.slice(1) : rawDomain) || undefined;
 
 function domainOpts(): { domain?: string } {
   return platformSessionCookieDomain ? { domain: platformSessionCookieDomain } : {};

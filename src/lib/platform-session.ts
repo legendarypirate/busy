@@ -39,11 +39,14 @@ export type PlatformUserWithBusyAuthz = PlatformUser & {
 /** Cookie-based session (matches login / Google callback cookies). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
   const jar = await cookies();
-  let idRaw = jar.get("bni_platform_account_id")?.value;
-  if (!idRaw) {
-    const h = await headers();
-    idRaw = readCookieFromHeader(h.get("cookie"), "bni_platform_account_id");
-  }
+  const idValue = jar.get("bni_platform_account_id")?.value;
+
+  const h = await headers();
+  const rawCookie = h.get("cookie");
+
+  // Prioritize headers fallback for Server Actions / multipart, or use jar value
+  const idRaw = idValue || readCookieFromHeader(rawCookie, "bni_platform_account_id");
+
   if (!idRaw) {
     return null;
   }
