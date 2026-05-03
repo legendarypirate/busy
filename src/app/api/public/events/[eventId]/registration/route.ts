@@ -37,7 +37,11 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
     const out = await getPublishedEventRegistrationDrawerSchema(eventId);
     if (!out.ok) {
-      return NextResponse.json({ success: false, message: out.message }, { status: 404 });
+      const notFoundEvent = out.message === "Эвент олдсонгүй.";
+      return NextResponse.json(
+        { success: false, message: out.message },
+        { status: notFoundEvent ? 404 : 200 },
+      );
     }
     return NextResponse.json({
       success: true,

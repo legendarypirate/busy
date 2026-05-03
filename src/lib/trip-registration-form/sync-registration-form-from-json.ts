@@ -50,10 +50,18 @@ export function needsTripOptions(t: TripFormQuestionType): boolean {
 
 /** Normalizes `business_trips.registration_form_json` array elements. */
 export function parseLegacyRegistrationArray(registration: unknown): LegacyRegistrationRow[] {
-  if (!Array.isArray(registration)) {
+  let v: unknown = registration;
+  if (typeof v === "string" && v.trim()) {
+    try {
+      v = JSON.parse(v) as unknown;
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(v)) {
     return [];
   }
-  return registration
+  return v
     .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
     .map((x) => ({
       name: String(x.name ?? "").trim(),

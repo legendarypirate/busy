@@ -378,14 +378,41 @@ export async function submitPublicFormResponseByTripId(input: {
 export async function getPublishedEventRegistrationDrawerSchema(eventId: bigint): Promise<
   { ok: true; eventTitle: string; schema: HomeTripDrawerSchemaItem[] } | { ok: false; message: string }
 > {
-  const form = await prisma.tripRegistrationForm.findFirst({
-    where: { eventId, isPublished: true },
-    include: {
-      event: { select: { title: true } },
-      questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
-    },
+  const ev = await prisma.bniEvent.findUnique({
+    where: { id: eventId },
+    select: { title: true, registrationFormJson: true },
   });
-  if (form) {
+  if (!ev) {
+    return { ok: false, message: "Эвент олдсонгүй." };
+  }
+
+  const eventTitle = ev.title?.trim() || "Арга хэмжээ";
+  const parsedRows = parseLegacyRegistrationArray(ev.registrationFormJson);
+  const legacySchemaDirect = legacyRowsToHomeDrawerSchema(parsedRows);
+
+  const loadPublishedForm = () =>
+    prisma.tripRegistrationForm.findFirst({
+      where: { eventId, isPublished: true },
+      include: {
+        event: { select: { title: true } },
+        questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+      },
+    });
+
+  let form = await loadPublishedForm();
+
+  const needsSyncFromLegacy =
+    legacySchemaDirect.length > 0 && (!form || form.questions.length === 0);
+  if (needsSyncFromLegacy) {
+    try {
+      await syncEventRegistrationFormFromLegacyJson(eventId, ev.registrationFormJson);
+    } catch (e) {
+      console.error("[getPublishedEventRegistrationDrawerSchema] syncEventRegistrationFormFromLegacyJson", e);
+    }
+    form = await loadPublishedForm();
+  }
+
+  if (form && form.questions.length > 0) {
     const schema: HomeTripDrawerSchemaItem[] = form.questions.map((q) => {
       const mapped = mapQuestionTypeToDrawer(q.type, q.options, q.placeholder);
       return {
@@ -397,29 +424,16 @@ export async function getPublishedEventRegistrationDrawerSchema(eventId: bigint)
         ...(mapped.options?.length ? { options: mapped.options } : {}),
       };
     });
-    const eventTitle = form.event?.title?.trim() || "Арга хэмжээ";
-    return { ok: true, eventTitle, schema };
+    return { ok: true, eventTitle: form.event?.title?.trim() || eventTitle, schema };
   }
 
-  const ev = await prisma.bniEvent.findUnique({
-    where: { id: eventId },
-    select: { title: true, registrationFormJson: true },
-  });
-  if (!ev) {
-    return {
-      ok: false,
-      message: "Эвент олдсонгүй.",
-    };
-  }
-  const legacySchema = legacyRowsToHomeDrawerSchema(parseLegacyRegistrationArray(ev.registrationFormJson));
-  if (legacySchema.length === 0) {
+  if (legacySchemaDirect.length === 0) {
     return {
       ok: false,
       message: "Энэ арга хэмжээнд нийтэд нээлттэй бүртгэлийн форм байхгүй байна. Зохион байгуулагчид хандана уу.",
     };
   }
-  const eventTitle = ev.title?.trim() || "Арга хэмжээ";
-  return { ok: true, eventTitle, schema: legacySchema };
+  return { ok: true, eventTitle, schema: legacySchemaDirect };
 }
 
 export async function submitPublicFormResponseByEventId(input: {
