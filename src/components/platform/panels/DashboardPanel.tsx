@@ -1,8 +1,32 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { GrowthHint, PlatformDashboardStats } from "@/lib/platform-dashboard-stats";
+import { formatPlatformInteger, formatPlatformRevenue } from "@/lib/platform-dashboard-stats";
 
-/** Mirrors legacy `platform-home.php` dashboard (`?panel=dashboard`) — demo metrics + table + widgets. */
-export default function DashboardPanel() {
+function GrowthMeta({ hint }: { hint: GrowthHint }) {
+  const toneClass =
+    hint.tone === "up" || (hint.tone === "neutral" && hint.pctLabel === "Шинэ")
+      ? "up"
+      : hint.tone === "down"
+        ? "down"
+        : "";
+  const showCaret = hint.tone === "up" || hint.tone === "down";
+  return (
+    <div className={`pl-org-metric-meta${toneClass ? ` ${toneClass}` : ""}`.trim()}>
+      {showCaret ? (
+        <>
+          <i className={`fa-solid fa-caret-${hint.tone === "up" ? "up" : "down"}`} /> {hint.pctLabel}{" "}
+        </>
+      ) : (
+        <>{hint.pctLabel ? `${hint.pctLabel} ` : null}</>
+      )}
+      <span className="text-muted fw-normal">{hint.sublabel}</span>
+    </div>
+  );
+}
+
+/** Mirrors legacy `platform-home.php` dashboard (`?panel=dashboard`) — top metrics from DB; table/widgets demo. */
+export default function DashboardPanel({ stats }: { stats: PlatformDashboardStats }) {
   return (
     <div className="pl-main-grid">
       <div className="pl-main-content">
@@ -15,36 +39,36 @@ export default function DashboardPanel() {
             <div className="pl-org-metric-label">
               <i className="fa-regular fa-calendar-check" /> Нийт арга хэмжээ
             </div>
-            <div className="pl-org-metric-val">128</div>
-            <div className="pl-org-metric-meta up">
-              <i className="fa-solid fa-caret-up" /> 18%{" "}
-              <span className="text-muted fw-normal">сүүлийн 30 хоногт</span>
-            </div>
+            <div className="pl-org-metric-val">{formatPlatformInteger(stats.totalEvents)}</div>
+            <GrowthMeta hint={stats.eventGrowth} />
           </div>
           <div className="pl-org-metric-card">
             <div className="pl-org-metric-label">
               <i className="fa-regular fa-clock" /> Удахгүй болох
             </div>
-            <div className="pl-org-metric-val">24</div>
+            <div className="pl-org-metric-val">{formatPlatformInteger(stats.upcomingNext30d)}</div>
             <div className="pl-org-metric-meta text-muted">Дараагийн 30 хоногт</div>
           </div>
           <div className="pl-org-metric-card">
             <div className="pl-org-metric-label">
               <i className="fa-regular fa-user" /> Нийт бүртгэл
             </div>
-            <div className="pl-org-metric-val">2,458</div>
-            <div className="pl-org-metric-meta up">
-              <i className="fa-solid fa-caret-up" /> 24%{" "}
-              <span className="text-muted fw-normal">нийт өсөлт</span>
-            </div>
+            <div className="pl-org-metric-val">{formatPlatformInteger(stats.totalRegistrations)}</div>
+            <GrowthMeta hint={stats.registrationGrowth} />
           </div>
           <div className="pl-org-metric-card">
             <div className="pl-org-metric-label">
               <i className="fa-regular fa-circle-check" /> Ирц бүртгэсэн
             </div>
-            <div className="pl-org-metric-val">1,783</div>
+            <div className="pl-org-metric-val">{formatPlatformInteger(stats.attendancePresent)}</div>
             <div className="pl-org-metric-meta" style={{ color: "#10b981" }}>
-              <b>72%</b> <span className="text-muted fw-normal">ирцийн хувь</span>
+              {stats.attendancePct != null ? (
+                <>
+                  <b>{stats.attendancePct}%</b> <span className="text-muted fw-normal">ирцийн хувь (7 хоногийн хурал)</span>
+                </>
+              ) : (
+                <span className="text-muted fw-normal">Ирцийн өгөгдөл байхгүй</span>
+              )}
             </div>
           </div>
           <div className="pl-org-metric-card">
@@ -52,19 +76,16 @@ export default function DashboardPanel() {
               <i className="fa-solid fa-coins" /> Нийт орлого
             </div>
             <div className="pl-org-metric-val" style={{ fontSize: "1rem" }}>
-              327,450,000₮
+              {formatPlatformRevenue(stats.revenueTotalMnt)}
             </div>
-            <div className="pl-org-metric-meta up">
-              <i className="fa-solid fa-caret-up" /> 32%{" "}
-              <span className="text-muted fw-normal">сүүлийн 30 хоногт</span>
-            </div>
+            <GrowthMeta hint={stats.revenueGrowth} />
           </div>
           <div className="pl-org-metric-card">
             <div className="pl-org-metric-label">
               <i className="fa-regular fa-hourglass-half" /> Хүлээгдэж буй
             </div>
-            <div className="pl-org-metric-val">16</div>
-            <div className="pl-org-metric-meta text-warning">Зөвшөөрөл хүлээгдэж буй</div>
+            <div className="pl-org-metric-val">{formatPlatformInteger(stats.pendingApprovals)}</div>
+            <div className="pl-org-metric-meta text-warning">Төлбөр, зөвшөөрөл, гишүүн элсэлт</div>
           </div>
         </div>
         <div className="pl-btn-row">
