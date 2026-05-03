@@ -138,7 +138,9 @@ export default async function TripDetailsPage({ params }: Props) {
             <div className="col-lg-8">
               <div className="trd-status-badge"><i className="fa-solid fa-circle-check"></i> Бүртгэл нээлттэй</div>
               <h1 className="trd-hero-title">{trip.destination}</h1>
-              <p className="lead mb-4 opacity-75">7 хоногийн бизнесийн дэлхийн хэмжээний арга хэмжээ</p>
+              {extras.short_description.trim() ? (
+                <p className="lead mb-4 opacity-75">{extras.short_description.trim()}</p>
+              ) : null}
               {isLoggedIn ? (
                 <Link href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
                   Төлбөр төлөх
