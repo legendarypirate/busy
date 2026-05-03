@@ -24,7 +24,7 @@ type SearchParams = {
 export default async function EventsPage({ searchParams }: { searchParams: SearchParams }) {
   const chapterFilter = parseInt(searchParams.chapter || "0", 10);
   const status = ["upcoming", "past", "all"].includes(searchParams.status || "") ? searchParams.status! : "upcoming";
-  const validEt = ["all", "weekly_meeting", "visitor_day", "training", "social"];
+  const validEt = ["all", "weekly_meeting", "visitor_day", "training", "social", "event"];
   const eventType = validEt.includes(searchParams.event_type || "") ? searchParams.event_type! : "all";
   const q = searchParams.q?.trim() || "";
   const dateFrom = searchParams.date_from?.trim() || "";
@@ -101,10 +101,16 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
 
   const getEventTypeBadge = (type: string) => {
     switch (type) {
-      case 'visitor_day': return 'Visitor day';
-      case 'training': return 'Сургалт';
-      case 'social': return 'Social';
-      default: return '7 хоногийн хурал';
+      case "visitor_day":
+        return "Visitor day";
+      case "training":
+        return "Сургалт";
+      case "social":
+        return "Social";
+      case "event":
+        return "Event";
+      default:
+        return "7 хоногийн хурал";
     }
   };
 
@@ -174,6 +180,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
                   <option value="visitor_day">Visitor day</option>
                   <option value="training">Сургалт</option>
                   <option value="social">Social</option>
+                  <option value="event">Event</option>
                 </select>
               </div>
 

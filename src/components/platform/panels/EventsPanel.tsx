@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import EventHeroImageField from "@/components/platform/forms/EventHeroImageField";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
 import SpeakerPhotoUrlField from "@/components/platform/forms/SpeakerPhotoUrlField";
@@ -9,14 +10,25 @@ import { parseBniEventDetailEnvelope } from "@/lib/bni-event-detail";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
-const EVENT_TYPES = ["weekly_meeting", "visitor_day", "training", "social"] as const;
+const EVENT_TYPES = ["weekly_meeting", "visitor_day", "training", "social", "event"] as const;
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
+const EVENT_TYPE_LABELS: Record<(typeof EVENT_TYPES)[number], string> = {
   weekly_meeting: "7 хоногийн хурал",
   visitor_day: "Visitor day",
   training: "Сургалт",
   social: "Social",
+  event: "Event",
 };
+
+const KNOWN_EVENT_TYPES = new Set<string>(EVENT_TYPES);
+
+function labelForEventType(raw: string): string {
+  const t = raw.trim();
+  if (KNOWN_EVENT_TYPES.has(t)) {
+    return EVENT_TYPE_LABELS[t as (typeof EVENT_TYPES)[number]];
+  }
+  return t || "—";
+}
 
 function firstParam(v: string | string[] | undefined): string | undefined {
   if (Array.isArray(v)) {
@@ -99,7 +111,10 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
   }
 
   const [chapters, schedules, curriculums, managedEvents] = await Promise.all([
-    prisma.chapter.findMany({ orderBy: { name: "asc" } }),
+    prisma.chapter.findMany({
+      orderBy: [{ region: { name: "asc" } }, { name: "asc" }],
+      include: { region: { select: { name: true } } },
+    }),
     prisma.chapterWeeklySchedule.findMany({
       take: 500,
       orderBy: { id: "desc" },
@@ -139,7 +154,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
         id: existing.id,
         title: existing.title ?? "",
         chapterId: existing.chapterId ?? null,
-        eventType: EVENT_TYPES.some((t) => t === existing.eventType) ? existing.eventType : "weekly_meeting",
+        eventType: existing.eventType?.trim() || "weekly_meeting",
         startsAt: existing.startsAt,
         endsAt: existing.endsAt,
         location: existing.location ?? "",
@@ -218,7 +233,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     </td>
                     <td>
                       <div className="small fw-bold">{ev.chapter?.name ?? "—"}</div>
-                      <div className="smaller text-muted">{EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType}</div>
+                      <div className="smaller text-muted">{labelForEventType(ev.eventType)}</div>
                     </td>
                     <td className="small text-muted">{toDatetimeLocal(new Date(ev.startsAt))}</td>
                     <td>{fmtMoney(ev.priceMnt)}</td>
@@ -311,10 +326,23 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                       <option value="">— Сонгохгүй —</option>
                       {chapters.map((ch) => (
                         <option key={ch.id} value={ch.id}>
-                          {ch.name}
+                          {ch.region.name} · {ch.name}
                         </option>
                       ))}
                     </select>
+                    {venue === "admin" ? (
+                      <p className="small text-muted mt-1 mb-0">
+                        Жагсаалт нь <code>bni_chapters</code> хүснэгтэй ижил —{" "}
+                        <Link href="/admin/bni-chapters" className="text-decoration-none">
+                          Админ → Бүлгүүд
+                        </Link>
+                        .
+                      </p>
+                    ) : (
+                      <p className="small text-muted mt-1 mb-0">
+                        Бүс · бүлгийн нэр (<code>bni_chapters</code>).
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="pm-label">Төрөл</label>
@@ -324,6 +352,9 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                           {EVENT_TYPE_LABELS[type]}
                         </option>
                       ))}
+                      {existing && !KNOWN_EVENT_TYPES.has(eventForm.eventType) ? (
+                        <option value={eventForm.eventType}>{eventForm.eventType}</option>
+                      ) : null}
                     </select>
                   </div>
                 </div>
@@ -445,16 +476,20 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     defaultValue={parsed.audience_text}
                   />
                 </div>
-                <div className="col-12">
-                  <label className="pm-label">Hero зураг (URL эсвэл /assets/... зам)</label>
-                  <input
-                    type="text"
-                    className="pm-input"
-                    name="hero_image_url"
-                    placeholder="Ж: /assets/img/meeting-hero.png эсвэл https://..."
-                    defaultValue={parsed.hero_image_url}
-                  />
-                </div>
+                {venue === "admin" ? (
+                  <EventHeroImageField defaultUrl={parsed.hero_image_url} />
+                ) : (
+                  <div className="col-12">
+                    <label className="pm-label">Hero зураг (URL эсвэл /assets/... зам)</label>
+                    <input
+                      type="text"
+                      className="pm-input"
+                      name="hero_image_url"
+                      placeholder="Ж: /assets/img/meeting-hero.png эсвэл https://..."
+                      defaultValue={parsed.hero_image_url}
+                    />
+                  </div>
+                )}
               </div>
               <div className="mt-4">
                 <label className="pm-label d-block mb-1">Илтгэгчид (5 хүртэл)</label>

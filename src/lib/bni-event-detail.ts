@@ -231,6 +231,8 @@ export function eventTypeBadgeMn(eventType: string): string {
       return "Сургалт";
     case "social":
       return "Social";
+    case "event":
+      return "Event";
     default:
       return "BNI";
   }
