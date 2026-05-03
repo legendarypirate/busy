@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { saveMarketingListingHeroSlidesAction } from "@/app/admin/(protected)/marketing-listing-heroes/actions";
-import { slidesToTextareaLines } from "@/lib/marketing-listing-hero";
+import { slidesToTextareaLines } from "@/lib/marketing-listing-hero-shared";
 
 type Props = {
   initialTrips: string[];
