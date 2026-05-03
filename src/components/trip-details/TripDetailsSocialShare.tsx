@@ -1,61 +1,39 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 type Props = {
-  /** Page path, e.g. `/trip-details/9` */
-  sharePath: string;
-  /** Trip title for X post text */
+  /** Full absolute URL to this trip page (e.g. `https://busy.mn/trip-details/9`). */
+  sharePageUrl: string;
   shareTitle: string;
-  /** When set (e.g. from `NEXT_PUBLIC_APP_URL`), used for sharer URLs without waiting for client. */
-  canonicalUrl?: string;
 };
 
-export function TripDetailsSocialShare({ sharePath, shareTitle, canonicalUrl = "" }: Props) {
-  const [pageUrl, setPageUrl] = useState(() => canonicalUrl.trim());
-
-  useEffect(() => {
-    const c = canonicalUrl.trim();
-    if (c) {
-      setPageUrl(c);
-      return;
-    }
-    if (typeof window === "undefined") return;
-    const path = sharePath.startsWith("/") ? sharePath : `/${sharePath}`;
-    setPageUrl(`${window.location.origin}${path}`);
-  }, [canonicalUrl, sharePath]);
-
-  const encodedUrl = useMemo(() => encodeURIComponent(pageUrl), [pageUrl]);
+export function TripDetailsSocialShare({ sharePageUrl, shareTitle }: Props) {
+  const encodedUrl = useMemo(() => encodeURIComponent(sharePageUrl), [sharePageUrl]);
   const encodedText = useMemo(() => encodeURIComponent(shareTitle.trim() || "BUSY.mn — аялал"), [shareTitle]);
 
-  const fbHref = pageUrl ? `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` : "#";
-  const xHref = pageUrl ? `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}` : "#";
-
-  const block = (e: React.MouseEvent) => {
-    if (!pageUrl) e.preventDefault();
-  };
+  const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+  const xHref = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
 
   return (
     <div className="trd-share" aria-label="Сошиалд хуваалцах">
       <span className="trd-share-label">Хуваалцах</span>
       <div className="trd-share-btns">
         <a
-          className={`trd-share-btn trd-share-btn--fb${!pageUrl ? " trd-share-btn--hold" : ""}`}
+          className="trd-share-btn trd-share-btn--fb"
           href={fbHref}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Facebook-д хуваалцах"
-          onClick={block}
         >
           <i className="fa-brands fa-facebook-f" aria-hidden />
         </a>
         <a
-          className={`trd-share-btn trd-share-btn--x${!pageUrl ? " trd-share-btn--hold" : ""}`}
+          className="trd-share-btn trd-share-btn--x"
           href={xHref}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="X (Twitter) дээр хуваалцах"
-          onClick={block}
         >
           <i className="fa-brands fa-x-twitter" aria-hidden />
         </a>

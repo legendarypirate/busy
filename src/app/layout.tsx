@@ -2,8 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
+
+function rootMetadataBase(): URL {
+  try {
+    return new URL(`${marketingSiteOrigin()}/`);
+  } catch {
+    return new URL("https://busy.mn/");
+  }
+}
 
 export const metadata: Metadata = {
+  metadataBase: rootMetadataBase(),
   title: "BUSY.mn",
   description: "BUSY Platform",
 };

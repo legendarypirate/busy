@@ -326,25 +326,19 @@ export function TripDetailsHeroCtas({ isLoggedIn, payTripUrl }: HeroProps) {
   const { openRegister } = useTripDetailsBooking();
   if (isLoggedIn) {
     return (
-      <div className="d-flex flex-column align-items-center align-items-lg-start gap-3 mb-4">
-        <a href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 shadow">
-          Төлбөр төлөх
-        </a>
-        <TripDetailsRegistrationQr variant="hero" />
-      </div>
+      <a href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
+        Төлбөр төлөх
+      </a>
     );
   }
   return (
-    <div className="d-flex flex-column align-items-center align-items-lg-start gap-3 mb-4">
-      <button
-        type="button"
-        className="btn btn-qpay btn-lg rounded-pill fw-bold px-5 shadow"
-        onClick={() => openRegister()}
-      >
-        Бүртгүүлэх
-      </button>
-      <TripDetailsRegistrationQr variant="hero" />
-    </div>
+    <button
+      type="button"
+      className="btn btn-qpay btn-lg rounded-pill fw-bold px-5 mb-4 shadow"
+      onClick={() => openRegister()}
+    >
+      Бүртгүүлэх
+    </button>
   );
 }
 
@@ -380,7 +374,7 @@ export function TripDetailsSidebarRegisterCtas({ isLoggedIn, payTripUrl, qpayLog
           <span>Зөвлөх</span>
         </button>
       </div>
-      <TripDetailsRegistrationQr variant="sidebar" />
+      <TripDetailsRegistrationQr />
     </>
   );
 }

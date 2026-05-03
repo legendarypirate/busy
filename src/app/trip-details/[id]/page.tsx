@@ -14,7 +14,7 @@ import { TripDetailsSocialShare } from "@/components/trip-details/TripDetailsSoc
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
-import { tripDetailsPublicOrigin } from "@/lib/trip-details-public-url";
+import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
 import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 
 export const dynamic = "force-dynamic";
@@ -52,21 +52,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogDescription =
     bits.join(" · ") || plainDesc || `${dest} — BUSY.mn олон улсын бизнес аялал.`;
 
-  const origin = await tripDetailsPublicOrigin();
+  const base = marketingSiteOrigin();
   let cover = mediaUrl(trip.coverImageUrl || "");
   const heroUrl = mediaUrl(extras.trip_details_hero_url);
   if (heroUrl) cover = heroUrl;
   if (!cover) {
     cover = "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1200&q=80";
   }
-  const base = origin.replace(/\/$/, "");
   const ogImage =
     cover.startsWith("http://") || cover.startsWith("https://")
       ? cover
-      : base
-        ? `${base}${cover.startsWith("/") ? cover : `/${cover}`}`
-        : cover;
-  const canonical = base ? `${base}/trip-details/${tripId}` : undefined;
+      : `${base}${cover.startsWith("/") ? cover : `/${cover}`}`;
+  const canonical = `${base}/trip-details/${tripId}`;
   const title = `${dest} | BUSY.mn`;
   const descShort = ogDescription.length > 300 ? `${ogDescription.slice(0, 297)}…` : ogDescription;
 
@@ -80,18 +77,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "BUSY.mn",
       locale: "mn_MN",
       type: "website",
-      images:
-        ogImage.startsWith("http://") || ogImage.startsWith("https://")
-          ? [{ url: ogImage, width: 1200, height: 630, alt: dest }]
-          : [],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: dest }],
     },
     twitter: {
       card: "summary_large_image",
       title: dest,
       description: descShort.length > 200 ? `${descShort.slice(0, 197)}…` : descShort,
-      images: ogImage.startsWith("http://") || ogImage.startsWith("https://") ? [ogImage] : [],
+      images: [ogImage],
     },
-    ...(canonical ? { alternates: { canonical } } : {}),
+    alternates: { canonical },
   };
 }
 
@@ -209,9 +203,9 @@ export default async function TripDetailsPage({ params }: Props) {
   const formattedEndStr = formattedStartYear === formattedEndYear ? formatMnDate(endDate).slice(5).replace(/-/g, '.') : formatMnDate(endDate).replace(/-/g, '.');
   const tripDateRange = `${formattedStartStr} – ${formattedEndStr}`;
 
-  const origin = await tripDetailsPublicOrigin();
+  const origin = marketingSiteOrigin();
   const sharePath = `/trip-details/${tripId}`;
-  const canonicalShareUrl = origin ? `${origin.replace(/\/$/, "")}${sharePath}` : "";
+  const canonicalShareUrl = `${origin}${sharePath}`;
   const shareTitle = dest || trip.destination?.trim() || "BUSY.mn — бизнес аялал";
 
   const publishedForm = await prisma.tripRegistrationForm.findFirst({
@@ -221,7 +215,7 @@ export default async function TripDetailsPage({ params }: Props) {
   const registerTargetPath = publishedForm?.publicSlug
     ? `/register/${encodeURIComponent(publishedForm.publicSlug)}`
     : sharePath;
-  const registerAbsUrl = origin ? `${origin.replace(/\/$/, "")}${registerTargetPath}` : "";
+  const registerAbsUrl = `${origin}${registerTargetPath}`;
   let registrationQrDataUrl: string | null = null;
   let registrationQrCaption: string | null = null;
   if (registerAbsUrl) {
@@ -289,7 +283,7 @@ export default async function TripDetailsPage({ params }: Props) {
                   </div>
                 </div>
               </div>
-              <TripDetailsSocialShare sharePath={sharePath} shareTitle={shareTitle} canonicalUrl={canonicalShareUrl} />
+              <TripDetailsSocialShare sharePageUrl={canonicalShareUrl} shareTitle={shareTitle} />
             </div>
           </div>
         </div>
