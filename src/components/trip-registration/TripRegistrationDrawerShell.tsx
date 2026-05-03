@@ -1,0 +1,182 @@
+"use client";
+
+import type { ReactNode } from "react";
+import type { RefObject } from "react";
+import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
+
+type Feedback = { text: string; kind: "" | "loading" | "success" | "error" };
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  tripTitle: string;
+  tripId: number | null;
+  loading: boolean;
+  schema: HomeTripDrawerSchemaItem[];
+  feedback: Feedback;
+  formRef: RefObject<HTMLFormElement | null>;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  beforeActions?: ReactNode;
+};
+
+export function TripRegistrationDrawerShell({
+  open,
+  onClose,
+  tripTitle,
+  tripId,
+  loading,
+  schema,
+  feedback,
+  formRef,
+  onSubmit,
+  beforeActions,
+}: Props) {
+  const feedbackClass =
+    feedback.kind === ""
+      ? "trip-register-feedback"
+      : `trip-register-feedback is-${feedback.kind}`;
+
+  return (
+    <>
+      <div
+        className="trip-register-overlay"
+        id="tripRegisterOverlay"
+        hidden={!open}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`trip-register-drawer${open ? " is-open" : ""}`}
+        id="tripRegisterDrawer"
+        aria-hidden={!open}
+        aria-labelledby="tripRegisterTitle"
+      >
+        <div className="trip-register-drawer__header">
+          <div>
+            <h3 id="tripRegisterTitle" className="trip-register-drawer__title">
+              Эвэнт / Аяллын бүртгэл
+            </h3>
+            <p className="trip-register-drawer__subtitle mb-0" id="tripRegisterTripName">
+              {tripTitle}
+            </p>
+          </div>
+          <button type="button" className="trip-register-drawer__close" aria-label="Хаах" onClick={onClose}>
+            <i className="fa-solid fa-xmark" />
+          </button>
+        </div>
+
+        <form ref={formRef} className="trip-register-form" noValidate onSubmit={onSubmit}>
+          <input type="hidden" name="trip_id" value={tripId ?? ""} readOnly />
+
+          <div id="tripRegisterDynamicFields">
+            {loading ? <div className="small text-muted">Форм ачаалж байна...</div> : null}
+            {!loading && feedback.kind === "error" && schema.length === 0 ? (
+              <div className="small text-danger">{feedback.text}</div>
+            ) : null}
+            {!loading &&
+              schema.map((q, idx) => {
+                const num = idx + 1;
+                const req = q.required ? " *" : "";
+                const label = (
+                  <span>
+                    {num}. {q.label}
+                    {req}
+                  </span>
+                );
+
+                if (q.type === "textarea") {
+                  return (
+                    <label key={q.name} className="trip-register-field">
+                      {label}
+                      <textarea
+                        name={`answers[${q.name}]`}
+                        rows={3}
+                        required={q.required}
+                        placeholder={q.placeholder}
+                      />
+                    </label>
+                  );
+                }
+                if (q.type === "select" && q.options?.length) {
+                  return (
+                    <label key={q.name} className="trip-register-field">
+                      {label}
+                      <select name={`answers[${q.name}]`} required={q.required}>
+                        <option value="">Сонгох</option>
+                        {q.options.map((op) => (
+                          <option key={op} value={op}>
+                            {op}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                }
+                if ((q.type === "radio" || q.type === "checkbox") && q.options?.length) {
+                  const isRadio = q.type === "radio";
+                  return (
+                    <fieldset key={q.name} className="trip-register-fieldset">
+                      <legend>
+                        {num}. {q.label}
+                        {req}
+                      </legend>
+                      {isRadio ? (
+                        <div className="trip-register-inline-options">
+                          {q.options.map((op) => (
+                            <label key={op}>
+                              <input type="radio" name={`answers[${q.name}]`} value={op} required={q.required} /> {op}
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="trip-register-checkboxes">
+                          {q.options.map((op) => (
+                            <label key={op}>
+                              <input type="checkbox" name={`answers[${q.name}][]`} value={op} /> {op}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </fieldset>
+                  );
+                }
+                const inputType =
+                  q.type === "number" ? "number" : q.type === "email" ? "email" : q.type === "tel" ? "tel" : "text";
+                return (
+                  <label key={q.name} className="trip-register-field">
+                    {label}
+                    <input
+                      type={inputType}
+                      name={`answers[${q.name}]`}
+                      required={q.required}
+                      placeholder={q.placeholder}
+                    />
+                  </label>
+                );
+              })}
+          </div>
+
+          {beforeActions}
+
+          <div className="trip-register-actions">
+            <button type="button" className="btn-exact-outline" onClick={onClose}>
+              Хаах
+            </button>
+            <button
+              type="submit"
+              className="btn-qpay"
+              disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+            >
+              Бүртгүүлэх
+            </button>
+          </div>
+          {feedback.text && (schema.length > 0 || feedback.kind !== "error") ? (
+            <div className={feedbackClass} role="status" aria-live="polite">
+              {feedback.text}
+            </div>
+          ) : null}
+        </form>
+      </aside>
+    </>
+  );
+}

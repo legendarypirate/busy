@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary";
 import { cn } from "@/lib/utils";
 
 type Row = {
@@ -16,6 +17,7 @@ type Row = {
   status: TripFormResponseWorkflowStatus;
   paymentStatus: TripFormMoneyStatus;
   internalNote: string | null;
+  orderSummary: unknown;
   hasParticipant: boolean;
   answers: { questionLabel: string; value: string | null; fileUrl: string | null }[];
 };
@@ -143,6 +145,7 @@ export default function TripResponsesClient({ tripId, formId }: { tripId: number
         r.id,
         r.status,
         r.paymentStatus,
+        formatOrderSummaryMn(r.orderSummary),
         ...r.answers.map((a) => `${a.questionLabel} ${a.value ?? ""} ${a.fileUrl ?? ""}`),
       ]
         .join(" ")
@@ -220,9 +223,12 @@ export default function TripResponsesClient({ tripId, formId }: { tripId: number
               </TableHeader>
               <TableBody>
                 {filtered.map((r) => {
-                  const preview = r.answers
-                    .slice(0, 2)
-                    .map((a) => `${a.questionLabel}: ${a.value ?? a.fileUrl ?? "—"}`)
+                  const orderBit = formatOrderSummaryMn(r.orderSummary).replace(/\n/g, " · ");
+                  const preview = [
+                    orderBit,
+                    ...r.answers.slice(0, 2).map((a) => `${a.questionLabel}: ${a.value ?? a.fileUrl ?? "—"}`),
+                  ]
+                    .filter(Boolean)
                     .join(" · ");
                   return (
                     <TableRow key={r.id}>
@@ -382,6 +388,16 @@ function ResponseDetailDrawer({
           </div>
 
           <Separator className="my-6" />
+
+          {formatOrderSummaryMn(row.orderSummary) ? (
+            <>
+              <h3 className="text-sm font-medium text-foreground">Захиалга (түвшин, тоо, дүн)</h3>
+              <div className="mt-2 rounded-lg border bg-muted/40 px-3 py-2.5 text-sm whitespace-pre-wrap">
+                {formatOrderSummaryMn(row.orderSummary)}
+              </div>
+              <Separator className="my-6" />
+            </>
+          ) : null}
 
           <h3 className="text-sm font-medium text-foreground">Хариултууд</h3>
           <dl className="mt-3 space-y-3">

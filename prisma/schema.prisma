@@ -585,6 +585,8 @@ model TripFormResponse {
   submittedByUserId BigInt?                        @map("submitted_by_user_id")
   status            TripFormResponseWorkflowStatus @default(SUBMITTED)
   paymentStatus     TripFormMoneyStatus            @default(UNPAID) @map("payment_status")
+  /** Trip detail checkout: tier counts, departure, totals (JSON). */
+  orderSummary      Json?                          @map("order_summary")
   internalNote      String?                        @map("internal_note") @db.Text
   submittedAt       DateTime                       @default(now()) @map("submitted_at") @db.Timestamptz(6)
   createdAt         DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -1,21 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useId, useMemo, useState } from "react";
+import { useId } from "react";
+import { useTripDetailsBooking } from "@/components/trip-details/trip-details-booking-context";
+import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
 
-export type TripCheckoutTier = {
-  id: string;
-  label: string;
-  subtitle: string;
-  priceMnt: number;
-};
+export type { TripCheckoutTier };
 
 type Props = {
   defaultDepartureIso: string;
   tiers: TripCheckoutTier[];
   maxPassengers: number;
   capacityNote: string;
-  /** Summary grid, CTAs, trust chips (server-rendered markup). */
+  /** Summary grid, trust chips (server-rendered). CTAs use `TripDetailsSidebarRegisterCtas`. */
   children: ReactNode;
 };
 
@@ -23,56 +20,21 @@ function formatMnt(n: number): string {
   return n.toLocaleString("mn-MN", { maximumFractionDigits: 0 });
 }
 
-function emptyCounts(tiers: TripCheckoutTier[]): Record<string, number> {
-  return tiers.reduce(
-    (acc, t) => {
-      acc[t.id] = 0;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-}
-
 /**
- * Book panel + tier selector share one checkout state: headline price = Σ (qty × tier price).
+ * Book panel + tier selector; checkout state lives in `TripDetailsBookingRegisterProvider`.
  */
 export function TripDetailsBookSidebarClient({
-  defaultDepartureIso,
+  defaultDepartureIso: _defaultDepartureIso,
   tiers,
   maxPassengers,
   capacityNote,
   children,
 }: Props) {
   const formId = useId();
-  const [departure, setDeparture] = useState(defaultDepartureIso);
-  const [counts, setCounts] = useState<Record<string, number>>(() => emptyCounts(tiers));
-
-  const totalPax = useMemo(() => tiers.reduce((s, t) => s + (counts[t.id] ?? 0), 0), [counts, tiers]);
-
-  const checkoutTotalMnt = useMemo(
-    () => tiers.reduce((s, t) => s + (counts[t.id] ?? 0) * t.priceMnt, 0),
-    [counts, tiers],
-  );
-
-  const setTier = (id: string, next: number) => {
-    const clamped = Math.max(0, next);
-    const other = tiers.filter((t) => t.id !== id).reduce((s, t) => s + (counts[t.id] ?? 0), 0);
-    const capForThis = Math.max(0, maxPassengers - other);
-    setCounts((prev) => ({ ...prev, [id]: Math.min(clamped, capForThis) }));
-  };
-
-  const bump = (id: string, delta: number) => {
-    setTier(id, (counts[id] ?? 0) + delta);
-  };
-
-  const clearTier = (id: string) => {
-    setCounts((prev) => ({ ...prev, [id]: 0 }));
-  };
+  const { departure, setDeparture, counts, bump, clearTier, totalPax, checkoutTotalMnt } = useTripDetailsBooking();
 
   const checkoutSub =
-    totalPax === 0
-      ? "Түвшин сонгоно уу · нийт төлбөр"
-      : `${totalPax} хүн · нийт төлбөр`;
+    totalPax === 0 ? "Түвшин сонгоно уу · нийт төлбөр" : `${totalPax} хүн · нийт төлбөр`;
 
   if (tiers.length === 0) {
     return null;

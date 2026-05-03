@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       return NextResponse.json({ success: false, message: "Буруу аяллын дугаар." }, { status: 400 });
     }
 
-    let body: { answers: TripFormSubmitAnswer[] };
+    let body: { answers: TripFormSubmitAnswer[]; orderSummary?: unknown };
     try {
       body = (await req.json()) as typeof body;
     } catch {
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         tripId,
         answers: body.answers,
         submittedByUserId: user?.id ?? null,
+        orderSummary: body.orderSummary,
       });
       return NextResponse.json({ success: true, message: "Таны бүртгэлийг амжилттай хүлээн авлаа." });
     } catch (e) {
@@ -95,14 +96,26 @@ export async function POST(req: NextRequest, ctx: Ctx) {
             ? "validation"
             : msg === "NOT_FOUND"
               ? "not_found"
-              : "submit_failed";
+              : msg === "INVALID_ORDER_SUMMARY" || msg === "ORDER_REQUIRES_TIERS" || msg === "INVALID_TIER"
+                ? "order_summary"
+                : msg === "STALE_PRICE"
+                  ? "stale_price"
+                  : msg === "CAPACITY_EXCEEDED"
+                    ? "capacity"
+                    : "submit_failed";
       const status = statusFromError(e);
       const friendly =
         code === "validation"
           ? "Заавал талбаруудыг бөглөж, зөв форматаар оруулна уу."
           : code === "not_found"
             ? "Нийтэд нээлттэй форм олдсонгүй."
-            : "Бүртгэл хадгалах үед алдаа гарлаа. Дахин оролдоно уу.";
+            : code === "order_summary"
+              ? "Захиалгын мэдээлэл буруу байна. Түвшин, тоо ширхэгийг дахин сонгоно уу."
+              : code === "stale_price"
+                ? "Үнэ шинэчлэгдсэн байна. Хуудсыг дахин ачаалаад сонголтоо шинэчилнэ үү."
+                : code === "capacity"
+                  ? "Суудлын хязгаараас хэтэрсэн тоо сонгосон байна."
+                  : "Бүртгэл хадгалах үед алдаа гарлаа. Дахин оролдоно уу.";
       return NextResponse.json({ success: false, message: friendly, code }, { status });
     }
   } catch {

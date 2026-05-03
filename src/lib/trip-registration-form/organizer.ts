@@ -5,6 +5,7 @@ import type {
   TripFormResponseWorkflowStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary";
 import { assertTripEditableByAccount } from "@/lib/trip-registration-form/service";
 import { MVP_TRIP_FORM_QUESTION_TYPES } from "@/lib/trip-registration-form/types";
 
@@ -286,6 +287,7 @@ export async function buildTripFormResponsesCsv(formId: string, accountId: bigin
     "submitted_at",
     "workflow_status",
     "payment_status",
+    "order_summary",
     ...questions.map((q) => q.label),
   ];
   const lines = [headers.map(csvEscape).join(",")];
@@ -298,6 +300,7 @@ export async function buildTripFormResponsesCsv(formId: string, accountId: bigin
       r.submittedAt.toISOString(),
       r.status,
       r.paymentStatus,
+      formatOrderSummaryMn(r.orderSummary).replace(/\n/g, " | "),
       ...questions.map((q) => {
         const t = (byQ.get(q.id) ?? "").trim();
         const f = (fileByQ.get(q.id) ?? "").trim();

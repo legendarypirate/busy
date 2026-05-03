@@ -2,6 +2,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import TripDetailsEffects from "@/components/trip-details/TripDetailsEffects";
 import { TripItineraryAccordion } from "@/components/trip-details/TripItineraryAccordion";
+import {
+  TripDetailsBookingRegisterProvider,
+  TripDetailsHeroCtas,
+  TripDetailsSidebarRegisterCtas,
+} from "@/components/trip-details/trip-details-booking-context";
 import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDetailsBookSidebarClient";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
@@ -92,7 +97,6 @@ export default async function TripDetailsPage({ params }: Props) {
   const tripHeroBg = tripDetailHeroUrl || tripCover;
 
   const payTripUrl = `/pay-advance?type=trip&id=${tripId}`;
-  const tripRegisterLoginUrl = `/auth/login?next=${encodeURIComponent(payTripUrl)}`;
   const qpayLogoUrl = '/assets/img/qpay-logo.png';
 
   const isLoggedIn = false; // Replace with NextAuth or session logic
@@ -128,6 +132,14 @@ export default async function TripDetailsPage({ params }: Props) {
   const tripDateRange = `${formattedStartStr} – ${formattedEndStr}`;
 
   return (
+    <TripDetailsBookingRegisterProvider
+      tripId={tripId}
+      tripTitle={dest || trip.destination || "Бизнес аялал"}
+      defaultDepartureIso={bookingDepartureIso}
+      tiers={bookingPanelTiers}
+      maxPassengers={seatCapacity}
+      capacityNote={bookingCapacityNote}
+    >
     <div className="trd-body">
       <TripDetailsEffects />
       {/* Hero Section */}
@@ -142,15 +154,7 @@ export default async function TripDetailsPage({ params }: Props) {
               {extras.short_description.trim() ? (
                 <p className="lead mb-4 opacity-75">{extras.short_description.trim()}</p>
               ) : null}
-              {isLoggedIn ? (
-                <Link href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
-                  Төлбөр төлөх
-                </Link>
-              ) : (
-                <Link href={tripRegisterLoginUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
-                  Бүртгүүлэх
-                </Link>
-              )}
+              <TripDetailsHeroCtas isLoggedIn={isLoggedIn} payTripUrl={payTripUrl} />
               <div className="trd-hero-meta">
                 <div className="trd-hero-meta-item">
                   <i className="fa-regular fa-calendar-days"></i>
@@ -285,24 +289,11 @@ export default async function TripDetailsPage({ params }: Props) {
                   </div>
                 </div>
 
-                <div className="trd-cta-grid trd-cta-grid--stacked">
-                  {isLoggedIn ? (
-                    <Link className="trd-btn-qpay" href={payTripUrl}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={qpayLogoUrl} alt="QPay" width="72" height="20" loading="lazy" decoding="async" />
-                      <span>Төлбөр төлөх</span>
-                    </Link>
-                  ) : (
-                    <Link className="trd-btn-trip-register" href={tripRegisterLoginUrl}>
-                      <i className="fa-solid fa-user-check" aria-hidden="true"></i>
-                      <span>Бүртгүүлэх</span>
-                    </Link>
-                  )}
-                  <button className="trd-btn-contact" type="button">
-                    <i className="fa-solid fa-headset"></i>
-                    <span>Зөвлөх</span>
-                  </button>
-                </div>
+                <TripDetailsSidebarRegisterCtas
+                  isLoggedIn={isLoggedIn}
+                  payTripUrl={payTripUrl}
+                  qpayLogoUrl={qpayLogoUrl}
+                />
 
                 <div className="trd-trust-grid" aria-label="Давуу тал">
                   <div className="trd-trust-chip"><i className="fa-solid fa-shield-halved"></i><span>Төлбөр</span></div>
@@ -395,5 +386,6 @@ export default async function TripDetailsPage({ params }: Props) {
       </div>
       
     </div>
+    </TripDetailsBookingRegisterProvider>
   );
 }

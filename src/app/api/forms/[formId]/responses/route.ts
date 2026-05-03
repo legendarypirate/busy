@@ -25,6 +25,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         status: r.status,
         paymentStatus: r.paymentStatus,
         internalNote: r.internalNote,
+        orderSummary: r.orderSummary,
         hasParticipant: Boolean(r.participant),
         answers: r.answers.map((a) => ({
           questionId: a.questionId,

@@ -1,4 +1,4 @@
-import type { TripFormQuestionType } from "@prisma/client";
+import type { Prisma, TripFormQuestionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { defaultBusinessTripRegistrationQuestions } from "@/lib/trip-registration-form/default-questions";
 import { newTripFormPublicSlug } from "@/lib/trip-registration-form/public-slug";
@@ -7,6 +7,10 @@ import {
   stableLegacyQuestionId,
   syncTripRegistrationFormFromLegacyJson,
 } from "@/lib/trip-registration-form/sync-registration-form-from-json";
+import {
+  orderSummaryToPrismaJson,
+  parseAndValidateOrderSummaryForTrip,
+} from "@/lib/trip-registration-form/order-summary";
 import {
   assertTripFormSubmissionValid,
   filterAnswersToFormQuestions,
@@ -109,6 +113,7 @@ export async function submitPublicFormResponse(input: {
   publicSlug: string;
   answers: TripFormSubmitAnswer[];
   submittedByUserId?: bigint | null;
+  orderSummary?: Prisma.InputJsonValue | null;
 }): Promise<{ responseId: string }> {
   const form = await prisma.tripRegistrationForm.findFirst({
     where: { publicSlug: input.publicSlug, isPublished: true },
@@ -151,6 +156,7 @@ export async function submitPublicFormResponse(input: {
         submittedByUserId: input.submittedByUserId ?? null,
         status: "SUBMITTED",
         paymentStatus: "UNPAID",
+        ...(input.orderSummary != null ? { orderSummary: input.orderSummary } : {}),
       },
     });
     if (answersToStore.length) {
@@ -312,6 +318,7 @@ export async function submitPublicFormResponseByTripId(input: {
   tripId: number;
   answers: TripFormSubmitAnswer[];
   submittedByUserId?: bigint | null;
+  orderSummary?: unknown;
 }): Promise<{ responseId: string }> {
   let form = await prisma.tripRegistrationForm.findFirst({
     where: { tripId: input.tripId, isPublished: true },
@@ -335,9 +342,14 @@ export async function submitPublicFormResponseByTripId(input: {
     (e as Error & { status?: number }).status = 404;
     throw e;
   }
+
+  const validated = await parseAndValidateOrderSummaryForTrip(input.tripId, input.orderSummary);
+  const orderJson = orderSummaryToPrismaJson(validated);
+
   return submitPublicFormResponse({
     publicSlug: form.publicSlug,
     answers: input.answers,
     submittedByUserId: input.submittedByUserId,
+    ...(orderJson !== undefined ? { orderSummary: orderJson } : {}),
   });
 }
