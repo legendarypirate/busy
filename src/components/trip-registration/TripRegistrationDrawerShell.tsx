@@ -10,7 +10,10 @@ type Props = {
   open: boolean;
   onClose: () => void;
   tripTitle: string;
-  tripId: number | null;
+  /** Trip public registration (drawer posts to `/api/public/trips/:id/registration`). */
+  tripId?: number | null;
+  /** Event public registration (drawer posts to `/api/public/events/:id/registration`). */
+  eventId?: string | null;
   loading: boolean;
   schema: HomeTripDrawerSchemaItem[];
   feedback: Feedback;
@@ -23,7 +26,8 @@ export function TripRegistrationDrawerShell({
   open,
   onClose,
   tripTitle,
-  tripId,
+  tripId = null,
+  eventId = null,
   loading,
   schema,
   feedback,
@@ -66,7 +70,11 @@ export function TripRegistrationDrawerShell({
         </div>
 
         <form ref={formRef} className="trip-register-form" noValidate onSubmit={onSubmit}>
-          <input type="hidden" name="trip_id" value={tripId ?? ""} readOnly />
+          {eventId ? (
+            <input type="hidden" name="event_id" value={eventId} readOnly />
+          ) : (
+            <input type="hidden" name="trip_id" value={tripId ?? ""} readOnly />
+          )}
 
           {feedback.kind === "success" && feedback.text ? (
             <div

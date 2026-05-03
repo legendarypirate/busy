@@ -6,21 +6,33 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary-format";
-import { assertTripEditableByAccount } from "@/lib/trip-registration-form/service";
+import { assertEventFormEditableByAccount, assertTripEditableByAccount } from "@/lib/trip-registration-form/service";
 import { MVP_TRIP_FORM_QUESTION_TYPES } from "@/lib/trip-registration-form/types";
 
-export async function assertFormEditableByAccount(formId: string, accountId: bigint): Promise<{ tripId: number }> {
+export async function assertFormEditableByAccount(
+  formId: string,
+  accountId: bigint,
+): Promise<{ tripId: number | null; eventId: bigint | null }> {
   const form = await prisma.tripRegistrationForm.findUnique({
     where: { id: formId },
-    select: { tripId: true },
+    select: { tripId: true, eventId: true },
   });
   if (!form) {
     const e = new Error("NOT_FOUND");
     (e as Error & { status?: number }).status = 404;
     throw e;
   }
-  await assertTripEditableByAccount(form.tripId, accountId);
-  return { tripId: form.tripId };
+  if (form.tripId != null) {
+    await assertTripEditableByAccount(form.tripId, accountId);
+    return { tripId: form.tripId, eventId: null };
+  }
+  if (form.eventId != null) {
+    await assertEventFormEditableByAccount(form.eventId, accountId);
+    return { tripId: null, eventId: form.eventId };
+  }
+  const e = new Error("INVALID_FORM");
+  (e as Error & { status?: number }).status = 400;
+  throw e;
 }
 
 export async function listTripFormsForOrganizer(tripId: number, accountId: bigint) {
@@ -45,6 +57,7 @@ export async function getTripFormForOrganizer(formId: string, accountId: bigint)
     where: { id: formId },
     include: {
       trip: { select: { id: true, destination: true, startDate: true, endDate: true, coverImageUrl: true } },
+      event: { select: { id: true, title: true, startsAt: true, endsAt: true } },
       questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
     },
   });
@@ -418,12 +431,18 @@ export async function convertTripFormResponseToParticipant(responseId: string, a
     throw e;
   }
 
+  if (response.tripId == null) {
+    const e = new Error("NOT_TRIP_RESPONSE");
+    (e as Error & { status?: number }).status = 400;
+    throw e;
+  }
+
   const snap = extractParticipantSnapshotFromAnswers(response.form.questions, response.answers);
 
   await prisma.$transaction(async (tx) => {
     await tx.tripParticipant.create({
       data: {
-        tripId: response.tripId,
+        tripId: response.tripId!,
         responseId: response.id,
         userId: response.submittedByUserId,
         fullName: snap.fullName,

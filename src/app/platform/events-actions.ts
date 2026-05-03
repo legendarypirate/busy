@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { getPlatformSession } from "@/lib/platform-session";
 import { prisma } from "@/lib/prisma";
+import { syncEventRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-event-registration-form-from-json";
 
 const ADMIN_EVENTS_PATH = "/admin/meetings";
 const PLATFORM_EVENTS_PATH = "/platform/events";
@@ -145,6 +146,11 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     envelope.audience_text = audienceText;
   }
 
+  const heroImageUrl = String(formData.get("hero_image_url") ?? "").trim();
+  if (heroImageUrl !== "") {
+    envelope.hero_image_url = heroImageUrl;
+  }
+
   const curriculumOverrideJson: Prisma.InputJsonValue | typeof Prisma.DbNull =
     Object.keys(envelope).length > 0 ? (envelope as Prisma.InputJsonValue) : Prisma.DbNull;
 
@@ -174,6 +180,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     advanceOrderMnt,
   };
 
+  let savedEventId = eventId;
   if (eventId > BigInt(0)) {
     const exists = await prisma.bniEvent.findUnique({ where: { id: eventId } });
     if (!exists) {
@@ -183,15 +190,22 @@ export async function saveEventAction(formData: FormData): Promise<void> {
       where: { id: eventId },
       data: row,
     });
+    savedEventId = eventId;
   } else {
-    await prisma.bniEvent.create({
+    const created = await prisma.bniEvent.create({
       data: row,
+      select: { id: true },
     });
+    savedEventId = created.id;
   }
+
+  const regForSync = registrationFormJson === Prisma.DbNull ? null : (registrationFormJson as unknown);
+  await syncEventRegistrationFormFromLegacyJson(savedEventId, regForSync);
 
   revalidatePath("/platform/events");
   revalidatePath(ADMIN_EVENTS_PATH);
   revalidatePath("/events");
+  revalidatePath(`/events/${savedEventId.toString()}`);
   redirect(listPath);
 }
 
@@ -226,5 +240,6 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
   revalidatePath("/platform/events");
   revalidatePath(ADMIN_EVENTS_PATH);
   revalidatePath("/events");
+  revalidatePath(`/events/${eventId.toString()}`);
   redirect(listPath);
 }

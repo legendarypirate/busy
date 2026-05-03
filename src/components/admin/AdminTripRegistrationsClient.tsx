@@ -117,9 +117,13 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                   <td className="ps-3 text-nowrap text-muted">{fmtLocal(r.submittedAt)}</td>
                   <td>
                     <div className="fw-semibold text-body">
-                      <Link href={`/admin/trips?edit_trip=${r.trip.id}`} className="text-decoration-none">
-                        #{r.trip.id}
-                      </Link>
+                      {r.trip.id > 0 ? (
+                        <Link href={`/admin/trips?edit_trip=${r.trip.id}`} className="text-decoration-none">
+                          #{r.trip.id}
+                        </Link>
+                      ) : (
+                        <span className="text-muted">Эвент</span>
+                      )}
                     </div>
                     <div className="text-muted text-break" style={{ maxWidth: "14rem" }}>
                       {r.trip.destination}
@@ -201,9 +205,16 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                     <span className="text-muted d-block mb-0" style={{ fontSize: "0.7rem" }}>
                       Аялал
                     </span>
-                    <Link href={`/admin/trips?edit_trip=${active.trip.id}`} className="fw-semibold text-decoration-none">
-                      #{active.trip.id} — {active.trip.destination}
-                    </Link>
+                    {active.trip.id > 0 ? (
+                      <Link
+                        href={`/admin/trips?edit_trip=${active.trip.id}`}
+                        className="fw-semibold text-decoration-none"
+                      >
+                        #{active.trip.id} — {active.trip.destination}
+                      </Link>
+                    ) : (
+                      <span className="fw-semibold">{active.trip.destination}</span>
+                    )}
                   </div>
                   <div className="mb-0">
                     <span className="text-muted d-block mb-0" style={{ fontSize: "0.7rem" }}>

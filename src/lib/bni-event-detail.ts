@@ -4,6 +4,8 @@ export type BniEventDetailEnvelope = {
   sections: unknown[];
   intro_body: string;
   audience_text: string;
+  /** Optional hero image (URL or site-relative path); shown on public event detail. */
+  hero_image_url: string;
   speakers: { name: string; role: string; photo_url: string }[];
   faq: { question: string; answer: string }[];
 };
@@ -20,6 +22,7 @@ export function parseBniEventDetailEnvelope(raw: unknown): BniEventDetailEnvelop
     sections: [],
     intro_body: "",
     audience_text: "",
+    hero_image_url: "",
     speakers: [],
     faq: [],
   };
@@ -44,6 +47,7 @@ export function parseBniEventDetailEnvelope(raw: unknown): BniEventDetailEnvelop
   }
   base.intro_body = String(obj.intro_body ?? "").trim();
   base.audience_text = String(obj.audience_text ?? "").trim();
+  base.hero_image_url = String(obj.hero_image_url ?? obj.heroImageUrl ?? "").trim();
   if (Array.isArray(obj.speakers)) {
     for (const sp of obj.speakers) {
       if (!sp || typeof sp !== "object") {
@@ -185,6 +189,22 @@ export function resolvedAudienceText(envelope: BniEventDetailEnvelope): string {
     return t;
   }
   return AUDIENCE_DEFAULT;
+}
+
+/** Hero for event detail: absolute URL, media helper path, or empty → caller uses default asset. */
+export function resolvedEventHeroImageUrl(envelope: BniEventDetailEnvelope): string {
+  const raw = envelope.hero_image_url.trim();
+  if (raw === "") {
+    return "";
+  }
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    return raw;
+  }
+  const u = mediaUrl(raw);
+  if (u.startsWith("http://") || u.startsWith("https://")) {
+    return u;
+  }
+  return raw.startsWith("/") ? raw : `/${raw}`;
 }
 
 /** Speaker portrait: remote URL, media base for uploads, or ui-avatars fallback (matches PHP). */

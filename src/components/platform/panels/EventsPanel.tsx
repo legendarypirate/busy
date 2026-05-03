@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import DynamicQuestionBuilder from "@/components/platform/forms/DynamicQuestionBuilder";
+import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
 import SpeakerPhotoUrlField from "@/components/platform/forms/SpeakerPhotoUrlField";
 import EventManageForm from "@/components/platform/panels/EventManageForm";
 import { deleteEventAction } from "@/app/platform/events-actions";
+import { parseBniEventDetailEnvelope } from "@/lib/bni-event-detail";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
@@ -40,69 +41,6 @@ function errorBanner(code: string | undefined): string | null {
 function toDatetimeLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function parseEnvelope(raw: unknown): {
-  sections: unknown[];
-  intro_body: string;
-  audience_text: string;
-  speakers: { name: string; role: string; photo_url: string }[];
-  faq: { question: string; answer: string }[];
-} {
-  const base = {
-    sections: [] as unknown[],
-    intro_body: "",
-    audience_text: "",
-    speakers: [] as { name: string; role: string; photo_url: string }[],
-    faq: [] as { question: string; answer: string }[],
-  };
-  let obj: Record<string, unknown> | null = null;
-  if (typeof raw === "string" && raw.trim()) {
-    try {
-      const j = JSON.parse(raw) as unknown;
-      if (j && typeof j === "object" && !Array.isArray(j)) {
-        obj = j as Record<string, unknown>;
-      }
-    } catch {
-      return base;
-    }
-  } else if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-    obj = raw as Record<string, unknown>;
-  }
-  if (!obj) {
-    return base;
-  }
-  if (Array.isArray(obj.sections)) {
-    base.sections = obj.sections;
-  }
-  base.intro_body = String(obj.intro_body ?? "").trim();
-  base.audience_text = String(obj.audience_text ?? "").trim();
-  if (Array.isArray(obj.speakers)) {
-    for (const sp of obj.speakers) {
-      if (!sp || typeof sp !== "object") {
-        continue;
-      }
-      const r = sp as Record<string, unknown>;
-      base.speakers.push({
-        name: String(r.name ?? "").trim(),
-        role: String(r.role ?? "").trim(),
-        photo_url: String(r.photo_url ?? "").trim(),
-      });
-    }
-  }
-  if (Array.isArray(obj.faq)) {
-    for (const f of obj.faq) {
-      if (!f || typeof f !== "object") {
-        continue;
-      }
-      const r = f as Record<string, unknown>;
-      base.faq.push({
-        question: String(r.question ?? r.q ?? "").trim(),
-        answer: String(r.answer ?? r.a ?? "").trim(),
-      });
-    }
-  }
-  return base;
 }
 
 function padSpeakers(
@@ -190,7 +128,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
     );
   }
 
-  const parsed = parseEnvelope(existing?.curriculumOverrideJson ?? undefined);
+  const parsed = parseBniEventDetailEnvelope(existing?.curriculumOverrideJson ?? undefined);
 
   const defaultStarts = new Date();
   const defaultEnds = new Date(defaultStarts.getTime() + 2 * 60 * 60 * 1000);
@@ -507,6 +445,16 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     defaultValue={parsed.audience_text}
                   />
                 </div>
+                <div className="col-12">
+                  <label className="pm-label">Hero зураг (URL эсвэл /assets/... зам)</label>
+                  <input
+                    type="text"
+                    className="pm-input"
+                    name="hero_image_url"
+                    placeholder="Ж: /assets/img/meeting-hero.png эсвэл https://..."
+                    defaultValue={parsed.hero_image_url}
+                  />
+                </div>
               </div>
               <div className="mt-4">
                 <label className="pm-label d-block mb-1">Илтгэгчид (5 хүртэл)</label>
@@ -570,14 +518,14 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
             <div className="tps-form-section mt-4">
               <div className="tps-section-head">
                 <div className="tps-section-num">5</div>
-                <span className="tps-section-title">Эвентийн бүртгэлийн асуулгын форм (Dynamic)</span>
+                <span className="tps-section-title">Эвентийн бүртгэлийн асуулгын форм</span>
               </div>
-              <div className="small text-muted mb-2">Эвент бүр дээр гарч ирэх бүртгэлийн талбарууд.</div>
-              <DynamicQuestionBuilder
+              <div className="small text-muted mb-2">
+                Аяллын админтай ижил JSON форм (нийтийн хуудасны drawer-т шууд таарна).
+              </div>
+              <PlatformTripRegistrationJsonBuilder
                 hiddenName="event_registration_form_json"
                 initialJson={existing?.registrationFormJson ?? undefined}
-                listId="eventQuestionBuilderList"
-                addBtnId="eventQuestionAddBtn"
               />
             </div>
 

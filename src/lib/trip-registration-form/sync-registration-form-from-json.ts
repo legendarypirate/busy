@@ -21,7 +21,7 @@ export function stableLegacyQuestionId(name: string, index: number): string {
 const DEFAULT_THANK_YOU_MN =
   "Таны бүртгэл амжилттай илгээгдлээ. Зохион байгуулагч таны мэдээллийг шалгаж баталгаажуулна.";
 
-function legacyStringToTripType(typeStr: string): TripFormQuestionType {
+export function legacyStringToTripType(typeStr: string): TripFormQuestionType {
   switch (typeStr) {
     case "textarea":
       return "LONG_TEXT";
@@ -44,7 +44,7 @@ function legacyStringToTripType(typeStr: string): TripFormQuestionType {
   }
 }
 
-function needsTripOptions(t: TripFormQuestionType): boolean {
+export function needsTripOptions(t: TripFormQuestionType): boolean {
   return t === "MULTIPLE_CHOICE" || t === "CHECKBOXES" || t === "DROPDOWN";
 }
 

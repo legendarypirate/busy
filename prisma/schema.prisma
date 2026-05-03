@@ -180,6 +180,9 @@ model BniEvent {
   schedule   ChapterWeeklySchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   curriculum Curriculum?             @relation(fields: [curriculumId], references: [id], onDelete: SetNull)
 
+  tripRegistrationForms TripRegistrationForm[]
+  tripFormResponses     TripFormResponse[]
+
   @@index([chapterId, startsAt])
   @@map("bni_events")
 }
@@ -527,7 +530,8 @@ enum TripParticipantLifecycleStatus {
 
 model TripRegistrationForm {
   id          String   @id @default(cuid())
-  tripId      Int      @map("trip_id")
+  tripId      Int?     @map("trip_id")
+  eventId     BigInt?  @map("event_id")
   title       String   @db.VarChar(512)
   description String?  @db.Text
   publicSlug  String   @unique @map("public_slug") @db.VarChar(160)
@@ -536,11 +540,13 @@ model TripRegistrationForm {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  trip      BusinessTrip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip      BusinessTrip? @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  event     BniEvent?     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   questions TripFormQuestion[]
   responses TripFormResponse[]
 
   @@index([tripId])
+  @@index([eventId])
   @@map("trip_registration_forms")
 }
 
@@ -581,7 +587,8 @@ model TripFormQuestionOption {
 model TripFormResponse {
   id                String                         @id @default(cuid())
   formId            String                         @map("form_id")
-  tripId            Int                            @map("trip_id")
+  tripId            Int?                           @map("trip_id")
+  eventId           BigInt?                        @map("event_id")
   submittedByUserId BigInt?                        @map("submitted_by_user_id")
   status            TripFormResponseWorkflowStatus @default(SUBMITTED)
   paymentStatus     TripFormMoneyStatus            @default(UNPAID) @map("payment_status")
@@ -593,13 +600,15 @@ model TripFormResponse {
   updatedAt         DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   form         TripRegistrationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
-  trip         BusinessTrip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip         BusinessTrip?        @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  event        BniEvent?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   submitter    PlatformAccount?     @relation(fields: [submittedByUserId], references: [id], onDelete: SetNull)
   answers      TripFormResponseAnswer[]
   participant  TripParticipant?
 
   @@index([formId])
   @@index([tripId])
+  @@index([eventId])
   @@map("trip_form_responses")
 }
 

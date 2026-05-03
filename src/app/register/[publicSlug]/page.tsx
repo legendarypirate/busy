@@ -20,18 +20,32 @@ export default async function PublicTripRegisterPage({ params }: Props) {
   const bundle = await getPublishedFormBundleBySlug(publicSlug).catch(() => null);
   if (!bundle) notFound();
 
+  const tripBlock =
+    bundle.trip != null
+      ? {
+          id: bundle.trip.id,
+          destination: bundle.trip.destination,
+          startDate: bundle.trip.startDate.toISOString(),
+          endDate: bundle.trip.endDate.toISOString(),
+          coverImageUrl: bundle.trip.coverImageUrl,
+        }
+      : bundle.event != null
+        ? {
+            id: 0,
+            destination: bundle.event.title?.trim() || bundle.title,
+            startDate: bundle.event.startsAt.toISOString(),
+            endDate: bundle.event.endsAt.toISOString(),
+            coverImageUrl: null as string | null,
+          }
+        : null;
+  if (!tripBlock) notFound();
+
   const form: PublicFormPayload = {
     title: bundle.title,
     description: bundle.description,
     publicSlug: bundle.publicSlug,
     settings: bundle.settings,
-    trip: {
-      id: bundle.trip.id,
-      destination: bundle.trip.destination,
-      startDate: bundle.trip.startDate.toISOString(),
-      endDate: bundle.trip.endDate.toISOString(),
-      coverImageUrl: bundle.trip.coverImageUrl,
-    },
+    trip: tripBlock,
     questions: bundle.questions.map((q) => ({
       id: q.id,
       label: q.label,

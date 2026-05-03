@@ -7,6 +7,7 @@ import {
   stableLegacyQuestionId,
   syncTripRegistrationFormFromLegacyJson,
 } from "@/lib/trip-registration-form/sync-registration-form-from-json";
+import { syncEventRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-event-registration-form-from-json";
 import {
   orderSummaryToPrismaJson,
   parseAndValidateOrderSummaryForTrip,
@@ -16,6 +17,24 @@ import {
   filterAnswersToFormQuestions,
   type TripFormSubmitAnswer,
 } from "@/lib/trip-registration-form/submit-validation";
+
+export async function assertEventFormEditableByAccount(eventId: bigint, accountId: bigint): Promise<void> {
+  const acc = await prisma.platformAccount.findUnique({
+    where: { id: accountId },
+    select: { role: true, status: true },
+  });
+  if (!acc || acc.status !== "active") {
+    const e = new Error("FORBIDDEN");
+    (e as Error & { status?: number }).status = 403;
+    throw e;
+  }
+  if (acc.role === "admin" || acc.role === "director") {
+    return;
+  }
+  const e = new Error("FORBIDDEN");
+  (e as Error & { status?: number }).status = 403;
+  throw e;
+}
 
 export async function assertTripEditableByAccount(tripId: number, accountId: bigint): Promise<void> {
   const trip = await prisma.businessTrip.findUnique({
@@ -103,6 +122,7 @@ export async function getPublishedFormBundleBySlug(publicSlug: string) {
     where: { publicSlug, isPublished: true },
     include: {
       trip: { select: { id: true, destination: true, startDate: true, endDate: true, coverImageUrl: true } },
+      event: { select: { id: true, title: true, startsAt: true, endsAt: true } },
       questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
     },
   });
@@ -152,7 +172,8 @@ export async function submitPublicFormResponse(input: {
     const r = await tx.tripFormResponse.create({
       data: {
         formId: form.id,
-        tripId: form.tripId,
+        tripId: form.tripId ?? null,
+        eventId: form.eventId ?? null,
         submittedByUserId: input.submittedByUserId ?? null,
         status: "SUBMITTED",
         paymentStatus: "UNPAID",
@@ -289,7 +310,7 @@ export async function getPublishedTripRegistrationDrawerSchema(tripId: number): 
         ...(mapped.options?.length ? { options: mapped.options } : {}),
       };
     });
-    const tripTitle = form.trip.destination?.trim() || "Бизнес аялал";
+    const tripTitle = form.trip?.destination?.trim() || "Бизнес аялал";
     return { ok: true, tripTitle, schema };
   }
 
@@ -351,5 +372,87 @@ export async function submitPublicFormResponseByTripId(input: {
     answers: input.answers,
     submittedByUserId: input.submittedByUserId,
     ...(orderJson !== undefined ? { orderSummary: orderJson } : {}),
+  });
+}
+
+export async function getPublishedEventRegistrationDrawerSchema(eventId: bigint): Promise<
+  { ok: true; eventTitle: string; schema: HomeTripDrawerSchemaItem[] } | { ok: false; message: string }
+> {
+  const form = await prisma.tripRegistrationForm.findFirst({
+    where: { eventId, isPublished: true },
+    include: {
+      event: { select: { title: true } },
+      questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+    },
+  });
+  if (form) {
+    const schema: HomeTripDrawerSchemaItem[] = form.questions.map((q) => {
+      const mapped = mapQuestionTypeToDrawer(q.type, q.options, q.placeholder);
+      return {
+        name: q.id,
+        label: q.label,
+        required: q.isRequired,
+        placeholder: mapped.placeholder ?? "",
+        type: mapped.type,
+        ...(mapped.options?.length ? { options: mapped.options } : {}),
+      };
+    });
+    const eventTitle = form.event?.title?.trim() || "Арга хэмжээ";
+    return { ok: true, eventTitle, schema };
+  }
+
+  const ev = await prisma.bniEvent.findUnique({
+    where: { id: eventId },
+    select: { title: true, registrationFormJson: true },
+  });
+  if (!ev) {
+    return {
+      ok: false,
+      message: "Эвент олдсонгүй.",
+    };
+  }
+  const legacySchema = legacyRowsToHomeDrawerSchema(parseLegacyRegistrationArray(ev.registrationFormJson));
+  if (legacySchema.length === 0) {
+    return {
+      ok: false,
+      message: "Энэ арга хэмжээнд нийтэд нээлттэй бүртгэлийн форм байхгүй байна. Зохион байгуулагчид хандана уу.",
+    };
+  }
+  const eventTitle = ev.title?.trim() || "Арга хэмжээ";
+  return { ok: true, eventTitle, schema: legacySchema };
+}
+
+export async function submitPublicFormResponseByEventId(input: {
+  eventId: bigint;
+  answers: TripFormSubmitAnswer[];
+  submittedByUserId?: bigint | null;
+}): Promise<{ responseId: string }> {
+  let form = await prisma.tripRegistrationForm.findFirst({
+    where: { eventId: input.eventId, isPublished: true },
+    select: { publicSlug: true },
+  });
+  if (!form) {
+    const ev = await prisma.bniEvent.findUnique({
+      where: { id: input.eventId },
+      select: { registrationFormJson: true },
+    });
+    if (ev?.registrationFormJson) {
+      await syncEventRegistrationFormFromLegacyJson(input.eventId, ev.registrationFormJson);
+    }
+    form = await prisma.tripRegistrationForm.findFirst({
+      where: { eventId: input.eventId, isPublished: true },
+      select: { publicSlug: true },
+    });
+  }
+  if (!form) {
+    const e = new Error("NOT_FOUND");
+    (e as Error & { status?: number }).status = 404;
+    throw e;
+  }
+
+  return submitPublicFormResponse({
+    publicSlug: form.publicSlug,
+    answers: input.answers,
+    submittedByUserId: input.submittedByUserId,
   });
 }

@@ -20,6 +20,7 @@ async function loadResponses(where: { tripId?: number }) {
     take: 500,
     include: {
       trip: { select: { id: true, destination: true } },
+      event: { select: { id: true, title: true } },
       form: { select: { title: true, publicSlug: true } },
       submitter: { select: { email: true } },
       participant: { select: { fullName: true, phone: true, email: true } },
@@ -45,7 +46,16 @@ function serializeTripRegistrationRows(
       status: r.status,
       paymentStatus: r.paymentStatus,
       orderSummary: r.orderSummary ?? null,
-      trip: r.trip,
+      trip:
+        r.trip != null
+          ? r.trip
+          : {
+              id: 0,
+              destination:
+                r.event != null
+                  ? `Эвент #${r.event.id.toString()} — ${r.event.title?.trim() || ""}`
+                  : "Эвент (аялалгүй)",
+            },
       form: r.form,
       submitterEmail: r.submitter?.email?.trim() || null,
       submittedByUserId: r.submittedByUserId != null ? String(r.submittedByUserId) : null,

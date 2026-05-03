@@ -19,6 +19,7 @@ function serializeForm(form: NonNullable<Awaited<ReturnType<typeof getTripFormFo
   return {
     id: form.id,
     tripId: form.tripId,
+    eventId: form.eventId != null ? form.eventId.toString() : null,
     title: form.title,
     description: form.description,
     publicSlug: form.publicSlug,

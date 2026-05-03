@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import EventDetailRegisterDrawer from "@/components/events/EventDetailRegisterDrawer";
 import EventDetailTabs from "@/components/events/EventDetailTabs";
 import {
   buildAgendaDisplayRows,
@@ -8,18 +9,18 @@ import {
   parseBniEventDetailEnvelope,
   resolvedAudienceText,
   resolvedEventDescription,
+  resolvedEventHeroImageUrl,
   speakerPortraitUrl,
 } from "@/lib/bni-event-detail";
 import { formatMnDate } from "@/lib/format-date";
 import { prisma } from "@/lib/prisma";
 import { bniEventPublicDetailSelect } from "@/lib/prisma-event-select";
+import { SITE_CONTACT } from "@/lib/site-contact";
 
 export const dynamic = "force-dynamic";
 
-const EVENT_HERO_IMG =
-  "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1200&q=80";
-const EVENT_MINI_IMG =
-  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80";
+const EVENT_DEFAULT_HERO = "/assets/img/meeting-hero.png";
+const EVENT_MINI_IMG = "/assets/img/meeting-hero.png";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -79,6 +80,10 @@ export default async function EventDetailPage({ params }: Props) {
     notFound();
   }
 
+  const registeredTotal = await prisma.tripFormResponse
+    .count({ where: { eventId: nid } })
+    .catch(() => 0);
+
   const envelope = parseBniEventDetailEnvelope(ev.curriculumOverrideJson ?? undefined);
   const description = resolvedEventDescription(envelope);
   const audienceText = resolvedAudienceText(envelope);
@@ -100,8 +105,10 @@ export default async function EventDetailPage({ params }: Props) {
 
   const faq = envelope.faq.map((f) => ({ question: f.question, answer: f.answer }));
 
-  const registeredTotal = 0;
-  const progressPct = registeredTotal > 0 ? Math.min(92, Math.max(12, 18 + Math.min(74, registeredTotal * 4))) : 28;
+  const heroFromEnvelope = resolvedEventHeroImageUrl(envelope);
+  const heroSrc = heroFromEnvelope !== "" ? heroFromEnvelope : EVENT_DEFAULT_HERO;
+  const progressPct =
+    registeredTotal > 0 ? Math.min(100, Math.max(18, 20 + Math.min(80, registeredTotal * 6))) : 14;
 
   const similar =
     ev.chapterId != null
@@ -179,7 +186,7 @@ export default async function EventDetailPage({ params }: Props) {
         <section className="event-hero-card">
           <div className="event-hero-image">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={EVENT_HERO_IMG} alt="" />
+            <img src={heroSrc} alt="" />
             <div className="event-hero-badge">{typeBadge}</div>
           </div>
           <div className="event-hero-content">
@@ -256,10 +263,10 @@ export default async function EventDetailPage({ params }: Props) {
 
             <div className="registration-progress mt-4">
               <div className="progress-label">
-                <span>Бүртгүүлсэн: {registeredTotal}</span>
+                <span>Илгээсэн бүртгэл: {registeredTotal}</span>
                 <span>
                   <Link href="/events" className="text-decoration-none">
-                    Бүртгэлийн төлөв
+                    Бусад эвент
                   </Link>
                 </span>
               </div>
@@ -332,47 +339,21 @@ export default async function EventDetailPage({ params }: Props) {
             <div className="registration-card">
               <div className="registration-title">
                 Бүртгэл
-                <span className="seat-remain">Бүртгэл: {registeredTotal}</span>
-              </div>
-
-              <label className="form-label-custom">Тасалбарын төрөл</label>
-              <select className="form-input-custom" defaultValue="std" disabled aria-readonly>
-                <option value="std">Ердийн оролцоо</option>
-                <option value="vip">VIP оролцоо</option>
-              </select>
-
-              <label className="form-label-custom">Оролцогчийн төрөл</label>
-              <div className="segmented-control" aria-hidden>
-                <button type="button" className="segment-btn active" disabled>
-                  Гишүүн
-                </button>
-                <button type="button" className="segment-btn" disabled>
-                  Зочин
-                </button>
-                <button type="button" className="segment-btn" disabled>
-                  Үзэсгэлэн
-                </button>
+                <span className="seat-remain">Илгээсэн: {registeredTotal}</span>
               </div>
 
               <p className="small text-muted mb-3">
-                Бүртгэлийг платформоор идэвхжүүлсэн үед энд бөглөх хэлбэр гарна. Одоогоор дэлгэрэнгүй мэдээллийг доорх холбоосоор
-                үзнэ үү.
+                Доорх товчоор бүртгэлийн хураангуйг бөглөнө. Зохион байгуулагч таны мэдээллийг шалгана.
               </p>
 
-              <Link href={`/events/${ev.id}`} className="btn-register-submit text-center text-decoration-none d-block">
-                Дэлгэрэнгүй хуудас
-              </Link>
+              <EventDetailRegisterDrawer eventId={ev.id.toString()} initialTitle={hTitle} />
 
               <p className="form-terms">
-                Нөхцөл, нууцлалын талаар{" "}
-                <Link href="#" className="text-decoration-none">
-                  нууцлалын бодлого
+                Холбоо барих, нөхцөлийн талаар{" "}
+                <Link href="/contact" className="text-decoration-none">
+                  холбоо барих хуудас
                 </Link>
-                ,{" "}
-                <Link href="#" className="text-decoration-none">
-                  нөхцөл, болзол
-                </Link>
-                -ыг хүндэтгэнэ үү.
+                -аар хандана уу.
               </p>
 
               <div className="organizer-card">
@@ -382,11 +363,11 @@ export default async function EventDetailPage({ params }: Props) {
                   <div className="organizer-name">BUSY.mn</div>
                 </div>
                 <div className="organizer-contact">
-                  <a href="tel:+97670001010" className="contact-item">
-                    <i className="fa-solid fa-phone" /> +976 7000 1010
+                  <a href={`tel:${SITE_CONTACT.phoneTel}`} className="contact-item">
+                    <i className="fa-solid fa-phone" /> {SITE_CONTACT.phoneDisplay}
                   </a>
-                  <a href="mailto:info@busy.mn" className="contact-item">
-                    <i className="fa-solid fa-envelope" /> info@busy.mn
+                  <a href={`mailto:${SITE_CONTACT.email}`} className="contact-item">
+                    <i className="fa-solid fa-envelope" /> {SITE_CONTACT.email}
                   </a>
                   <a href="https://busy.mn" target="_blank" rel="noopener noreferrer" className="contact-item">
                     <i className="fa-solid fa-globe" /> busy.mn
@@ -397,15 +378,7 @@ export default async function EventDetailPage({ params }: Props) {
               <div className="event-stats-footer">
                 <div className="stat-box">
                   <span className="stat-num">{registeredTotal}</span>
-                  <span className="stat-lab">Нийт бүртгэл</span>
-                </div>
-                <div className="stat-box">
-                  <span className="stat-num">0</span>
-                  <span className="stat-lab">Нээлттэй</span>
-                </div>
-                <div className="stat-box">
-                  <span className="stat-num">0</span>
-                  <span className="stat-lab">Дотоод</span>
+                  <span className="stat-lab">Илгээсэн бүртгэл</span>
                 </div>
                 <div className="stat-box">
                   <span className="stat-num">{faq.length}</span>
