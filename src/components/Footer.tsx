@@ -31,8 +31,7 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="footer-col-title">Платформ</h4>
-            <p className="small text-muted mb-3">Аялал, хурал, эвентын бүртгэл болон удирдлагыг нэг дороос.</p>
-            <Link href="/platform" className="btn-footer-login">Платформ руу</Link>
+            <p className="small text-muted mb-0">Аялал, хурал, эвентын бүртгэл болон удирдлагыг нэг дороос.</p>
           </div>
         </div>
         <div className="pt-4 border-top">

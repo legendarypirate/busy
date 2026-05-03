@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   metadataBase: rootMetadataBase(),
   title: "BUSY.mn",
   description: "BUSY Platform",
+  icons: {
+    icon: [{ url: "/fav.jpeg", type: "image/jpeg" }],
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="mn">
       <head>
-        <link rel="icon" type="image/png" href="/assets/img/bsy.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
