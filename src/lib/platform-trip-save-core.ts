@@ -112,6 +112,7 @@ function buildExtrasPayload(
   base: Record<string, unknown>,
   shortDesc: string,
   tripLoc: string,
+  tripManagerPhone: string,
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
@@ -121,6 +122,11 @@ function buildExtrasPayload(
   const payload: Record<string, unknown> = { ...base };
   payload.short_description = shortDesc.trim() || null;
   payload.location = tripLoc.trim() || null;
+  if (tripManagerPhone.trim()) {
+    payload.trip_manager_phone = tripManagerPhone.trim();
+  } else {
+    delete payload.trip_manager_phone;
+  }
   payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
   payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
 
@@ -180,6 +186,7 @@ export async function executeSaveTrip(
 
   const shortDesc = String(formData.get("trip_short_description") ?? "").trim();
   const tripLoc = String(formData.get("trip_location") ?? "").trim();
+  const tripManagerPhone = String(formData.get("trip_manager_phone") ?? "").trim();
   const totalSeats = Math.max(0, Number(String(formData.get("trip_total_seats") ?? "30")) || 30);
   const advancePct = Math.max(0, Number(String(formData.get("trip_advance_percent") ?? "20")) || 20);
 
@@ -289,6 +296,7 @@ export async function executeSaveTrip(
     extrasBase,
     shortDesc,
     tripLoc,
+    tripManagerPhone,
     totalSeats,
     advancePct,
     bookingTiersParsed,

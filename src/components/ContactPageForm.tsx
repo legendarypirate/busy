@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
@@ -12,6 +12,12 @@ export function ContactPageForm() {
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<FormState>("idle");
   const [errorText, setErrorText] = useState("");
+
+  useEffect(() => {
+    if (status !== "success") return;
+    const t = window.setTimeout(() => setStatus("idle"), 5000);
+    return () => window.clearTimeout(t);
+  }, [status]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,11 +59,19 @@ export function ContactPageForm() {
 
       {status === "success" ? (
         <div>
-          <div className="alert alert-success mb-3" role="status">
-            Амжилттай илгээгдлээ. Удахгүй холбогдох болно.
+          <div
+            className="alert alert-success d-flex align-items-start gap-2 mb-3 border-0 shadow-sm py-3"
+            role="status"
+            aria-live="polite"
+          >
+            <i className="fa-solid fa-circle-check mt-1 flex-shrink-0" aria-hidden />
+            <div>
+              <strong className="d-block">Амжилттай илгээгдлээ</strong>
+              <span className="small">Удахгүй холбогдох болно. 5 секундын дараа маягт дахин нээгдэнэ.</span>
+            </div>
           </div>
           <button type="button" className="btn-brand-outline w-100 py-2" onClick={() => setStatus("idle")}>
-            Өөр зурвас бичих
+            Одоо шинэ зурвас бичих
           </button>
         </div>
       ) : (

@@ -361,6 +361,28 @@ export default function TripEditorForm({
             </div>
           </div>
 
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8b</div>
+              <span className="tps-section-title">Trip-details — тусламжийн утас</span>
+            </div>
+            <p className="small text-muted mb-3">
+              <code>/trip-details/:id</code> хуудсын «Тусламж» хэсэгт харагдана. Оролцогчид энэ дугаараар аяллын
+              зохион байгуулагч руу шууд залгана.
+            </p>
+            <div className="mb-0">
+              <label className="pm-label">Утасны дугаар</label>
+              <input
+                type="tel"
+                className="pm-input"
+                name="trip_manager_phone"
+                placeholder="Жишээ: +976 9911 2233 эсвэл 99112233"
+                defaultValue={extras.trip_manager_phone}
+                autoComplete="tel"
+              />
+            </div>
+          </div>
+
           <div className="tps-form-section mt-4">
             <div className="tps-section-head justify-content-between">
               <div className="d-flex align-items-center gap-2">

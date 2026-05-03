@@ -68,6 +68,17 @@ export function TripRegistrationDrawerShell({
         <form ref={formRef} className="trip-register-form" noValidate onSubmit={onSubmit}>
           <input type="hidden" name="trip_id" value={tripId ?? ""} readOnly />
 
+          {feedback.kind === "success" && feedback.text ? (
+            <div
+              className="mx-3 mt-3 mb-0 alert alert-success d-flex align-items-start gap-2 shadow-sm border-0"
+              role="alert"
+              aria-live="assertive"
+            >
+              <i className="fa-solid fa-circle-check mt-1 flex-shrink-0" aria-hidden />
+              <span className="fw-semibold">{feedback.text}</span>
+            </div>
+          ) : null}
+
           <div id="tripRegisterDynamicFields">
             {loading ? <div className="small text-muted">Форм ачаалж байна...</div> : null}
             {!loading && feedback.kind === "error" && schema.length === 0 ? (
@@ -165,12 +176,12 @@ export function TripRegistrationDrawerShell({
             <button
               type="submit"
               className="btn-qpay"
-              disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+              disabled={loading || schema.length === 0 || feedback.kind === "loading" || feedback.kind === "success"}
             >
               Бүртгүүлэх
             </button>
           </div>
-          {feedback.text && (schema.length > 0 || feedback.kind !== "error") ? (
+          {feedback.text && feedback.kind !== "success" && (schema.length > 0 || feedback.kind !== "error") ? (
             <div className={feedbackClass} role="status" aria-live="polite">
               {feedback.text}
             </div>

@@ -54,6 +54,8 @@ export type TripDetailsBookingContextValue = {
   openRegister: () => void;
   registrationQrDataUrl: string | null;
   registrationQrCaption: string | null;
+  /** Same URL encoded in the QR (full page link to the public registration form or trip page). */
+  registrationFormUrl: string | null;
 };
 
 const TripDetailsBookingContext = createContext<TripDetailsBookingContextValue | null>(null);
@@ -76,6 +78,8 @@ type ProviderProps = {
   /** Data URL PNG/SVG for `/register/…` or trip page (server-generated). */
   registrationQrDataUrl?: string | null;
   registrationQrCaption?: string | null;
+  /** Absolute URL for the public form (for “copy link” under the QR). */
+  registrationFormUrl?: string | null;
   children: ReactNode;
 };
 
@@ -88,6 +92,7 @@ export function TripDetailsBookingRegisterProvider({
   capacityNote,
   registrationQrDataUrl = null,
   registrationQrCaption = null,
+  registrationFormUrl = null,
   children,
 }: ProviderProps) {
   const [departure, setDeparture] = useState(defaultDepartureIso);
@@ -246,7 +251,7 @@ export function TripDetailsBookingRegisterProvider({
       }
       setFeedback({ text: data.message || "Таны бүртгэлийг амжилттай хүлээн авлаа.", kind: "success" });
       formRef.current.reset();
-      window.setTimeout(() => closeDrawer(), 600);
+      window.setTimeout(() => closeDrawer(), 5000);
     } catch (err) {
       setFeedback({
         text: err instanceof Error ? err.message : "Серверийн алдаа гарлаа. Дахин оролдоно уу.",
@@ -271,6 +276,7 @@ export function TripDetailsBookingRegisterProvider({
       openRegister,
       registrationQrDataUrl: registrationQrDataUrl?.trim() || null,
       registrationQrCaption: registrationQrCaption?.trim() || null,
+      registrationFormUrl: registrationFormUrl?.trim() || null,
     }),
     [
       defaultDepartureIso,
@@ -286,6 +292,7 @@ export function TripDetailsBookingRegisterProvider({
       openRegister,
       registrationQrDataUrl,
       registrationQrCaption,
+      registrationFormUrl,
     ],
   );
 

@@ -51,21 +51,19 @@ export default function TripFormQrCard({ formId, publicSlug, publicUrl, isPublis
                 className={`rounded-md bg-background object-contain shadow-inner ${compact ? "size-[140px]" : "size-[200px]"}`}
               />
             </div>
+            <Button type="button" variant="outline" size={compact ? "sm" : "default"} className="w-full" onClick={() => void copyLink()}>
+              {copied ? "Хуулагдлаа" : "Линк хуулах"}
+            </Button>
             <p
               className={`break-all rounded-md bg-muted/60 font-mono leading-snug text-muted-foreground ${compact ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-[11px]"}`}
             >
               {publicUrl}
             </p>
-            <div className={`flex flex-col ${compact ? "gap-1.5" : "gap-2 sm:flex-row"}`}>
-              <Button type="button" variant="outline" size={compact ? "sm" : "default"} className="w-full" onClick={() => void copyLink()}>
-                {copied ? "Хуулагдлаа" : "Линк хуулах"}
-              </Button>
-              <Button asChild size={compact ? "sm" : "default"} className="w-full">
-                <a href={qrSrc} download={`busy-qr-${publicSlug}.png`}>
-                  QR татах
-                </a>
-              </Button>
-            </div>
+            <Button asChild size={compact ? "sm" : "default"} className="w-full">
+              <a href={qrSrc} download={`busy-qr-${publicSlug}.png`}>
+                QR татах
+              </a>
+            </Button>
           </>
         ) : (
           <p

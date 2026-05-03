@@ -104,6 +104,26 @@ function parseSeatCapacity(label: string | null | undefined): number {
   return Math.min(500, Math.max(1, parseInt(m[1], 10)));
 }
 
+/** `tel:` href + display label from admin-entered phone (MN-friendly). */
+function tripManagerTelParts(raw: string): { href: string; label: string } | null {
+  const label = raw.trim();
+  if (!label) return null;
+  const compact = label.replace(/[\s-]/g, "");
+  let href: string;
+  if (compact.startsWith("+")) {
+    href = `tel:${compact}`;
+  } else if (compact.startsWith("00")) {
+    href = `tel:+${compact.slice(2)}`;
+  } else if (/^976\d{8}$/.test(compact)) {
+    href = `tel:+${compact}`;
+  } else if (/^0\d{8}$/.test(compact)) {
+    href = `tel:+976${compact.slice(1)}`;
+  } else {
+    href = `tel:${compact}`;
+  }
+  return { href, label };
+}
+
 export default async function TripDetailsPage({ params }: Props) {
   const { id } = await params;
   const tripId = parseInt(id, 10);
@@ -174,8 +194,7 @@ export default async function TripDetailsPage({ params }: Props) {
   const isLoggedIn = false; // Replace with NextAuth or session logic
 
   const tripLocationDisplay = extras.location.trim() || dest || "—";
-  const mapQueryPlain = extras.location.trim() || dest || "South Korea";
-  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQueryPlain)}`;
+  const tripManagerCall = tripManagerTelParts(extras.trip_manager_phone);
 
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
 
@@ -244,6 +263,7 @@ export default async function TripDetailsPage({ params }: Props) {
       capacityNote={bookingCapacityNote}
       registrationQrDataUrl={registrationQrDataUrl}
       registrationQrCaption={registrationQrCaption}
+      registrationFormUrl={registerAbsUrl}
     >
     <div className="trd-body">
       <TripDetailsEffects />
@@ -324,7 +344,6 @@ export default async function TripDetailsPage({ params }: Props) {
               <a href="#trd-section-itinerary" className="trd-tab">Хөтөлбөр</a>
               <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
               <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
-              <a href="#trd-section-location" className="trd-tab">Байршил</a>
             </div>
 
             {/* Itinerary — vertical accordion */}
@@ -409,24 +428,21 @@ export default async function TripDetailsPage({ params }: Props) {
                 </div>
               </TripDetailsBookSidebarClient>
 
-              <div id="trd-section-location" className="trd-map-card trd-aside-card trd-scroll-anchor">
-                <div className="trd-aside-card__title">Маршрут</div>
-                <Link href={mapHref} className="trd-map-static" target="_blank" rel="noopener noreferrer">
-                  <span className="trd-map-static__icon" aria-hidden="true"><i className="fa-solid fa-map-location-dot"></i></span>
-                  <span className="trd-map-static__text">
-                    <span className="trd-map-static__title">Газрын зураг нээх</span>
-                    <span className="trd-map-static__sub">Google Maps — чиглэл, замыг шууд харах</span>
-                  </span>
-                  <span className="trd-map-static__go" aria-hidden="true"><i className="fa-solid fa-arrow-up-right-from-square"></i></span>
-                </Link>
-                <p className="trd-map-note"><i className="fa-solid fa-train text-primary me-1"></i>KTX: Бусан — Сеүл</p>
-              </div>
-
               <div id="trd-section-help" className="trd-help-card trd-aside-card trd-scroll-anchor">
                 <div className="trd-aside-card__title">Тусламж</div>
                 <p className="trd-help-lead">Зөвлөхүүд асуултад хариулна.</p>
                 <div className="trd-help-grid">
-                  <Link href="tel:+97677772828" className="trd-help-tile"><i className="fa-solid fa-phone"></i><span>+976 7777 2828</span></Link>
+                  {tripManagerCall ? (
+                    <Link href={tripManagerCall.href} className="trd-help-tile">
+                      <i className="fa-solid fa-phone"></i>
+                      <span>{tripManagerCall.label}</span>
+                    </Link>
+                  ) : (
+                    <div className="trd-help-tile opacity-50" role="status">
+                      <i className="fa-solid fa-phone"></i>
+                      <span>Аяллын удирдагчийн утас тохируулаагүй</span>
+                    </div>
+                  )}
                   <Link href="mailto:travel@busy.mn" className="trd-help-tile"><i className="fa-solid fa-envelope"></i><span>travel@busy.mn</span></Link>
                   <Link href="#trd-section-help" className="trd-help-tile trd-help-tile--wide"><i className="fa-solid fa-comments"></i><span>Онлайн чат</span></Link>
                 </div>

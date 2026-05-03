@@ -125,7 +125,7 @@ export default function HomeTripRegisterDrawer() {
       }
       setFeedback({ text: data.message || "Таны бүртгэлийг амжилттай хүлээн авлаа.", kind: "success" });
       formRef.current.reset();
-      window.setTimeout(() => closeDrawer(), 600);
+      window.setTimeout(() => closeDrawer(), 5000);
     } catch (err) {
       setFeedback({
         text: err instanceof Error ? err.message : "Серверийн алдаа гарлаа. Дахин оролдоно уу.",
