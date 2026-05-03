@@ -9,6 +9,7 @@ import {
   type BniLangCode,
   isBniLang,
 } from "@/lib/nav-php-parity";
+import { SHOW_PUBLIC_HEADER_LOGIN_REGISTER } from "@/lib/public-marketing-flags";
 
 /** Marketing top bar — same primary links as `SiteHeaderNav` / PHP header. */
 export default function Navbar() {
@@ -121,12 +122,16 @@ export default function Navbar() {
                 })}
               </ul>
             </div>
-            <Link href="/auth/login" className="btn btn-light px-4 fw-medium rounded-pill border">
-              Нэвтрэх
-            </Link>
-            <Link href="/auth/register" className="btn btn-brand px-4 fw-medium rounded-pill">
-              Бүртгүүлэх
-            </Link>
+            {SHOW_PUBLIC_HEADER_LOGIN_REGISTER ? (
+              <>
+                <Link href="/auth/login" className="btn btn-light px-4 fw-medium rounded-pill border">
+                  Нэвтрэх
+                </Link>
+                <Link href="/auth/register" className="btn btn-brand px-4 fw-medium rounded-pill">
+                  Бүртгүүлэх
+                </Link>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

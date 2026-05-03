@@ -8,6 +8,7 @@ import {
   type BniLangCode,
   isBniLang,
 } from "@/lib/nav-php-parity";
+import { SHOW_PUBLIC_HEADER_LOGIN_REGISTER } from "@/lib/public-marketing-flags";
 
 /** Matches `includes/header.php` `<nav>` children (paths adapted for Next App Router). */
 const NAV = [
@@ -179,7 +180,7 @@ export function SiteHeaderNav({
                   </li>
                 </ul>
               </div>
-            ) : (
+            ) : SHOW_PUBLIC_HEADER_LOGIN_REGISTER ? (
               <>
                 <Link href={loginHref} className="btn btn-light px-4 fw-medium rounded-pill border">
                   Нэвтрэх
@@ -188,7 +189,7 @@ export function SiteHeaderNav({
                   Бүртгүүлэх
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
