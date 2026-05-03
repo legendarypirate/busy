@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import EventEditorRegistrationQrAside from "@/components/platform/events/EventEditorRegistrationQrAside";
 import EventDateTimeFields from "@/components/platform/forms/EventDateTimeFields";
 import EventHeroImageField from "@/components/platform/forms/EventHeroImageField";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
@@ -364,6 +365,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     <span className="tps-section-title">Хугацаа ба Байршил</span>
                   </div>
                   <EventDateTimeFields
+                    key={`event-dt-${eventForm.id.toString()}`}
                     initialStartsLocal={formatEventDatetimeWireUb(new Date(eventForm.startsAt))}
                     initialEndsLocal={formatEventDatetimeWireUb(new Date(eventForm.endsAt))}
                   />
@@ -529,6 +531,51 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                   </div>
                 ))}
               </div>
+
+              <div className="mt-4 pt-3 border-top border-secondary-subtle">
+                <div className="tps-section-head mb-2">
+                  <div className="tps-section-num">4b</div>
+                  <span className="tps-section-title">Нийтийн хуудас — Тусламж (утас, имэйл, чат)</span>
+                </div>
+                <p className="small text-muted mb-3">
+                  <code>/events/[id]</code> баруун талын «Тусламж» хэсэгт харагдана. Имэйл хоосон бол сайтын үндсэн
+                  имэйл ашиглагдана.
+                </p>
+                <div className="row g-3">
+                  <div className="col-md-4">
+                    <label className="pm-label">Утас (зохион байгуулагч)</label>
+                    <input
+                      type="tel"
+                      className="pm-input"
+                      name="event_manager_phone"
+                      placeholder="+976 …"
+                      defaultValue={parsed.event_manager_phone}
+                      autoComplete="tel"
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="pm-label">Имэйл (тусламж)</label>
+                    <input
+                      type="email"
+                      className="pm-input"
+                      name="event_help_email"
+                      placeholder="Хоосон бол сайтын үндсэн имэйл"
+                      defaultValue={parsed.event_help_email}
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="pm-label">Онлайн чат (URL)</label>
+                    <input
+                      type="text"
+                      className="pm-input"
+                      name="event_help_chat_url"
+                      placeholder="https://wa.me/976…"
+                      defaultValue={parsed.event_help_chat_url}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="tps-form-section mt-4">
@@ -537,12 +584,19 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                 <span className="tps-section-title">Эвентийн бүртгэлийн асуулгын форм</span>
               </div>
               <div className="small text-muted mb-2">
-                Аяллын админтай ижил JSON форм (нийтийн хуудасны drawer-т шууд таарна).
+                Аяллын админтай ижил JSON форм. Нийтийн <strong>/register/…</strong> болон QR баруун талд.
               </div>
-              <PlatformTripRegistrationJsonBuilder
-                hiddenName="event_registration_form_json"
-                initialJson={existing?.registrationFormJson ?? undefined}
-              />
+              <div className="row g-3 align-items-start">
+                <div className="col-lg-8">
+                  <PlatformTripRegistrationJsonBuilder
+                    hiddenName="event_registration_form_json"
+                    initialJson={existing?.registrationFormJson ?? undefined}
+                  />
+                </div>
+                <div className="col-lg-4">
+                  <EventEditorRegistrationQrAside eventId={eventForm.id.toString()} />
+                </div>
+              </div>
             </div>
 
             <div className="row g-4">

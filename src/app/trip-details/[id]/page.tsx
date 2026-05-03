@@ -13,6 +13,7 @@ import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDeta
 import { TripDetailsSocialShare } from "@/components/trip-details/TripDetailsSocialShare";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
+import { buildTripItineraryAccordionDays } from "@/lib/trip-itinerary-for-trip-details";
 import { mediaUrl } from "@/lib/media-url";
 import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
 import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
@@ -170,38 +171,50 @@ export default async function TripDetailsPage({ params }: Props) {
 
   const startDate = new Date(trip.startDate);
   const endDate = new Date(trip.endDate);
-  
-  // Calculate days difference
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  const nDays = Math.max(1, Math.min(14, diffDays));
 
   const dest = trip.destination?.trim() || "";
-  const scheduleDays = [];
 
-  for (let i = 1; i <= nDays; i++) {
-    const dDt = new Date(startDate);
-    dDt.setDate(dDt.getDate() + (i - 1));
-    
-    scheduleDays.push({
-      id: `trd-plh-${i}`,
-      label: `Өдөр ${i}`,
-      date: dDt.toISOString().split("T")[0],
-      /** Preformatted on server — avoids Node vs browser `toLocaleDateString` hydration mismatch in accordion. */
-      dateDisplay: formatMnDate(dDt).replace(/-/g, "."),
-      heading: i === 1 ? "Хөтөлбөр" : "",
-      banner_image: '',
-      items: [
-        {
-          time: '',
-          end_time: '',
-          title: i === 1 ? 'Хөтөлбөрийн дэлгэрэнгүй удахгүй шинэчлэгдэнэ.' : '—',
-          description: (dest ? `${dest} · ` : '') + formatMnDate(dDt),
-          highlight: '',
-        }
-      ]
-    });
-  }
+  const scheduleDaysFromItinerary = buildTripItineraryAccordionDays(trip.itineraryJson, startDate, dest);
+
+  const scheduleDays =
+    scheduleDaysFromItinerary && scheduleDaysFromItinerary.length > 0
+      ? scheduleDaysFromItinerary
+      : (() => {
+          const out: {
+            id: string;
+            label: string;
+            date: string;
+            dateDisplay: string;
+            heading: string;
+            banner_image: string;
+            items: { time: string; end_time: string; title: string; description: string; highlight: string }[];
+          }[] = [];
+          const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          const nDays = Math.max(1, Math.min(14, diffDays));
+          for (let i = 1; i <= nDays; i++) {
+            const dDt = new Date(startDate);
+            dDt.setDate(dDt.getDate() + (i - 1));
+            out.push({
+              id: `trd-plh-${i}`,
+              label: `Өдөр ${i}`,
+              date: dDt.toISOString().split("T")[0],
+              dateDisplay: formatMnDate(dDt).replace(/-/g, "."),
+              heading: i === 1 ? "Хөтөлбөр" : "",
+              banner_image: "",
+              items: [
+                {
+                  time: "",
+                  end_time: "",
+                  title: i === 1 ? "Хөтөлбөрийн дэлгэрэнгүй удахгүй шинэчлэгдэнэ." : "—",
+                  description: (dest ? `${dest} · ` : "") + formatMnDate(dDt),
+                  highlight: "",
+                },
+              ],
+            });
+          }
+          return out;
+        })();
 
   let tripCover = mediaUrl(trip.coverImageUrl || "");
   if (!tripCover) {

@@ -8,6 +8,10 @@ export type BniEventDetailEnvelope = {
   hero_image_url: string;
   speakers: { name: string; role: string; photo_url: string }[];
   faq: { question: string; answer: string }[];
+  /** Public `/events/:id` — «Тусламж» tiles (same idea as trip-details). */
+  event_manager_phone: string;
+  event_help_email: string;
+  event_help_chat_url: string;
 };
 
 export type AgendaDisplayRow = { time: string; title: string; note: string };
@@ -25,6 +29,9 @@ export function parseBniEventDetailEnvelope(raw: unknown): BniEventDetailEnvelop
     hero_image_url: "",
     speakers: [],
     faq: [],
+    event_manager_phone: "",
+    event_help_email: "",
+    event_help_chat_url: "",
   };
   let obj: Record<string, unknown> | null = null;
   if (typeof raw === "string" && raw.trim()) {
@@ -63,6 +70,10 @@ export function parseBniEventDetailEnvelope(raw: unknown): BniEventDetailEnvelop
       base.speakers.push({ name, role, photo_url });
     }
   }
+  base.event_manager_phone = String(obj.event_manager_phone ?? obj.eventManagerPhone ?? "").trim();
+  base.event_help_email = String(obj.event_help_email ?? obj.eventHelpEmail ?? "").trim();
+  base.event_help_chat_url = String(obj.event_help_chat_url ?? obj.eventHelpChatUrl ?? "").trim();
+
   if (Array.isArray(obj.faq)) {
     for (const f of obj.faq) {
       if (!f || typeof f !== "object") {

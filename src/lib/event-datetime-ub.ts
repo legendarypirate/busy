@@ -14,12 +14,17 @@ export function parseEventDatetimeWireUb(raw: string): Date | null {
   const m = WIRE_RE.exec(t);
   if (!m) return null;
   const y = Number(m[1]);
-  const mo = Number(m[2]) - 1;
+  const mo = Number(m[2]);
   const d = Number(m[3]);
   const h = Number(m[4]);
   const min = Number(m[5]);
   if (![y, mo, d, h, min].every(Number.isFinite)) return null;
-  return fromZonedTime(new Date(y, mo, d, h, min, 0, 0), EVENT_ADMIN_DATETIME_TZ);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || min > 59) return null;
+  // Pass an ISO-like string (no Z) so fromZonedTime → toDate uses `timeZone`, not the host's local TZ.
+  // `new Date(y, mo, …)` + fromZonedTime breaks SSR (UTC) vs browser hydration and can yield Invalid Date → UI falls back to "now".
+  const isoLocal = `${String(y).padStart(4, "0")}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}:00`;
+  const out = fromZonedTime(isoLocal, EVENT_ADMIN_DATETIME_TZ);
+  return Number.isNaN(out.getTime()) ? null : out;
 }
 
 /** Format instant as `YYYY-MM-DDTHH:mm` wall clock in {@link EVENT_ADMIN_DATETIME_TZ}. */

@@ -702,3 +702,83 @@
     display: flex;
     justify-content: space-between;
 }
+
+/* Public event detail: registration QR + help tiles (aligned with trip-details patterns) */
+.hev-reg-qr__img {
+    display: inline-block;
+    border-radius: 12px;
+    border: 1px solid var(--event-border);
+    background: #fff;
+    box-shadow: var(--event-shadow);
+}
+.hev-help-card {
+    padding: 1rem 1.1rem 1.05rem;
+    border: 1px solid var(--event-border);
+    border-radius: var(--event-radius);
+    background: #f8fafc;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+.hev-help-card__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--event-text-muted);
+    margin-bottom: 10px;
+}
+.hev-help-lead {
+    font-size: 0.78rem;
+    color: var(--event-text-muted);
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+.hev-help-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.hev-help-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--event-border);
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.25;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    word-break: break-word;
+}
+a.hev-help-tile:hover {
+    border-color: var(--event-primary);
+    background: #eff6ff;
+    color: var(--event-primary);
+}
+.hev-help-tile i {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: var(--event-primary);
+    display: grid;
+    place-items: center;
+    font-size: 0.95rem;
+    border: 1px solid var(--event-border);
+}
+.hev-help-tile--wide {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px;
+}
+.hev-help-tile--wide i {
+    flex-shrink: 0;
+}

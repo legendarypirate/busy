@@ -147,6 +147,19 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     envelope.hero_image_url = heroImageUrl;
   }
 
+  const eventManagerPhone = String(formData.get("event_manager_phone") ?? "").trim();
+  const eventHelpEmail = String(formData.get("event_help_email") ?? "").trim();
+  const eventHelpChatUrl = String(formData.get("event_help_chat_url") ?? "").trim();
+  if (eventManagerPhone !== "") {
+    envelope.event_manager_phone = eventManagerPhone;
+  }
+  if (eventHelpEmail !== "") {
+    envelope.event_help_email = eventHelpEmail;
+  }
+  if (eventHelpChatUrl !== "") {
+    envelope.event_help_chat_url = eventHelpChatUrl;
+  }
+
   const curriculumOverrideJson: Prisma.InputJsonValue | typeof Prisma.DbNull =
     Object.keys(envelope).length > 0 ? (envelope as Prisma.InputJsonValue) : Prisma.DbNull;
 

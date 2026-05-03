@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import QRCode from "qrcode";
 import EventDetailRegisterDrawer from "@/components/events/EventDetailRegisterDrawer";
+import { EventDetailRegistrationQr } from "@/components/events/EventDetailRegistrationQr";
 import EventDetailTabs from "@/components/events/EventDetailTabs";
 import {
   buildAgendaDisplayRows,
@@ -15,6 +17,8 @@ import {
 import { formatMnDate } from "@/lib/format-date";
 import { prisma } from "@/lib/prisma";
 import { bniEventPublicDetailSelect } from "@/lib/prisma-event-select";
+import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
+import { helpEmailParts, helpPhoneTelParts, normalizeHelpChatHref } from "@/lib/public-help-contact";
 import { SITE_CONTACT } from "@/lib/site-contact";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +88,11 @@ export default async function EventDetailPage({ params }: Props) {
     .count({ where: { eventId: nid } })
     .catch(() => 0);
 
+  const publishedForm = await prisma.tripRegistrationForm.findFirst({
+    where: { eventId: nid, isPublished: true },
+    select: { publicSlug: true },
+  });
+
   const envelope = parseBniEventDetailEnvelope(ev.curriculumOverrideJson ?? undefined);
   const description = resolvedEventDescription(envelope);
   const audienceText = resolvedAudienceText(envelope);
@@ -109,6 +118,33 @@ export default async function EventDetailPage({ params }: Props) {
   const heroSrc = heroFromEnvelope !== "" ? heroFromEnvelope : EVENT_DEFAULT_HERO;
   const progressPct =
     registeredTotal > 0 ? Math.min(100, Math.max(18, 20 + Math.min(80, registeredTotal * 6))) : 14;
+
+  const origin = marketingSiteOrigin();
+  const sharePath = `/events/${nid.toString()}`;
+  const registerTargetPath = publishedForm?.publicSlug
+    ? `/register/${encodeURIComponent(publishedForm.publicSlug)}`
+    : sharePath;
+  const registerAbsUrl = `${origin}${registerTargetPath}`;
+  let registrationQrDataUrl: string | null = null;
+  let registrationQrCaption: string | null = null;
+  try {
+    registrationQrDataUrl = await QRCode.toDataURL(registerAbsUrl, {
+      margin: 2,
+      width: 220,
+      color: { dark: "#1d4ed8", light: "#ffffff" },
+    });
+    registrationQrCaption = publishedForm?.publicSlug
+      ? "Утасны камераар уншуулбал нийтийн бүртгэлийн хуудас нээгдэнэ."
+      : "Утасны камераар уншуулбал энэ эвентийн хуудас нээгдэнэ (бүртгэлийн товчоор бөглөнө).";
+  } catch {
+    registrationQrDataUrl = null;
+    registrationQrCaption = null;
+  }
+
+  const eventManagerCall = helpPhoneTelParts(envelope.event_manager_phone);
+  const eventHelpEmail = helpEmailParts(envelope.event_help_email, SITE_CONTACT.email);
+  const eventHelpChatHref = normalizeHelpChatHref(envelope.event_help_chat_url);
+  const eventHelpChatExternal = eventHelpChatHref != null && /^https?:\/\//i.test(eventHelpChatHref);
 
   const similar =
     ev.chapterId != null
@@ -347,6 +383,56 @@ export default async function EventDetailPage({ params }: Props) {
               </p>
 
               <EventDetailRegisterDrawer eventId={ev.id.toString()} initialTitle={hTitle} />
+
+              {registrationQrDataUrl ? (
+                <div className="mt-4 pt-3 border-top border-secondary-subtle">
+                  <div className="small fw-bold text-uppercase text-muted mb-2" style={{ letterSpacing: "0.04em" }}>
+                    Бүртгэлийн холбоос (QR)
+                  </div>
+                  <EventDetailRegistrationQr
+                    qrDataUrl={registrationQrDataUrl}
+                    formUrl={registerAbsUrl}
+                    caption={registrationQrCaption}
+                  />
+                </div>
+              ) : null}
+
+              <div className="hev-help-card mt-4">
+                <div className="hev-help-card__title">Тусламж</div>
+                <p className="hev-help-lead">Зохион байгуулагч, тусламжийн холбоос.</p>
+                <div className="hev-help-grid">
+                  {eventManagerCall ? (
+                    <Link href={eventManagerCall.href} className="hev-help-tile">
+                      <i className="fa-solid fa-phone" />
+                      <span>{eventManagerCall.label}</span>
+                    </Link>
+                  ) : (
+                    <div className="hev-help-tile opacity-50" role="status">
+                      <i className="fa-solid fa-phone" />
+                      <span>Утас тохируулаагүй</span>
+                    </div>
+                  )}
+                  <Link href={eventHelpEmail.href} className="hev-help-tile">
+                    <i className="fa-solid fa-envelope" />
+                    <span>{eventHelpEmail.label}</span>
+                  </Link>
+                  {eventHelpChatHref ? (
+                    <Link
+                      href={eventHelpChatHref}
+                      className="hev-help-tile hev-help-tile--wide"
+                      {...(eventHelpChatExternal ? { target: "_blank" as const, rel: "noopener noreferrer" as const } : {})}
+                    >
+                      <i className="fa-solid fa-comments" />
+                      <span>Онлайн чат</span>
+                    </Link>
+                  ) : (
+                    <div className="hev-help-tile hev-help-tile--wide opacity-50" role="status">
+                      <i className="fa-solid fa-comments" />
+                      <span>Онлайн чатын холбоос тохируулаагүй</span>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <p className="form-terms">
                 Холбоо барих, нөхцөлийн талаар{" "}
