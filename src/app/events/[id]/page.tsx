@@ -18,8 +18,8 @@ import { formatMnDate } from "@/lib/format-date";
 import { prisma } from "@/lib/prisma";
 import { bniEventPublicDetailSelect } from "@/lib/prisma-event-select";
 import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
+import { getFooterPublicConfig } from "@/lib/footer-public-config";
 import { helpEmailParts, helpPhoneTelParts, normalizeHelpChatHref } from "@/lib/public-help-contact";
-import { SITE_CONTACT } from "@/lib/site-contact";
 
 export const dynamic = "force-dynamic";
 
@@ -141,8 +141,9 @@ export default async function EventDetailPage({ params }: Props) {
     registrationQrCaption = null;
   }
 
+  const footerCfg = await getFooterPublicConfig();
   const eventManagerCall = helpPhoneTelParts(envelope.event_manager_phone);
-  const eventHelpEmail = helpEmailParts(envelope.event_help_email, SITE_CONTACT.email);
+  const eventHelpEmail = helpEmailParts(envelope.event_help_email, footerCfg.contact.email);
   const eventHelpChatHref = normalizeHelpChatHref(envelope.event_help_chat_url);
   const eventHelpChatExternal = eventHelpChatHref != null && /^https?:\/\//i.test(eventHelpChatHref);
 

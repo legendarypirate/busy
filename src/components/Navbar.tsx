@@ -64,7 +64,12 @@ export default function Navbar() {
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className={`collapse navbar-collapse${mobileNavOpen ? " show" : ""}`} id="navbarNav">
+        <div
+          id="navbarNav"
+          className={`navbar-collapse flex-column flex-lg-row flex-grow-1 align-items-stretch align-items-lg-center w-100 mt-2 mt-lg-0 ${
+            mobileNavOpen ? "d-flex" : "d-none"
+          } d-lg-flex`}
+        >
           <ul className="navbar-nav mx-auto align-items-lg-center">
             <li className="nav-item">
               <Link className={`nav-link${pathname === "/" ? " active" : ""}`} href="/">

@@ -133,7 +133,12 @@ export function SiteHeaderNav({
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className={`collapse navbar-collapse${mobileNavOpen ? " show" : ""}`} id="navbarNavSite">
+        <div
+          id="navbarNavSite"
+          className={`navbar-collapse flex-column flex-lg-row flex-grow-1 align-items-stretch align-items-lg-center w-100 mt-2 mt-lg-0 ${
+            mobileNavOpen ? "d-flex" : "d-none"
+          } d-lg-flex`}
+        >
           <ul className="navbar-nav mx-auto align-items-lg-center">
             {NAV.filter((item) => isNavItemVisible(item.id)).map((item) => (
               <li className="nav-item" key={item.href}>

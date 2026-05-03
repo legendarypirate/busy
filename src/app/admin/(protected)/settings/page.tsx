@@ -1,10 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { getDeploymentSessionSummary } from "@/lib/deployment-session-summary";
+import { FOOTER_PUBLIC_JSON_KEY, getFooterPublicConfig } from "@/lib/footer-public-config";
+import { FooterSettingsForm } from "./FooterSettingsForm";
 
 export const metadata = { title: "Footer / Site тохиргоо | Админ" };
 
-export default async function AdminSettingsPage() {
+type Props = { searchParams: Promise<{ saved?: string; reset?: string }> };
+
+export default async function AdminSettingsPage({ searchParams }: Props) {
+  const sp = await searchParams;
   const cfg = getDeploymentSessionSummary();
+  const footerCfg = await getFooterPublicConfig();
+
   let settings: { settingName: string; settingValue: string | null }[] = [];
   try {
     settings = await prisma.siteSetting.findMany({
@@ -20,9 +27,24 @@ export default async function AdminSettingsPage() {
     <div>
       <h1 className="h4 fw-bold mb-4">Footer / Site тохиргоо</h1>
 
-      <div className="card mb-4">
-        <div className="card-header fw-semibold">Орчны тохиргоо (нууцгүй)</div>
-        <div className="card-body small">
+      {sp.saved === "1" ? (
+        <div className="alert alert-success py-2 small mb-3" role="status">
+          Footer тохиргоо хадгалагдлаа.
+        </div>
+      ) : null}
+      {sp.reset === "1" ? (
+        <div className="alert alert-warning py-2 small mb-3" role="status">
+          Footer үндсэн утгад сэргээгдлээ.
+        </div>
+      ) : null}
+
+      <FooterSettingsForm cfg={footerCfg} />
+
+      <details className="card mb-4">
+        <summary className="card-header fw-semibold user-select-none" style={{ cursor: "pointer" }}>
+          Орчны тохиргоо (нууцгүй, заавал биш)
+        </summary>
+        <div className="card-body small border-top">
           <ul className="list-unstyled mb-0" style={{ lineHeight: 1.75 }}>
             <li>
               <strong>NODE_ENV</strong>: {cfg.nodeEnv}
@@ -40,7 +62,8 @@ export default async function AdminSettingsPage() {
               <strong>Secure cookie</strong>: {cfg.secureCookiesExpected ? "тийм" : "үгүй"}
             </li>
             <li>
-              <strong>DATABASE_URL</strong>: {cfg.databaseUrlConfigured ? "тохируулсан" : <em className="text-danger">байхгүй</em>}
+              <strong>DATABASE_URL</strong>:{" "}
+              {cfg.databaseUrlConfigured ? "тохируулсан" : <em className="text-danger">байхгүй</em>}
             </li>
           </ul>
           <p className="text-muted mb-0 mt-3 small">
@@ -48,10 +71,10 @@ export default async function AdminSettingsPage() {
             алдагдах үед эхлээд эдгээрийг шалгана уу.
           </p>
         </div>
-      </div>
+      </details>
 
       <div className="card">
-        <div className="card-header fw-semibold">site_settings</div>
+        <div className="card-header fw-semibold">site_settings (бүх түлхүүр)</div>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-sm table-hover mb-0">
@@ -69,23 +92,30 @@ export default async function AdminSettingsPage() {
                     </td>
                   </tr>
                 ) : (
-                  settings.map((s) => (
-                    <tr key={s.settingName}>
-                      <td className="small text-break">{s.settingName}</td>
-                      <td className="small text-muted text-break" style={{ maxWidth: "32rem" }}>
-                        {(s.settingValue ?? "").length > 200
+                  settings.map((s) => {
+                    const isFooterJson = s.settingName === FOOTER_PUBLIC_JSON_KEY;
+                    const display =
+                      isFooterJson && (s.settingValue?.length ?? 0) > 200
+                        ? `${(s.settingValue ?? "").slice(0, 200)}… (Footer картаас засварлана)`
+                        : (s.settingValue ?? "").length > 200
                           ? `${(s.settingValue ?? "").slice(0, 200)}…`
-                          : (s.settingValue ?? "—")}
-                      </td>
-                    </tr>
-                  ))
+                          : (s.settingValue ?? "—");
+                    return (
+                      <tr key={s.settingName}>
+                        <td className="small text-break">{s.settingName}</td>
+                        <td className="small text-muted text-break" style={{ maxWidth: "32rem" }}>
+                          {display}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </div>
         <div className="card-footer small text-muted">
-          Утга засах формыг дараагийн алхамтай нэмнэ (PHP <code>settings.php</code> parity).
+          Footer-ийн JSON-ыг дээрх «Нийтийн footer» картаас засварлана.
         </div>
       </div>
     </div>

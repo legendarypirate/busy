@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SITE_CONTACT } from "@/lib/site-contact";
+import { getFooterPublicConfig } from "@/lib/footer-public-config";
 
 const MAX_MESSAGE = 4000;
 const MAX_NAME = 200;
@@ -42,12 +42,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Зурвас ${MAX_MESSAGE} тэмдэгтээс уртгүй байна.` }, { status: 400 });
     }
 
+    const footer = await getFooterPublicConfig();
     console.info("[contact] inbound", {
       name,
       email,
       phone: phone || undefined,
       messagePreview: message.slice(0, 160),
-      routeTo: SITE_CONTACT.email,
+      routeTo: footer.contact.email,
     });
 
     return NextResponse.json({ ok: true });

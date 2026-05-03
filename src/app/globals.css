@@ -121,18 +121,28 @@ a {
   opacity: 0.85;
 }
 
-/* Marketing header: keep Bootstrap collapse content visible at lg+ if layer order / JS timing breaks it */
+/* Marketing header: lg+ дээр цэсийг үргэлж харуулна (navbar нь `.collapse`-гүй — Tailwind/BS давхцуулалтас зайлсхийх) */
 @media (min-width: 992px) {
-  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.collapse.navbar-collapse,
-  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNavSite.collapse.navbar-collapse {
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.navbar-collapse,
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNavSite.navbar-collapse {
     display: flex !important;
     flex-basis: auto !important;
     flex-grow: 1;
     align-items: center;
     width: auto;
-    visibility: visible;
+    visibility: visible !important;
     height: auto !important;
     overflow: visible;
+  }
+}
+
+/* Mobile: нээсэн цэсний агуулга харагдана (z-index + давхаргын доор алга болохоос сэргийлнэ) */
+@media (max-width: 991.98px) {
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.navbar-collapse.d-flex,
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNavSite.navbar-collapse.d-flex {
+    position: relative;
+    z-index: 1040;
+    visibility: visible !important;
   }
 }
 

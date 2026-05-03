@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { FooterContactList } from "@/components/FooterContactList";
+import { FooterRichLink } from "@/components/FooterRichLink";
 import { FooterSocialLinks } from "@/components/FooterSocialLinks";
 import { BUSY_ARCHITECTURE_RULE, BUSY_MISSION_LINES, BUSY_PLATFORM_GOAL } from "@/lib/busy-platform-vision";
+import { getFooterPublicConfig } from "@/lib/footer-public-config";
 
-export function SiteFooter() {
+export async function SiteFooter() {
   const year = new Date().getFullYear();
+  const cfg = await getFooterPublicConfig();
+
   return (
     <footer className="footer-v3 mt-auto">
       <div className="container">
@@ -12,7 +16,7 @@ export function SiteFooter() {
           <div className="footer-logo-area">
             <Link href="/" className="d-inline-block mb-3 text-decoration-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/finallogo.png" alt="BUSY.mn" style={{ height: 40, width: "auto" }} />
+              <img src="/finallogo.png" alt={cfg.brandName} style={{ height: 40, width: "auto" }} />
             </Link>
             <p className="desc mb-2">{BUSY_MISSION_LINES.join(" ")}</p>
             <p className="desc small text-muted mb-2">{BUSY_ARCHITECTURE_RULE}</p>
@@ -25,36 +29,33 @@ export function SiteFooter() {
                 Оролцогчийн замнал →
               </Link>
             </div>
-            <FooterSocialLinks />
+            <FooterSocialLinks links={cfg.socialLinks} />
           </div>
           <div>
-            <h4 className="footer-col-title">Холбоо барих</h4>
-            <FooterContactList />
+            <h4 className="footer-col-title">{cfg.contactColumnTitle}</h4>
+            <FooterContactList contact={cfg.contact} />
           </div>
           <div>
-            <h4 className="footer-col-title">Хэрэгтэй холбоосууд</h4>
+            <h4 className="footer-col-title">{cfg.usefulLinksColumnTitle}</h4>
             <ul className="footer-links">
-              <li>
-                <Link href="#">Нууцлалын бодлого</Link>
-              </li>
-              <li>
-                <Link href="#">Нөхцөл, болзол</Link>
-              </li>
-              <li>
-                <Link href="#">Тусламж, дэмжлэг</Link>
-              </li>
-              <li>
-                <Link href="#">Хамтран ажиллах</Link>
-              </li>
+              {cfg.usefulLinks.map((item, idx) => (
+                <li key={`${item.href}-${idx}`}>
+                  <FooterRichLink href={item.href} className="text-reset text-decoration-none">
+                    {item.label}
+                  </FooterRichLink>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
-            <h4 className="footer-col-title">Платформ</h4>
-            <p className="small text-muted mb-0">Аялал, хурал, эвентын бүртгэл болон удирдлагыг нэг дороос.</p>
+            <h4 className="footer-col-title">{cfg.platformColumnTitle}</h4>
+            <p className="small text-muted mb-0">{cfg.platformBlurb}</p>
           </div>
         </div>
         <div className="pt-4 border-top">
-          <p className="small text-muted m-0">© {year} BUSY. Бүх эрх хуулиар хамгаалагдсан.</p>
+          <p className="small text-muted m-0">
+            © {year} {cfg.copyrightName}. Бүх эрх хуулиар хамгаалагдсан.
+          </p>
         </div>
       </div>
     </footer>
