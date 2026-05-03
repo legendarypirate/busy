@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import EventDateTimeFields from "@/components/platform/forms/EventDateTimeFields";
 import EventHeroImageField from "@/components/platform/forms/EventHeroImageField";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import EventItineraryBuilder from "@/components/platform/forms/EventItineraryBuilder";
@@ -366,26 +367,10 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     <div className="tps-section-num">2</div>
                     <span className="tps-section-title">Хугацаа ба Байршил</span>
                   </div>
-                  <div className="mb-3">
-                    <label className="pm-label">Эхлэх</label>
-                    <input
-                      type="datetime-local"
-                      className="pm-input"
-                      name="starts_at"
-                      required
-                      defaultValue={toDatetimeLocal(new Date(eventForm.startsAt))}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="pm-label">Дуусах</label>
-                    <input
-                      type="datetime-local"
-                      className="pm-input"
-                      name="ends_at"
-                      required
-                      defaultValue={toDatetimeLocal(new Date(eventForm.endsAt))}
-                    />
-                  </div>
+                  <EventDateTimeFields
+                    initialStartsLocal={toDatetimeLocal(new Date(eventForm.startsAt))}
+                    initialEndsLocal={toDatetimeLocal(new Date(eventForm.endsAt))}
+                  />
                   <div>
                     <label className="pm-label">Байршил</label>
                     <input
