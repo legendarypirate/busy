@@ -8,6 +8,7 @@ import {
   TripDetailsSidebarRegisterCtas,
 } from "@/components/trip-details/trip-details-booking-context";
 import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDetailsBookSidebarClient";
+import { TripDetailsSocialShare } from "@/components/trip-details/TripDetailsSocialShare";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
@@ -131,6 +132,11 @@ export default async function TripDetailsPage({ params }: Props) {
   const formattedEndStr = formattedStartYear === formattedEndYear ? formatMnDate(endDate).slice(5).replace(/-/g, '.') : formatMnDate(endDate).replace(/-/g, '.');
   const tripDateRange = `${formattedStartStr} – ${formattedEndStr}`;
 
+  const siteOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const sharePath = `/trip-details/${tripId}`;
+  const canonicalShareUrl = siteOrigin ? `${siteOrigin}${sharePath}` : "";
+  const shareTitle = dest || trip.destination?.trim() || "BUSY.mn — бизнес аялал";
+
   return (
     <TripDetailsBookingRegisterProvider
       tripId={tripId}
@@ -178,6 +184,7 @@ export default async function TripDetailsPage({ params }: Props) {
                   </div>
                 </div>
               </div>
+              <TripDetailsSocialShare sharePath={sharePath} shareTitle={shareTitle} canonicalUrl={canonicalShareUrl} />
             </div>
           </div>
         </div>
