@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { getPlatformSession } from "@/lib/platform-session";
 import { prisma } from "@/lib/prisma";
+import { parseEventDatetimeWireUb } from "@/lib/event-datetime-ub";
 import { syncEventRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-event-registration-form-from-json";
 
 const ADMIN_EVENTS_PATH = "/admin/meetings";
@@ -24,15 +25,6 @@ async function assertAdminForEventCrud(accountId: bigint): Promise<void> {
   }
 }
 
-function parseDatetimeLocal(raw: string): Date | null {
-  const t = raw.trim();
-  if (!t) {
-    return null;
-  }
-  const d = new Date(t);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 function parseMoney(raw: string): Prisma.Decimal | null {
   const t = raw.trim();
   if (t === "" || !Number.isFinite(Number(t))) {
@@ -42,15 +34,19 @@ function parseMoney(raw: string): Prisma.Decimal | null {
 }
 
 function parseRegistrationJson(raw: string): Prisma.InputJsonValue | null {
-  try {
-    const v = JSON.parse(raw) as unknown;
-    if (Array.isArray(v) && v.length > 0) {
-      return v as Prisma.InputJsonValue;
+  let v: unknown = raw.trim();
+  if (v === "") return null;
+  for (let depth = 0; depth < 3 && typeof v === "string"; depth++) {
+    try {
+      v = JSON.parse(v as string) as unknown;
+    } catch {
+      return null;
     }
-    return null;
-  } catch {
-    return null;
   }
+  if (Array.isArray(v) && v.length > 0) {
+    return v as Prisma.InputJsonValue;
+  }
+  return null;
 }
 
 function parseSections(raw: string): Record<string, unknown>[] {
@@ -89,8 +85,8 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   const chapterId = chapterIdNum > 0 ? chapterIdNum : null;
   const eventType = String(formData.get("event_type") ?? "weekly_meeting").trim() || "weekly_meeting";
   const title = String(formData.get("title") ?? "").trim();
-  const startsAt = parseDatetimeLocal(String(formData.get("starts_at") ?? ""));
-  const endsAt = parseDatetimeLocal(String(formData.get("ends_at") ?? ""));
+  const startsAt = parseEventDatetimeWireUb(String(formData.get("starts_at") ?? ""));
+  const endsAt = parseEventDatetimeWireUb(String(formData.get("ends_at") ?? ""));
   const location = String(formData.get("location") ?? "").trim() || null;
   const isOnline = formData.get("is_online") === "1";
   const scheduleId = Math.max(0, Number(String(formData.get("schedule_id") ?? "0")));
@@ -155,8 +151,6 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     Object.keys(envelope).length > 0 ? (envelope as Prisma.InputJsonValue) : Prisma.DbNull;
 
   const regParsedRaw = parseRegistrationJson(String(formData.get("event_registration_form_json") ?? ""));
-  const registrationFormJson: Prisma.InputJsonValue | typeof Prisma.DbNull =
-    regParsedRaw === null ? Prisma.DbNull : regParsedRaw;
   const priceMnt = parseMoney(String(formData.get("price_mnt") ?? ""));
   const advanceOrderMnt = parseMoney(String(formData.get("advance_order_mnt") ?? ""));
 
@@ -164,7 +158,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     redirect(`${listPath}?error=missing`);
   }
 
-  const row = {
+  const rowBase = {
     chapterId,
     scheduleId: scheduleId > 0 ? scheduleId : null,
     curriculumId: curriculumId > 0 ? curriculumId : null,
@@ -175,31 +169,49 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     location,
     isOnline,
     curriculumOverrideJson,
-    registrationFormJson,
     priceMnt,
     advanceOrderMnt,
   };
 
+  const registrationFormJson: Prisma.InputJsonValue | typeof Prisma.DbNull =
+    regParsedRaw === null ? Prisma.DbNull : regParsedRaw;
+
   let savedEventId = eventId;
+  let existingRegistrationJson: unknown | undefined;
   if (eventId > BigInt(0)) {
-    const exists = await prisma.bniEvent.findUnique({ where: { id: eventId } });
+    const exists = await prisma.bniEvent.findUnique({
+      where: { id: eventId },
+      select: { id: true, registrationFormJson: true },
+    });
     if (!exists) {
       redirect(`${listPath}?error=notfound`);
     }
+    existingRegistrationJson = exists.registrationFormJson ?? undefined;
+    const updateData: typeof rowBase & { registrationFormJson?: Prisma.InputJsonValue | typeof Prisma.DbNull } = {
+      ...rowBase,
+    };
+    if (regParsedRaw !== null) {
+      updateData.registrationFormJson = registrationFormJson;
+    }
     await prisma.bniEvent.update({
       where: { id: eventId },
-      data: row,
+      data: updateData,
     });
     savedEventId = eventId;
   } else {
     const created = await prisma.bniEvent.create({
-      data: row,
+      data: { ...rowBase, registrationFormJson },
       select: { id: true },
     });
     savedEventId = created.id;
   }
 
-  const regForSync = registrationFormJson === Prisma.DbNull ? null : (registrationFormJson as unknown);
+  let regForSync: unknown = regParsedRaw as unknown;
+  if (eventId > BigInt(0) && regParsedRaw === null) {
+    regForSync = existingRegistrationJson ?? null;
+  } else if (regParsedRaw === null) {
+    regForSync = null;
+  }
   await syncEventRegistrationFormFromLegacyJson(savedEventId, regForSync);
 
   revalidatePath("/platform/events");

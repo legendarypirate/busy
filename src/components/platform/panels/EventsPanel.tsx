@@ -8,6 +8,7 @@ import SpeakerPhotoUrlField from "@/components/platform/forms/SpeakerPhotoUrlFie
 import EventManageForm from "@/components/platform/panels/EventManageForm";
 import { deleteEventAction } from "@/app/platform/events-actions";
 import { parseBniEventDetailEnvelope } from "@/lib/bni-event-detail";
+import { formatEventDatetimeWireUb, formatEventDisplayUb } from "@/lib/event-datetime-ub";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
 
@@ -49,11 +50,6 @@ function errorBanner(code: string | undefined): string | null {
     return "Эвент олдсонгүй.";
   }
   return null;
-}
-
-function toDatetimeLocal(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function padSpeakers(
@@ -236,7 +232,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                       <div className="small fw-bold">{ev.chapter?.name ?? "—"}</div>
                       <div className="smaller text-muted">{labelForEventType(ev.eventType)}</div>
                     </td>
-                    <td className="small text-muted">{toDatetimeLocal(new Date(ev.startsAt))}</td>
+                    <td className="small text-muted">{formatEventDisplayUb(new Date(ev.startsAt))}</td>
                     <td>{fmtMoney(ev.priceMnt)}</td>
                     <td className="text-end">
                       <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
@@ -368,8 +364,8 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     <span className="tps-section-title">Хугацаа ба Байршил</span>
                   </div>
                   <EventDateTimeFields
-                    initialStartsLocal={toDatetimeLocal(new Date(eventForm.startsAt))}
-                    initialEndsLocal={toDatetimeLocal(new Date(eventForm.endsAt))}
+                    initialStartsLocal={formatEventDatetimeWireUb(new Date(eventForm.startsAt))}
+                    initialEndsLocal={formatEventDatetimeWireUb(new Date(eventForm.endsAt))}
                   />
                   <div>
                     <label className="pm-label">Байршил</label>

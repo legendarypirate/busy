@@ -87,10 +87,18 @@ function legacyNeedsOptions(t: string) {
 }
 
 export function parseLegacyRows(raw: unknown): TripFormBuilderQuestionRow[] {
-  if (!Array.isArray(raw)) {
+  let v: unknown = raw;
+  if (typeof v === "string" && v.trim()) {
+    try {
+      v = JSON.parse(v.trim()) as unknown;
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(v)) {
     return [];
   }
-  return raw
+  return v
     .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
     .map((r, index) => {
       const name = String(r.name ?? "").trim() || newQuestionId();

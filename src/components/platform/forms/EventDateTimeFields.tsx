@@ -1,41 +1,47 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { mn } from "date-fns/locale/mn";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  eventInstantToPickerDate,
+  formatEventDatetimeWireUb,
+  parseEventDatetimeWireUb,
+  pickerDateToEventInstant,
+} from "@/lib/event-datetime-ub";
 
 registerLocale("mn", mn);
 
-/** Same wire format as native `datetime-local` + `parseDatetimeLocal` on the server. */
-function toFormDatetimeValue(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function parseLocalDatetimeInput(s: string): Date {
-  const t = s.trim();
-  if (!t) return new Date();
-  const d = new Date(t);
-  return Number.isNaN(d.getTime()) ? new Date() : d;
-}
-
 type Props = {
-  /** `YYYY-MM-DDTHH:mm` in browser-local interpretation (matches previous `datetime-local` default). */
+  /** `YYYY-MM-DDTHH:mm` wall clock in Asia/Ulaanbaatar (matches server + hidden fields). */
   initialStartsLocal: string;
   initialEndsLocal: string;
 };
 
 export default function EventDateTimeFields({ initialStartsLocal, initialEndsLocal }: Props) {
-  const [start, setStart] = useState(() => parseLocalDatetimeInput(initialStartsLocal));
-  const [end, setEnd] = useState(() => parseLocalDatetimeInput(initialEndsLocal));
+  const [start, setStart] = useState(() => parseEventDatetimeWireUb(initialStartsLocal) ?? new Date());
+  const [end, setEnd] = useState(() => {
+    const s = parseEventDatetimeWireUb(initialStartsLocal) ?? new Date();
+    let e = parseEventDatetimeWireUb(initialEndsLocal) ?? s;
+    if (e.getTime() < s.getTime()) {
+      e = new Date(s.getTime() + 2 * 60 * 60 * 1000);
+    }
+    return e;
+  });
 
-  useEffect(() => {
-    setEnd((prev) => (prev.getTime() < start.getTime() ? new Date(start.getTime() + 2 * 60 * 60 * 1000) : prev));
-  }, [start]);
+  const onStartChange = (d: Date | null) => {
+    if (!d) return;
+    const instant = pickerDateToEventInstant(d);
+    setStart(instant);
+    setEnd((prev) => (prev.getTime() < instant.getTime() ? new Date(instant.getTime() + 2 * 60 * 60 * 1000) : prev));
+  };
 
-  const startsAtValue = useMemo(() => toFormDatetimeValue(start), [start]);
-  const endsAtValue = useMemo(() => toFormDatetimeValue(end), [end]);
+  const startsAtValue = useMemo(() => formatEventDatetimeWireUb(start), [start]);
+  const endsAtValue = useMemo(() => formatEventDatetimeWireUb(end), [end]);
+
+  const startPicker = useMemo(() => eventInstantToPickerDate(start), [start]);
+  const endPicker = useMemo(() => eventInstantToPickerDate(end), [end]);
 
   const pickerClass = "pm-input event-dtp-input";
 
@@ -47,8 +53,8 @@ export default function EventDateTimeFields({ initialStartsLocal, initialEndsLoc
       <div className="mb-3">
         <label className="pm-label">Эхлэх</label>
         <DatePicker
-          selected={start}
-          onChange={(d: Date | null) => d && setStart(d)}
+          selected={startPicker}
+          onChange={(d: Date | null) => onStartChange(d)}
           showTimeSelect
           timeIntervals={15}
           timeCaption="Цаг"
@@ -67,14 +73,14 @@ export default function EventDateTimeFields({ initialStartsLocal, initialEndsLoc
       <div className="mb-3">
         <label className="pm-label">Дуусах</label>
         <DatePicker
-          selected={end}
-          onChange={(d: Date | null) => d && setEnd(d)}
+          selected={endPicker}
+          onChange={(d: Date | null) => d && setEnd(pickerDateToEventInstant(d))}
           showTimeSelect
           timeIntervals={15}
           timeCaption="Цаг"
           dateFormat="yyyy.MM.dd HH:mm"
           locale="mn"
-          minDate={start}
+          minDate={startPicker}
           className={pickerClass}
           wrapperClassName="w-100"
           calendarClassName="event-dtp-calendar"
