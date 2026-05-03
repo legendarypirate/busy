@@ -97,7 +97,8 @@ export default async function TripDetailsPage({ params }: Props) {
 
   const isLoggedIn = false; // Replace with NextAuth or session logic
 
-  const mapQueryPlain = dest ? `${dest}, South Korea` : 'Busan Seoul South Korea';
+  const tripLocationDisplay = extras.location.trim() || dest || "—";
+  const mapQueryPlain = extras.location.trim() || dest || "South Korea";
   const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQueryPlain)}`;
 
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
@@ -162,7 +163,7 @@ export default async function TripDetailsPage({ params }: Props) {
                   <i className="fa-solid fa-location-dot"></i>
                   <div>
                     <div className="opacity-50 small">Чиглэл</div>
-                    <div>БНСУ – Бусан, Сеүл</div>
+                    <div>{tripLocationDisplay}</div>
                   </div>
                 </div>
                 <div className="trd-hero-meta-item">
@@ -280,7 +281,7 @@ export default async function TripDetailsPage({ params }: Props) {
                   <div className="trd-summary-cell trd-summary-cell--full" role="listitem">
                     <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-solid fa-earth-asia"></i></span>
                     <span className="trd-summary-label">Чиглэл</span>
-                    <span className="trd-summary-val">БНСУ – Бусан, Сеүл</span>
+                    <span className="trd-summary-val">{tripLocationDisplay}</span>
                   </div>
                 </div>
 
