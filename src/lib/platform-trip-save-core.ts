@@ -96,20 +96,34 @@ function parseBookingTiersFormJson(raw: string): TripExtrasBookingTier[] {
   }
 }
 
+function cloneExtrasJson(raw: unknown): Record<string, unknown> {
+  if (raw != null && typeof raw === "object" && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>) };
+  }
+  return {};
+}
+
+type TripDetailsHeroFlag =
+  | { mode: "unchanged" }
+  | { mode: "set"; url: string }
+  | { mode: "clear" };
+
 function buildExtrasPayload(
+  base: Record<string, unknown>,
   shortDesc: string,
   tripLoc: string,
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
   bookingStatusNote: string,
+  tripDetailsHero: TripDetailsHeroFlag,
 ): Prisma.InputJsonValue {
-  const payload: Record<string, unknown> = {
-    short_description: shortDesc.trim() || null,
-    location: tripLoc.trim() || null,
-    total_seats: Number.isFinite(totalSeats) ? totalSeats : 30,
-    advance_percent: Number.isFinite(advancePercent) ? advancePercent : 20,
-  };
+  const payload: Record<string, unknown> = { ...base };
+  payload.short_description = shortDesc.trim() || null;
+  payload.location = tripLoc.trim() || null;
+  payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
+  payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
+
   if (bookingTiers.length > 0) {
     payload.booking_tiers = bookingTiers.map((t, idx) => ({
       id: (t.id || "").trim() || `t_${idx}`,
@@ -117,10 +131,22 @@ function buildExtrasPayload(
       subtitle: t.subtitle.trim() || null,
       price_mnt: Math.max(0, Math.round(t.price_mnt)),
     }));
+  } else {
+    delete payload.booking_tiers;
   }
+
   if (bookingStatusNote.trim()) {
     payload.booking_status_note = bookingStatusNote.trim();
+  } else {
+    delete payload.booking_status_note;
   }
+
+  if (tripDetailsHero.mode === "set") {
+    payload.trip_details_hero_url = tripDetailsHero.url;
+  } else if (tripDetailsHero.mode === "clear") {
+    delete payload.trip_details_hero_url;
+  }
+
   return payload as Prisma.InputJsonValue;
 }
 
@@ -237,7 +263,38 @@ export async function executeSaveTrip(
   const itineraryParsed = parseItinerary(itineraryRaw);
   const bookingTiersParsed = parseBookingTiersFormJson(String(formData.get("trip_booking_tiers_json") ?? "[]"));
   const bookingStatusNote = String(formData.get("trip_booking_status_note") ?? "").trim();
-  const tripExtras = buildExtrasPayload(shortDesc, tripLoc, totalSeats, advancePct, bookingTiersParsed, bookingStatusNote);
+
+  const extrasBase = cloneExtrasJson(existing?.extrasJson);
+  const previousDetailHeroUrl = String(extrasBase.trip_details_hero_url ?? "").trim();
+  const detailHeroFile = formData.get("trip_detail_hero_file");
+  const heroClear = String(formData.get("trip_details_hero_clear") ?? "") === "on";
+
+  let tripDetailsHeroFlag: TripDetailsHeroFlag = { mode: "unchanged" };
+  if (detailHeroFile instanceof File && detailHeroFile.size > 0) {
+    const up = await writePlatformUploadImage(accountId, detailHeroFile, 10 * 1024 * 1024);
+    if (up.ok) {
+      tripDetailsHeroFlag = { mode: "set", url: up.url };
+      if (tripId > 0 && previousDetailHeroUrl && previousDetailHeroUrl !== up.url) {
+        await destroyCloudinaryBySecureUrl(previousDetailHeroUrl);
+      }
+    }
+  } else if (heroClear) {
+    tripDetailsHeroFlag = { mode: "clear" };
+    if (tripId > 0 && previousDetailHeroUrl) {
+      await destroyCloudinaryBySecureUrl(previousDetailHeroUrl);
+    }
+  }
+
+  const tripExtras = buildExtrasPayload(
+    extrasBase,
+    shortDesc,
+    tripLoc,
+    totalSeats,
+    advancePct,
+    bookingTiersParsed,
+    bookingStatusNote,
+    tripDetailsHeroFlag,
+  );
 
   const common = {
     destination,

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import TripDetailsEffects from "@/components/trip-details/TripDetailsEffects";
 import { TripItineraryAccordion } from "@/components/trip-details/TripItineraryAccordion";
-import { TripBookingInfoPanel } from "@/components/trip-details/TripBookingInfoPanel";
+import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDetailsBookSidebarClient";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
@@ -87,6 +87,10 @@ export default async function TripDetailsPage({ params }: Props) {
     tripCover = 'https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1600&q=80';
   }
 
+  const extras = readExtras(trip.extrasJson);
+  const tripDetailHeroUrl = mediaUrl(extras.trip_details_hero_url);
+  const tripHeroBg = tripDetailHeroUrl || tripCover;
+
   const payTripUrl = `/pay-advance?type=trip&id=${tripId}`;
   const tripRegisterLoginUrl = `/auth/login?next=${encodeURIComponent(payTripUrl)}`;
   const qpayLogoUrl = '/assets/img/qpay-logo.png';
@@ -99,10 +103,8 @@ export default async function TripDetailsPage({ params }: Props) {
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
-  const tripPrice = basePriceMnt.toLocaleString("mn-MN");
   const seatCapacity = parseSeatCapacity(trip.seatsLabel);
   const bookingDepartureIso = formatLocalYmd(startDate);
-  const extras = readExtras(trip.extrasJson);
   const spotsHint = Math.min(20, seatCapacity);
   let bookingPanelTiers = extras.booking_tiers
     .filter((t) => t.label.trim() && Number.isFinite(t.price_mnt))
@@ -129,7 +131,7 @@ export default async function TripDetailsPage({ params }: Props) {
       <TripDetailsEffects />
       {/* Hero Section */}
       <div className="trd-hero">
-        <div className="trd-hero-img" style={{ backgroundImage: `url('${tripCover}')` }}></div>
+        <div className="trd-hero-img" style={{ backgroundImage: `url('${tripHeroBg}')` }}></div>
         <div className="trd-hero-overlay"></div>
         <div className="container trd-hero-content">
           <div className="row">
@@ -217,16 +219,14 @@ export default async function TripDetailsPage({ params }: Props) {
               <TripItineraryAccordion days={scheduleDays} fallbackCover={tripCover} />
             </div>
 
-            {/* About Section */}
-            <div id="trd-section-about" className="trd-about-grid mb-5 trd-scroll-anchor">
-              <div>
-                <h2 className="fw-bold mb-4">Аяллын тухай</h2>
-                <p className="text-muted lead" dangerouslySetInnerHTML={{ __html: tripAbout.replace(/\n/g, '<br/>') }}></p>
-              </div>
-              <div className="trd-about-img">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80" alt="About" className="img-fluid" />
-              </div>
+            {/* About Section — admin text only (no placeholder image; avoids cramped two-column layout). */}
+            <div id="trd-section-about" className="mb-5 trd-scroll-anchor" style={{ maxWidth: 720 }}>
+              <h2 className="fw-bold mb-4">Аяллын тухай</h2>
+              <div
+                className="text-muted lead text-break"
+                style={{ lineHeight: 1.65 }}
+                dangerouslySetInnerHTML={{ __html: tripAbout.replace(/\n/g, "<br/>") }}
+              />
             </div>
 
             {/* Comparison */}
@@ -257,12 +257,13 @@ export default async function TripDetailsPage({ params }: Props) {
           {/* Right Column: sticky viewport stack */}
           <div className="col-lg-4 order-1 order-lg-2 mb-4 mb-lg-0 trd-aside-col">
             <div className="trd-aside-inner">
-              <div className="trd-book-panel">
-                <div className="trd-price-row">
-                  <div className="trd-price-tag">{tripPrice} <span className="trd-price-cur">₮</span></div>
-                  <div className="trd-price-sub">1 хүн · бүх төлбөр багтсан</div>
-                </div>
-
+              <TripDetailsBookSidebarClient
+                key={tripId}
+                defaultDepartureIso={bookingDepartureIso}
+                tiers={bookingPanelTiers}
+                maxPassengers={seatCapacity}
+                capacityNote={bookingCapacityNote}
+              >
                 <div className="trd-summary-grid" role="list">
                   <div className="trd-summary-cell" role="listitem">
                     <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-regular fa-calendar-check"></i></span>
@@ -306,15 +307,7 @@ export default async function TripDetailsPage({ params }: Props) {
                   <div className="trd-trust-chip"><i className="fa-solid fa-clock"></i><span>24/7</span></div>
                   <div className="trd-trust-chip"><i className="fa-solid fa-star"></i><span>Зэрэглэл</span></div>
                 </div>
-              </div>
-
-              <TripBookingInfoPanel
-                key={tripId}
-                defaultDepartureIso={bookingDepartureIso}
-                tiers={bookingPanelTiers}
-                maxPassengers={seatCapacity}
-                capacityNote={bookingCapacityNote}
-              />
+              </TripDetailsBookSidebarClient>
 
               <div id="trd-section-location" className="trd-map-card trd-aside-card trd-scroll-anchor">
                 <div className="trd-aside-card__title">Маршрут</div>

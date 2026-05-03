@@ -74,6 +74,8 @@ export function readExtras(raw: unknown): {
   advance_percent: number;
   booking_tiers: TripExtrasBookingTier[];
   booking_status_note: string;
+  /** Full-width hero on `/trip-details/:id` (Cloudinary URL). */
+  trip_details_hero_url: string;
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -83,6 +85,7 @@ export function readExtras(raw: unknown): {
     advance_percent: Math.max(0, Number(d.advance_percent ?? 20) || 20),
     booking_tiers: readBookingTiers(d.booking_tiers),
     booking_status_note: String(d.booking_status_note ?? "").trim(),
+    trip_details_hero_url: String(d.trip_details_hero_url ?? "").trim(),
   };
 }
 

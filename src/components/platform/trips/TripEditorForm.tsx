@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BusinessTrip } from "@prisma/client";
+import { mediaUrl } from "@/lib/media-url";
 import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/PlatformTripRegistrationJsonBuilder";
 import TripFormUploadPendingOverlay from "@/components/platform/forms/TripFormUploadPendingOverlay";
 import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEditorRegistrationQrAside";
@@ -313,6 +314,49 @@ export default function TripEditorForm({
                   placeholder="Аяллын дэлгэрэнгүй мэдээллийг энд оруулна уу..."
                   defaultValue={editTrip?.description ?? ""}
                 />
+              </div>
+            </div>
+          </div>
+
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8a</div>
+              <span className="tps-section-title">Trip-details том hero (background)</span>
+            </div>
+            <p className="small text-muted mb-3">
+              <code>/trip-details/:id</code> хуудсын дээд том зураг — ковероос тусдаа. «Хадгалах» дарвал Cloudinary руу
+              байршина.
+            </p>
+            <div className="row g-3 align-items-start">
+              <div className="col-md-6">
+                <label className="pm-label mb-1">Зураг сонгох (JPG, PNG, WEBP · max 10MB)</label>
+                <input type="file" name="trip_detail_hero_file" className="form-control" accept="image/*" />
+                {extras.trip_details_hero_url ? (
+                  <div className="form-check mt-3">
+                    <input className="form-check-input" type="checkbox" name="trip_details_hero_clear" id="tripDetailsHeroClear" />
+                    <label className="form-check-label small" htmlFor="tripDetailsHeroClear">
+                      Одоогийн hero зургийг устгах (ковер руу буцна)
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+              <div className="col-md-6">
+                {extras.trip_details_hero_url ? (
+                  <div>
+                    <div className="pm-label small mb-1">Одоогийн hero</div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={mediaUrl(extras.trip_details_hero_url) || extras.trip_details_hero_url}
+                      alt=""
+                      className="rounded border w-100"
+                      style={{ maxHeight: 220, objectFit: "cover" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="small text-muted border rounded p-3 bg-light">
+                    Одоогоор тохируулаагүй — нийтийн хуудсан дээр ковер зураг background болно.
+                  </div>
+                )}
               </div>
             </div>
           </div>
