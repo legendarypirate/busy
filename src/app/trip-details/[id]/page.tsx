@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import TripDetailsEffects from "@/components/trip-details/TripDetailsEffects";
 import { TripItineraryAccordion } from "@/components/trip-details/TripItineraryAccordion";
 import {
@@ -9,14 +11,89 @@ import {
 } from "@/components/trip-details/trip-details-booking-context";
 import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDetailsBookSidebarClient";
 import { TripDetailsSocialShare } from "@/components/trip-details/TripDetailsSocialShare";
-import { dbBusinessTrip } from "@/lib/prisma";
+import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
+import { tripDetailsPublicOrigin } from "@/lib/trip-details-public-url";
 import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const tripId = parseInt(id, 10);
+  const fallback: Metadata = { title: "Аялал | BUSY.mn" };
+  if (isNaN(tripId)) return fallback;
+
+  const trip = await dbBusinessTrip().findUnique({
+    where: { id: tripId },
+    select: {
+      destination: true,
+      description: true,
+      coverImageUrl: true,
+      startDate: true,
+      endDate: true,
+      extrasJson: true,
+    },
+  });
+  if (!trip) return fallback;
+
+  const extras = readExtras(trip.extrasJson);
+  const dest = trip.destination?.trim() || "Бизнес аялал";
+  const plainDesc = (trip.description?.replace(/<[^>]*>?/gm, "") ?? "").trim().slice(0, 280);
+  const startDate = new Date(trip.startDate);
+  const endDate = new Date(trip.endDate);
+  const dateStr = `${formatMnDate(startDate).replace(/-/g, ".")} — ${formatMnDate(endDate).replace(/-/g, ".")}`;
+  const bits = [dateStr];
+  if (extras.location.trim()) bits.push(extras.location.trim());
+  if (extras.short_description.trim()) bits.push(extras.short_description.trim());
+  const ogDescription =
+    bits.join(" · ") || plainDesc || `${dest} — BUSY.mn олон улсын бизнес аялал.`;
+
+  const origin = await tripDetailsPublicOrigin();
+  let cover = mediaUrl(trip.coverImageUrl || "");
+  const heroUrl = mediaUrl(extras.trip_details_hero_url);
+  if (heroUrl) cover = heroUrl;
+  if (!cover) {
+    cover = "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1200&q=80";
+  }
+  const base = origin.replace(/\/$/, "");
+  const ogImage =
+    cover.startsWith("http://") || cover.startsWith("https://")
+      ? cover
+      : base
+        ? `${base}${cover.startsWith("/") ? cover : `/${cover}`}`
+        : cover;
+  const canonical = base ? `${base}/trip-details/${tripId}` : undefined;
+  const title = `${dest} | BUSY.mn`;
+  const descShort = ogDescription.length > 300 ? `${ogDescription.slice(0, 297)}…` : ogDescription;
+
+  return {
+    title,
+    description: descShort,
+    openGraph: {
+      title: dest,
+      description: descShort,
+      url: canonical,
+      siteName: "BUSY.mn",
+      locale: "mn_MN",
+      type: "website",
+      images:
+        ogImage.startsWith("http://") || ogImage.startsWith("https://")
+          ? [{ url: ogImage, width: 1200, height: 630, alt: dest }]
+          : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dest,
+      description: descShort.length > 200 ? `${descShort.slice(0, 197)}…` : descShort,
+      images: ogImage.startsWith("http://") || ogImage.startsWith("https://") ? [ogImage] : [],
+    },
+    ...(canonical ? { alternates: { canonical } } : {}),
+  };
+}
 
 function formatLocalYmd(d: Date): string {
   const y = d.getFullYear();
@@ -132,10 +209,36 @@ export default async function TripDetailsPage({ params }: Props) {
   const formattedEndStr = formattedStartYear === formattedEndYear ? formatMnDate(endDate).slice(5).replace(/-/g, '.') : formatMnDate(endDate).replace(/-/g, '.');
   const tripDateRange = `${formattedStartStr} – ${formattedEndStr}`;
 
-  const siteOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const origin = await tripDetailsPublicOrigin();
   const sharePath = `/trip-details/${tripId}`;
-  const canonicalShareUrl = siteOrigin ? `${siteOrigin}${sharePath}` : "";
+  const canonicalShareUrl = origin ? `${origin.replace(/\/$/, "")}${sharePath}` : "";
   const shareTitle = dest || trip.destination?.trim() || "BUSY.mn — бизнес аялал";
+
+  const publishedForm = await prisma.tripRegistrationForm.findFirst({
+    where: { tripId, isPublished: true },
+    select: { publicSlug: true },
+  });
+  const registerTargetPath = publishedForm?.publicSlug
+    ? `/register/${encodeURIComponent(publishedForm.publicSlug)}`
+    : sharePath;
+  const registerAbsUrl = origin ? `${origin.replace(/\/$/, "")}${registerTargetPath}` : "";
+  let registrationQrDataUrl: string | null = null;
+  let registrationQrCaption: string | null = null;
+  if (registerAbsUrl) {
+    try {
+      registrationQrDataUrl = await QRCode.toDataURL(registerAbsUrl, {
+        margin: 2,
+        width: 220,
+        color: { dark: "#0b2149", light: "#ffffff" },
+      });
+      registrationQrCaption = publishedForm?.publicSlug
+        ? "Утасны камераар уншуулбал нийтийн бүртгэлийн хуудас нээгдэнэ."
+        : "Утасны камераар уншуулбал энэ аяллын хуудас нээгдэнэ (бүртгэлийг баруун талын товчоор).";
+    } catch {
+      registrationQrDataUrl = null;
+      registrationQrCaption = null;
+    }
+  }
 
   return (
     <TripDetailsBookingRegisterProvider
@@ -145,6 +248,8 @@ export default async function TripDetailsPage({ params }: Props) {
       tiers={bookingPanelTiers}
       maxPassengers={seatCapacity}
       capacityNote={bookingCapacityNote}
+      registrationQrDataUrl={registrationQrDataUrl}
+      registrationQrCaption={registrationQrCaption}
     >
     <div className="trd-body">
       <TripDetailsEffects />

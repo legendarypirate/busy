@@ -13,6 +13,7 @@ import {
 import { TripRegistrationDrawerShell } from "@/components/trip-registration/TripRegistrationDrawerShell";
 import { buildTripDrawerAnswersFromForm } from "@/lib/trip-registration-form/drawer-build-answers";
 import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
+import { TripDetailsRegistrationQr } from "@/components/trip-details/TripDetailsRegistrationQr";
 import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
 
 async function readResponseJson<T>(res: Response): Promise<T> {
@@ -51,6 +52,8 @@ export type TripDetailsBookingContextValue = {
   totalPax: number;
   checkoutTotalMnt: number;
   openRegister: () => void;
+  registrationQrDataUrl: string | null;
+  registrationQrCaption: string | null;
 };
 
 const TripDetailsBookingContext = createContext<TripDetailsBookingContextValue | null>(null);
@@ -70,6 +73,9 @@ type ProviderProps = {
   tiers: TripCheckoutTier[];
   maxPassengers: number;
   capacityNote: string;
+  /** Data URL PNG/SVG for `/register/…` or trip page (server-generated). */
+  registrationQrDataUrl?: string | null;
+  registrationQrCaption?: string | null;
   children: ReactNode;
 };
 
@@ -80,6 +86,8 @@ export function TripDetailsBookingRegisterProvider({
   tiers,
   maxPassengers,
   capacityNote,
+  registrationQrDataUrl = null,
+  registrationQrCaption = null,
   children,
 }: ProviderProps) {
   const [departure, setDeparture] = useState(defaultDepartureIso);
@@ -261,6 +269,8 @@ export function TripDetailsBookingRegisterProvider({
       totalPax,
       checkoutTotalMnt,
       openRegister,
+      registrationQrDataUrl: registrationQrDataUrl?.trim() || null,
+      registrationQrCaption: registrationQrCaption?.trim() || null,
     }),
     [
       defaultDepartureIso,
@@ -274,6 +284,8 @@ export function TripDetailsBookingRegisterProvider({
       totalPax,
       checkoutTotalMnt,
       openRegister,
+      registrationQrDataUrl,
+      registrationQrCaption,
     ],
   );
 
@@ -314,19 +326,25 @@ export function TripDetailsHeroCtas({ isLoggedIn, payTripUrl }: HeroProps) {
   const { openRegister } = useTripDetailsBooking();
   if (isLoggedIn) {
     return (
-      <a href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 mb-4 shadow">
-        Төлбөр төлөх
-      </a>
+      <div className="d-flex flex-column align-items-center align-items-lg-start gap-3 mb-4">
+        <a href={payTripUrl} className="btn btn-warning btn-lg rounded-pill fw-bold px-5 shadow">
+          Төлбөр төлөх
+        </a>
+        <TripDetailsRegistrationQr variant="hero" />
+      </div>
     );
   }
   return (
-    <button
-      type="button"
-      className="btn btn-qpay btn-lg rounded-pill fw-bold px-5 mb-4 shadow"
-      onClick={() => openRegister()}
-    >
-      Бүртгүүлэх
-    </button>
+    <div className="d-flex flex-column align-items-center align-items-lg-start gap-3 mb-4">
+      <button
+        type="button"
+        className="btn btn-qpay btn-lg rounded-pill fw-bold px-5 shadow"
+        onClick={() => openRegister()}
+      >
+        Бүртгүүлэх
+      </button>
+      <TripDetailsRegistrationQr variant="hero" />
+    </div>
   );
 }
 
@@ -339,23 +357,30 @@ type SidebarCtasProps = {
 export function TripDetailsSidebarRegisterCtas({ isLoggedIn, payTripUrl, qpayLogoUrl }: SidebarCtasProps) {
   const { openRegister } = useTripDetailsBooking();
   return (
-    <div className="trd-cta-grid trd-cta-grid--stacked">
-      {isLoggedIn ? (
-        <a className="trd-btn-qpay" href={payTripUrl}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qpayLogoUrl} alt="QPay" width="72" height="20" loading="lazy" decoding="async" />
-          <span>Төлбөр төлөх</span>
-        </a>
-      ) : (
-        <button type="button" className="btn btn-qpay w-100 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-2" onClick={() => openRegister()}>
-          <i className="fa-solid fa-user-check" aria-hidden="true" />
-          <span>Бүртгүүлэх</span>
+    <>
+      <div className="trd-cta-grid trd-cta-grid--stacked">
+        {isLoggedIn ? (
+          <a className="trd-btn-qpay" href={payTripUrl}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qpayLogoUrl} alt="QPay" width="72" height="20" loading="lazy" decoding="async" />
+            <span>Төлбөр төлөх</span>
+          </a>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-qpay w-100 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-2"
+            onClick={() => openRegister()}
+          >
+            <i className="fa-solid fa-user-check" aria-hidden="true" />
+            <span>Бүртгүүлэх</span>
+          </button>
+        )}
+        <button className="trd-btn-contact" type="button">
+          <i className="fa-solid fa-headset" />
+          <span>Зөвлөх</span>
         </button>
-      )}
-      <button className="trd-btn-contact" type="button">
-        <i className="fa-solid fa-headset" />
-        <span>Зөвлөх</span>
-      </button>
-    </div>
+      </div>
+      <TripDetailsRegistrationQr variant="sidebar" />
+    </>
   );
 }
