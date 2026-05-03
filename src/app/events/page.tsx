@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { MarketingListingHero } from "@/components/marketing/MarketingListingHero";
-import { prisma } from "@/lib/prisma";
+import {
+  buildAgendaDisplayRows,
+  eventListingCardImageUrl,
+  eventListingSummaryBullets,
+  parseBniEventDetailEnvelope,
+} from "@/lib/bni-event-detail";
 import { formatMnDate } from "@/lib/format-date";
 import { getMarketingListingHeroSlides } from "@/lib/marketing-listing-hero";
 import { mediaUrl } from "@/lib/media-url";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const EVENT_CARD_IMG =
-  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80";
-const EVENT_FEATURED_IMG =
-  "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=800&q=80";
+const TIMELINE_ICONS = ["fa-door-open", "fa-microphone", "fa-handshake", "fa-users", "fa-flag-checkered", "fa-calendar-check"] as const;
 
 type SearchParams = {
   chapter?: string;
@@ -67,9 +70,10 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
     include: {
       chapter: {
         include: {
-          region: true
-        }
-      }
+          region: true,
+        },
+      },
+      curriculum: { select: { agendaJson: true, name: true } },
     },
     orderBy: status === "past" 
       ? [{ startsAt: 'desc' }, { id: 'desc' }]
@@ -94,6 +98,13 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
   const featuredEvents = events.length > 0 ? [events[0]] : [];
   const eventCards = events.length > 1 ? events.slice(1, 13) : [];
   const featuredEvent = featuredEvents[0] ?? null;
+  const featuredAgendaRows =
+    featuredEvent != null
+      ? buildAgendaDisplayRows(
+          parseBniEventDetailEnvelope(featuredEvent.curriculumOverrideJson ?? undefined),
+          featuredEvent.curriculum?.agendaJson ?? null,
+        )
+      : [];
 
   const getEventTitle = (ev: any) => {
     return ev.title ? ev.title : (ev.chapter?.name ? `${ev.chapter.name}` : 'Хурал / эвент');
@@ -200,10 +211,18 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
             <Link className={`trip-tab ${eventType === 'visitor_day' ? 'active' : ''}`} href={queryBase({ status: status, event_type: 'visitor_day' })}>Visitor</Link>
           </div>
 
-          {featuredEvents.map((fe) => (
+          {featuredEvents.map((fe) => {
+            const bullets = eventListingSummaryBullets({
+              location: fe.location,
+              isOnline: fe.isOnline,
+              curriculumOverrideJson: fe.curriculumOverrideJson ?? undefined,
+              chapterName: fe.chapter?.name ?? null,
+            });
+            const heroSrc = eventListingCardImageUrl(fe.curriculumOverrideJson ?? undefined);
+            return (
             <div className="featured-trip-card featured-trip-card-stack" key={fe.id.toString()}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={EVENT_FEATURED_IMG} alt="" className="featured-trip-img" />
+              <img src={heroSrc} alt="" className="featured-trip-img" />
               <div className="featured-trip-content">
                 <div className="featured-trip-header">
                   <div>
@@ -221,9 +240,11 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
                 
                 <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem" }}>Товч</div>
                 <ul className="featured-trip-features">
-                  <li><i className="fa-solid fa-check"></i> {fe.location ? fe.location.slice(0, 120) : 'Байршил: удахгүй шинэчлэгдэнэ'}</li>
-                  <li><i className="fa-solid fa-check"></i> Бизнес сүлжээ, танилцах боломж</li>
-                  <li><i className="fa-solid fa-check"></i> Ирээдүйн түншлэлийг өргөжүүлнэ</li>
+                  {bullets.map((line, bi) => (
+                    <li key={bi}>
+                      <i className="fa-solid fa-check"></i> {line}
+                    </li>
+                  ))}
                 </ul>
                 
                 <div className="featured-trip-footer">
@@ -241,7 +262,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <div className="trips-grid">
             {eventCards.length > 0 ? (
@@ -249,7 +271,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
                 <div className="trip-card-v4" key={evRow.id.toString()}>
                   <div className="trip-img-wrap">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={EVENT_CARD_IMG} alt="" />
+                    <img src={eventListingCardImageUrl(evRow.curriculumOverrideJson ?? undefined)} alt="" />
                     <div className="trip-date-overlay"><i className="fa-regular fa-calendar me-1"></i> {formatMnDate(evRow.startsAt).slice(0, 10)}</div>
                   </div>
                   <div className="trip-card-body">
@@ -286,44 +308,43 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
             <Link href="/events" className="btn-brand-outline px-5" style={{ borderRadius: 20 }}>Хуваарийг шинэчлэх <i className="fa-solid fa-arrow-right ms-2" style={{ fontSize: "0.8rem" }}></i></Link>
           </div>
           
-          <div className="timeline-section mt-5">
-            <div className="timeline-header">
-              <h3 className="widget-title mb-0">Хурлын үе шат</h3>
-              <Link href={featuredEvent ? getEventDetailUrl(featuredEvent.id) : '/events'} className="btn-brand-outline btn-sm d-inline-flex align-items-center text-decoration-none" style={{ fontSize: "0.75rem", padding: "0.3rem 0.8rem", borderColor: "var(--border-color)" }}>Дэлгэрэнгүй үзэх <i className="fa-solid fa-arrow-right ms-1"></i></Link>
+          {featuredAgendaRows.length > 0 ? (
+            <div className="timeline-section mt-5">
+              <div className="timeline-header">
+                <h3 className="widget-title mb-0">Хурлын үе шат</h3>
+                <Link
+                  href={featuredEvent ? getEventDetailUrl(featuredEvent.id) : "/events"}
+                  className="btn-brand-outline btn-sm d-inline-flex align-items-center text-decoration-none"
+                  style={{ fontSize: "0.75rem", padding: "0.3rem 0.8rem", borderColor: "var(--border-color)" }}
+                >
+                  Дэлгэрэнгүй үзэх <i className="fa-solid fa-arrow-right ms-1"></i>
+                </Link>
+              </div>
+              <div className="timeline-track">
+                {featuredAgendaRows.slice(0, 6).map((row, idx) => {
+                  const icon = TIMELINE_ICONS[idx % TIMELINE_ICONS.length];
+                  return (
+                    <div
+                      key={`${row.title}-${idx}`}
+                      className={`timeline-node${idx === 0 ? " is-active" : ""}`}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="node-day">{idx + 1}</div>
+                      <div className={`node-circle${idx === 0 ? " active" : ""}`}>
+                        <i className={`fa-solid ${icon}`} style={{ fontSize: "1rem" }} />
+                      </div>
+                      <div className="node-title">{row.title}</div>
+                      <div className="node-desc">
+                        {row.time ? `${row.time} · ` : ""}
+                        {row.note || "—"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="timeline-track">
-              <div className="timeline-node is-active" role="button" tabIndex={0}>
-                <div className="node-day">1</div>
-                <div className="node-circle active"><i className="fa-solid fa-door-open" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Угтах, бүртгэл</div>
-                <div className="node-desc">Зочид, гишүүдийг угтан авна</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">2</div>
-                <div className="node-circle"><i className="fa-solid fa-microphone" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Нээлт</div>
-                <div className="node-desc">Хөтөлбөр танилцуулга</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">3</div>
-                <div className="node-circle"><i className="fa-regular fa-handshake" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Танилцуулга</div>
-                <div className="node-desc">Бизнес реферал солилцох</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">4</div>
-                <div className="node-circle"><i className="fa-solid fa-users" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Сүлжээ</div>
-                <div className="node-desc">Чөлөөт ярилцлага</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">5</div>
-                <div className="node-circle"><i className="fa-solid fa-flag-checkered" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Дүгнэлт</div>
-                <div className="node-desc">Хаалт, дараагийн алхам</div>
-              </div>
-            </div>
-          </div>
+          ) : null}
 
           <div className="testimonials-section mt-5">
             <h3 className="widget-title mb-4">Гишүүдийн туршлага</h3>

@@ -191,6 +191,39 @@ export function resolvedAudienceText(envelope: BniEventDetailEnvelope): string {
   return AUDIENCE_DEFAULT;
 }
 
+/** Up to 3 short lines for /events listing «Товч» (location, intro, audience/chapter). */
+export function eventListingSummaryBullets(input: {
+  location: string | null;
+  isOnline: boolean;
+  curriculumOverrideJson: unknown;
+  chapterName: string | null;
+}): string[] {
+  const env = parseBniEventDetailEnvelope(input.curriculumOverrideJson ?? undefined);
+  const out: string[] = [];
+  const loc = input.location?.trim() ?? "";
+  if (input.isOnline) {
+    out.push(loc ? `Онлайн · ${loc.slice(0, 120)}` : "Онлайн арга хэмжээ");
+  } else if (loc) {
+    out.push(loc.slice(0, 140));
+  } else {
+    out.push("Байршил удахгүй тодорно.");
+  }
+  const intro = resolvedEventDescription(env).trim();
+  const defaultIntro = intro === DESC_DEFAULT;
+  if (!defaultIntro) {
+    const one = intro.length > 180 ? `${intro.slice(0, 177)}…` : intro;
+    out.push(one);
+  }
+  const aud = resolvedAudienceText(env).trim();
+  const defaultAud = aud === AUDIENCE_DEFAULT;
+  if (out.length < 3 && !defaultAud) {
+    out.push(aud.length > 130 ? `${aud.slice(0, 127)}…` : aud);
+  } else if (out.length < 3 && input.chapterName?.trim()) {
+    out.push(`Бүлэг: ${input.chapterName.trim()}`);
+  }
+  return out.slice(0, 3);
+}
+
 /** Hero for event detail: absolute URL, media helper path, or empty → caller uses default asset. */
 export function resolvedEventHeroImageUrl(envelope: BniEventDetailEnvelope): string {
   const raw = envelope.hero_image_url.trim();
@@ -205,6 +238,16 @@ export function resolvedEventHeroImageUrl(envelope: BniEventDetailEnvelope): str
     return u;
   }
   return raw.startsWith("/") ? raw : `/${raw}`;
+}
+
+/** Card / listing image: hero from envelope or default asset. */
+export function eventListingCardImageUrl(curriculumOverrideJson: unknown): string {
+  const env = parseBniEventDetailEnvelope(curriculumOverrideJson ?? undefined);
+  const hero = resolvedEventHeroImageUrl(env);
+  if (hero !== "") {
+    return hero;
+  }
+  return "/assets/img/meeting-hero.png";
 }
 
 /** Speaker portrait: remote URL, media base for uploads, or ui-avatars fallback (matches PHP). */
