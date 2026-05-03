@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import TripFormQuestionCardEditor, {
   needsOptions,
+  questionSyncKey,
   type TripFormBuilderOption,
   type TripFormBuilderQuestionRow,
 } from "@/components/trip-registration/TripFormQuestionCardEditor";
@@ -407,6 +408,7 @@ export default function PlatformTripRegistrationJsonBuilder({ hiddenName, initia
                     }}
                   >
                     <TripFormQuestionCardEditor
+                      key={questionSyncKey(q)}
                       q={q}
                       index={index}
                       total={sorted.length}

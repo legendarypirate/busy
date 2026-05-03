@@ -441,36 +441,6 @@ export default async function EventDetailPage({ params }: Props) {
                 </Link>
                 -аар хандана уу.
               </p>
-
-              <div className="organizer-card">
-                <div className="organizer-info">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/assets/img/bsy.png" className="organizer-logo" alt="BUSY" />
-                  <div className="organizer-name">BUSY.mn</div>
-                </div>
-                <div className="organizer-contact">
-                  <a href={`tel:${SITE_CONTACT.phoneTel}`} className="contact-item">
-                    <i className="fa-solid fa-phone" /> {SITE_CONTACT.phoneDisplay}
-                  </a>
-                  <a href={`mailto:${SITE_CONTACT.email}`} className="contact-item">
-                    <i className="fa-solid fa-envelope" /> {SITE_CONTACT.email}
-                  </a>
-                  <a href="https://busy.mn" target="_blank" rel="noopener noreferrer" className="contact-item">
-                    <i className="fa-solid fa-globe" /> busy.mn
-                  </a>
-                </div>
-              </div>
-
-              <div className="event-stats-footer">
-                <div className="stat-box">
-                  <span className="stat-num">{registeredTotal}</span>
-                  <span className="stat-lab">Илгээсэн бүртгэл</span>
-                </div>
-                <div className="stat-box">
-                  <span className="stat-num">{faq.length}</span>
-                  <span className="stat-lab">FAQ</span>
-                </div>
-              </div>
             </div>
           </aside>
         </div>

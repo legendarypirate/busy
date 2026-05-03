@@ -58,6 +58,25 @@ function parseSections(raw: string): Record<string, unknown>[] {
   }
 }
 
+function parseExistingEnvelopeObject(raw: unknown): Record<string, unknown> {
+  if (raw == null) return {};
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const j = JSON.parse(raw) as unknown;
+      if (j && typeof j === "object" && !Array.isArray(j)) {
+        return { ...(j as Record<string, unknown>) };
+      }
+    } catch {
+      return {};
+    }
+    return {};
+  }
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>) };
+  }
+  return {};
+}
+
 export async function saveEventAction(formData: FormData): Promise<void> {
   const listPath = eventListPathFromFormData(formData);
   const session = await getPlatformSession();
@@ -83,7 +102,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   const chapterIdRaw = String(formData.get("chapter_id") ?? "").trim();
   const chapterIdNum = Math.max(0, Number(chapterIdRaw === "" ? "0" : chapterIdRaw));
   const chapterId = chapterIdNum > 0 ? chapterIdNum : null;
-  const eventType = String(formData.get("event_type") ?? "weekly_meeting").trim() || "weekly_meeting";
+  const eventType = String(formData.get("event_type") ?? "event").trim() || "event";
   const title = String(formData.get("title") ?? "").trim();
   const startsAt = parseEventDatetimeWireUb(String(formData.get("starts_at") ?? ""));
   const endsAt = parseEventDatetimeWireUb(String(formData.get("ends_at") ?? ""));
@@ -125,21 +144,34 @@ export async function saveEventAction(formData: FormData): Promise<void> {
 
   const agendaSections = parseSections(String(formData.get("event_sections_json") ?? ""));
 
-  const envelope: Record<string, unknown> = {};
-  if (agendaSections.length > 0) {
-    envelope.sections = agendaSections;
+  let existingRegistrationJson: unknown | undefined;
+  let existingEnvelope: Record<string, unknown> = {};
+  if (eventId > BigInt(0)) {
+    const exists = await prisma.bniEvent.findUnique({
+      where: { id: eventId },
+      select: { id: true, curriculumOverrideJson: true, registrationFormJson: true },
+    });
+    if (!exists) {
+      redirect(`${listPath}?error=notfound`);
+    }
+    existingRegistrationJson = exists.registrationFormJson ?? undefined;
+    existingEnvelope = parseExistingEnvelopeObject(exists.curriculumOverrideJson);
   }
-  if (speakersOut.length > 0) {
-    envelope.speakers = speakersOut;
-  }
-  if (faqOut.length > 0) {
-    envelope.faq = faqOut;
-  }
+
+  const envelope: Record<string, unknown> =
+    eventId > BigInt(0) ? { ...existingEnvelope } : {};
+  envelope.sections = agendaSections;
+  envelope.speakers = speakersOut;
+  envelope.faq = faqOut;
   if (introBody !== "") {
     envelope.intro_body = introBody;
+  } else {
+    delete envelope.intro_body;
   }
   if (audienceText !== "") {
     envelope.audience_text = audienceText;
+  } else {
+    delete envelope.audience_text;
   }
 
   const heroImageUrl = String(formData.get("hero_image_url") ?? "").trim();
@@ -152,12 +184,18 @@ export async function saveEventAction(formData: FormData): Promise<void> {
   const eventHelpChatUrl = String(formData.get("event_help_chat_url") ?? "").trim();
   if (eventManagerPhone !== "") {
     envelope.event_manager_phone = eventManagerPhone;
+  } else {
+    delete envelope.event_manager_phone;
   }
   if (eventHelpEmail !== "") {
     envelope.event_help_email = eventHelpEmail;
+  } else {
+    delete envelope.event_help_email;
   }
   if (eventHelpChatUrl !== "") {
     envelope.event_help_chat_url = eventHelpChatUrl;
+  } else {
+    delete envelope.event_help_chat_url;
   }
 
   const curriculumOverrideJson: Prisma.InputJsonValue | typeof Prisma.DbNull =
@@ -190,16 +228,7 @@ export async function saveEventAction(formData: FormData): Promise<void> {
     regParsedRaw === null ? Prisma.DbNull : regParsedRaw;
 
   let savedEventId = eventId;
-  let existingRegistrationJson: unknown | undefined;
   if (eventId > BigInt(0)) {
-    const exists = await prisma.bniEvent.findUnique({
-      where: { id: eventId },
-      select: { id: true, registrationFormJson: true },
-    });
-    if (!exists) {
-      redirect(`${listPath}?error=notfound`);
-    }
-    existingRegistrationJson = exists.registrationFormJson ?? undefined;
     const updateData: typeof rowBase & { registrationFormJson?: Prisma.InputJsonValue | typeof Prisma.DbNull } = {
       ...rowBase,
     };

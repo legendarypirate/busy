@@ -44,6 +44,30 @@ export function legacyStringToTripType(typeStr: string): TripFormQuestionType {
   }
 }
 
+/** Inverse of {@link legacyStringToTripType} for rebuilding legacy JSON from `trip_form_questions`. */
+export function tripTypeToLegacyString(t: TripFormQuestionType): string {
+  switch (t) {
+    case "LONG_TEXT":
+      return "textarea";
+    case "EMAIL":
+      return "email";
+    case "PHONE":
+      return "tel";
+    case "NUMBER":
+      return "number";
+    case "DATE":
+      return "date";
+    case "DROPDOWN":
+      return "select";
+    case "MULTIPLE_CHOICE":
+      return "radio";
+    case "CHECKBOXES":
+      return "checkbox";
+    default:
+      return "text";
+  }
+}
+
 export function needsTripOptions(t: TripFormQuestionType): boolean {
   return t === "MULTIPLE_CHOICE" || t === "CHECKBOXES" || t === "DROPDOWN";
 }

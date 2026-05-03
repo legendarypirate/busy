@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useState } from "react";
 import type { TripFormQuestionType } from "@prisma/client";
 import { GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,18 @@ export function needsOptions(t: TripFormQuestionType) {
 const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
+export function questionSyncKey(q: TripFormBuilderQuestionRow): string {
+  return JSON.stringify({
+    id: q.id,
+    label: q.label,
+    type: q.type,
+    description: q.description,
+    placeholder: q.placeholder,
+    isRequired: q.isRequired,
+    options: q.options.map((o) => ({ l: o.label, v: o.value, s: o.sortOrder })),
+  });
+}
+
 export default function TripFormQuestionCardEditor({
   q,
   index,
@@ -55,13 +67,6 @@ export default function TripFormQuestionCardEditor({
 }) {
   const [draft, setDraft] = useState(q);
   const [optionsText, setOptionsText] = useState(() => q.options.map((o) => o.label).join("\n"));
-
-  useEffect(() => {
-    startTransition(() => {
-      setDraft(q);
-      setOptionsText(q.options.map((o) => o.label).join("\n"));
-    });
-  }, [q]);
 
   return (
     <Card className="border-l-4 border-l-primary py-4 shadow-sm">

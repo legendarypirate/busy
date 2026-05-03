@@ -4,6 +4,7 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from "reac
 import TripFormQrCard from "@/components/trip-registration/TripFormQrCard";
 import TripFormQuestionCardEditor, {
   needsOptions,
+  questionSyncKey,
   type TripFormBuilderQuestionRow,
 } from "@/components/trip-registration/TripFormQuestionCardEditor";
 import { Badge } from "@/components/ui/badge";
@@ -394,6 +395,7 @@ export default function TripFormBuilderClient({
                   }}
                 >
                   <TripFormQuestionCardEditor
+                    key={questionSyncKey(q)}
                     q={q}
                     index={index}
                     total={sortedQs.length}

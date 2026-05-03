@@ -12,8 +12,10 @@ import { parseBniEventDetailEnvelope } from "@/lib/bni-event-detail";
 import { formatEventDatetimeWireUb, formatEventDisplayUb } from "@/lib/event-datetime-ub";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSession } from "@/lib/platform-session";
+import { registrationLegacyJsonForEventEditor } from "@/lib/trip-registration-form/event-registration-editor-load";
 
-const EVENT_TYPES = ["weekly_meeting", "visitor_day", "training", "social", "event"] as const;
+/** `event` first so it appears at the top of the Төрөл dropdown. */
+const EVENT_TYPES = ["event", "weekly_meeting", "visitor_day", "training", "social"] as const;
 
 const EVENT_TYPE_LABELS: Record<(typeof EVENT_TYPES)[number], string> = {
   weekly_meeting: "7 хоногийн хурал",
@@ -143,6 +145,11 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
 
   const parsed = parseBniEventDetailEnvelope(existing?.curriculumOverrideJson ?? undefined);
 
+  const registrationEditorInitialJson =
+    existing != null
+      ? await registrationLegacyJsonForEventEditor(existing.id, existing.registrationFormJson)
+      : undefined;
+
   const defaultStarts = new Date();
   const defaultEnds = new Date(defaultStarts.getTime() + 2 * 60 * 60 * 1000);
 
@@ -166,7 +173,7 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
         id: BigInt(0),
         title: "",
         chapterId: chapterIdDefault ?? null,
-        eventType: "weekly_meeting",
+        eventType: "event",
         startsAt: defaultStarts,
         endsAt: defaultEnds,
         location: "",
@@ -460,7 +467,10 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                   />
                 </div>
                 {venue === "admin" ? (
-                  <EventHeroImageField defaultUrl={parsed.hero_image_url} />
+                  <EventHeroImageField
+                    key={`evt-hero-${eventForm.id}-${parsed.hero_image_url ?? ""}`}
+                    defaultUrl={parsed.hero_image_url ?? ""}
+                  />
                 ) : (
                   <div className="col-12">
                     <label className="pm-label">Hero зураг (URL эсвэл /assets/... зам)</label>
@@ -501,7 +511,10 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                       />
                     </div>
                     <div className="col-md-6">
-                      <SpeakerPhotoUrlField key={`${eventForm.id.toString()}-${sidx}`} defaultUrl={spRow.photo_url} />
+                      <SpeakerPhotoUrlField
+                        key={`${eventForm.id.toString()}-${sidx}-${spRow.photo_url ?? ""}`}
+                        defaultUrl={spRow.photo_url ?? ""}
+                      />
                     </div>
                   </div>
                 ))}
@@ -589,8 +602,9 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
               <div className="row g-3 align-items-start">
                 <div className="col-lg-8">
                   <PlatformTripRegistrationJsonBuilder
+                    key={`event-reg-${eventForm.id.toString()}`}
                     hiddenName="event_registration_form_json"
-                    initialJson={existing?.registrationFormJson ?? undefined}
+                    initialJson={registrationEditorInitialJson}
                   />
                 </div>
                 <div className="col-lg-4">
