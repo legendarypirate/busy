@@ -107,7 +107,7 @@ export function SiteHeaderNav({
       <div className="container">
         <Link className="navbar-brand d-flex align-items-center gap-2" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/img/bsy.png" alt="BUSY.mn" width={32} height={32} className="h-auto" />
+          <img src="/finallogo.png" alt="BUSY.mn" className="h-auto" style={{ height: 32, width: "auto" }} />
         </Link>
         <button
           className="navbar-toggler"

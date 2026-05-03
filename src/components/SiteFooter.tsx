@@ -10,7 +10,10 @@ export function SiteFooter() {
       <div className="container">
         <div className="footer-main-grid">
           <div className="footer-logo-area">
-            <div className="logo">BUSY.mn</div>
+            <Link href="/" className="d-inline-block mb-3 text-decoration-none">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/finallogo.png" alt="BUSY.mn" style={{ height: 40, width: "auto" }} />
+            </Link>
             <p className="desc mb-2">{BUSY_MISSION_LINES.join(" ")}</p>
             <p className="desc small text-muted mb-2">{BUSY_ARCHITECTURE_RULE}</p>
             <p className="desc small text-muted mb-2">{BUSY_PLATFORM_GOAL}</p>

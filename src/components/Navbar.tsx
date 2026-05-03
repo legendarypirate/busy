@@ -39,7 +39,7 @@ export default function Navbar() {
       <div className="container">
         <Link className="navbar-brand d-flex align-items-center gap-2" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/img/bsy.png" alt="BUSY.mn" height={32} />
+          <img src="/finallogo.png" alt="BUSY.mn" style={{ height: 32, width: "auto" }} />
         </Link>
         <button
           className="navbar-toggler"

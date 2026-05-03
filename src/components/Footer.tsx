@@ -10,7 +10,10 @@ export default function Footer() {
       <div className="container">
         <div className="footer-main-grid">
           <div className="footer-logo-area">
-            <div className="logo">BUSY.mn</div>
+            <Link href="/" className="d-inline-block mb-3 text-decoration-none">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/finallogo.png" alt="BUSY.mn" style={{ height: 40, width: "auto" }} />
+            </Link>
             <p className="desc">
               Бизнес аялал, хурал, эвент үүсгэхэд зориулагдсан платформ
             </p>
