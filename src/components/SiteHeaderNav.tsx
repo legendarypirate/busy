@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   BNI_ALLOWED_LANGS,
   BNI_LANGUAGES,
@@ -85,6 +86,19 @@ export function SiteHeaderNav({
   const navLang: BniLangCode = isBniLang(initialLang) ? initialLang : "mn";
   const curLang = BNI_LANGUAGES[navLang];
 
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 992px)");
+    const onMq = () => {
+      if (mq.matches) setMobileNavOpen(false);
+    };
+    mq.addEventListener("change", onMq);
+    return () => mq.removeEventListener("change", onMq);
+  }, []);
+
   const langHref = (code: BniLangCode) => {
     if (legacySiteUrl && !headerAuthUseNext) {
       return `${legacySiteUrl}/scripts/change-lang.php?lang=${encodeURIComponent(code)}`;
@@ -112,15 +126,14 @@ export function SiteHeaderNav({
         <button
           className="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
+          aria-controls="navbarNavSite"
+          aria-expanded={mobileNavOpen}
           aria-label="Цэс нээх, хаах"
+          onClick={() => setMobileNavOpen((o) => !o)}
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className={`collapse navbar-collapse${mobileNavOpen ? " show" : ""}`} id="navbarNavSite">
           <ul className="navbar-nav mx-auto align-items-lg-center">
             {NAV.filter((item) => isNavItemVisible(item.id)).map((item) => (
               <li className="nav-item" key={item.href}>

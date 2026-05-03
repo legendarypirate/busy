@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { MarketingListingHero } from "@/components/marketing/MarketingListingHero";
 import { prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
+import { getMarketingListingHeroSlides } from "@/lib/marketing-listing-hero";
+import { mediaUrl } from "@/lib/media-url";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +108,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
     }
   };
 
-  const getEventDetailUrl = (id: any) => `/event-details/${id}`;
+  const getEventDetailUrl = (id: bigint | number | string) =>
+    `/events/${typeof id === "bigint" ? id.toString() : String(id)}`;
 
   const queryBase = (extra: Record<string, any>) => {
     const params = new URLSearchParams();
@@ -116,16 +120,20 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
     return `/events?${params.toString()}`;
   };
 
+  const heroSlidesRaw = await getMarketingListingHeroSlides("events");
+  const heroSlides = heroSlidesRaw.map((u) => mediaUrl(u) || u).filter(Boolean);
+  const heroFallback = "/assets/img/busy-background.png";
+
   return (
     <main className="page-content" style={{ backgroundColor: "var(--bg-page)" }}>
-      {/* Hero Section */}
-      <section className="py-5" style={{ background: "url('/assets/img/busy-background.png') no-repeat center bottom", backgroundSize: "cover", minHeight: "250px", position: "relative" }}>
-        <div className="container position-relative" style={{ zIndex: 2 }}>
-          <h1 className="fw-bold" style={{ fontSize: "2.25rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>Хурал / Эвент</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>BNI болон платформын хурал, уулзалт, сургалтын хуваарь</p>
-        </div>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(255,255,255,0.7)", zIndex: 1 }}></div>
-      </section>
+      <MarketingListingHero slides={heroSlides} fallbackImageUrl={heroFallback}>
+        <h1 className="fw-bold" style={{ fontSize: "2.25rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>
+          Хурал / Эвент
+        </h1>
+        <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>
+          BNI болон платформын хурал, уулзалт, сургалтын хуваарь
+        </p>
+      </MarketingListingHero>
 
       <div className="container trips-layout mt-5 mb-5">
         

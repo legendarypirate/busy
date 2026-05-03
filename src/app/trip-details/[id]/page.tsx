@@ -223,6 +223,15 @@ export default async function TripDetailsPage({ params }: Props) {
   const tripHelpChatHref = normalizeTripHelpChatHref(extras.trip_help_chat_url);
   const tripHelpChatExternal = tripHelpChatHref != null && /^https?:\/\//i.test(tripHelpChatHref);
 
+  const regCloseIso = extras.trip_registration_close_date.trim();
+  let registrationCloseDisplay: string | null = null;
+  if (regCloseIso && /^\d{4}-\d{2}-\d{2}$/.test(regCloseIso)) {
+    const cd = new Date(`${regCloseIso}T12:00:00`);
+    if (!Number.isNaN(cd.getTime())) {
+      registrationCloseDisplay = formatMnDate(cd).replace(/-/g, ".");
+    }
+  }
+
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
@@ -302,6 +311,14 @@ export default async function TripDetailsPage({ params }: Props) {
           <div className="row">
             <div className="col-lg-8">
               <div className="trd-status-badge"><i className="fa-solid fa-circle-check"></i> Бүртгэл нээлттэй</div>
+              {registrationCloseDisplay ? (
+                <div className="small text-white opacity-90 mt-2 mb-1 d-flex align-items-center gap-2 flex-wrap">
+                  <span className="rounded-pill bg-white bg-opacity-15 px-3 py-1">
+                    <i className="fa-regular fa-calendar-xmark me-2" aria-hidden="true" />
+                    Бүртгэл хаагдах: <strong className="ms-1">{registrationCloseDisplay}</strong>
+                  </span>
+                </div>
+              ) : null}
               <h1 className="trd-hero-title">{trip.destination}</h1>
               {extras.short_description.trim() ? (
                 <p className="lead mb-4 opacity-75">{extras.short_description.trim()}</p>

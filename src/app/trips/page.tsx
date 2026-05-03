@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { MarketingListingHero } from "@/components/marketing/MarketingListingHero";
 import { TripsFilterBudgetInputs } from "@/components/trips/TripsFilterBudgetInputs";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
+import { getMarketingListingHeroSlides } from "@/lib/marketing-listing-hero";
 import { mediaUrl } from "@/lib/media-url";
 
 export const dynamic = "force-dynamic";
@@ -117,17 +119,20 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
   const limitedTripCards = tripCards.slice(0, 12);
   const featuredTrip = featuredTrips[0] ?? null;
 
+  const heroSlidesRaw = await getMarketingListingHeroSlides("trips");
+  const heroSlides = heroSlidesRaw.map((u) => mediaUrl(u) || u).filter(Boolean);
+  const heroFallback = "/assets/img/busy-background.png";
+
   return (
     <main className="page-content" style={{ backgroundColor: "var(--bg-page)" }}>
-      {/* Trips Hero Section */}
-      <section className="py-5" style={{ background: "url('/assets/img/busy-background.png') no-repeat center bottom", backgroundSize: "cover", minHeight: "250px", position: "relative" }}>
-        <div className="container position-relative" style={{ zIndex: 2 }}>
-          <h1 className="fw-bold" style={{ fontSize: "2.25rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>Бизнес аялал</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>Олон улсын бизнес аялал, үзэсгэлэн, үйлдвэртэй танилцах хөтөлбөрүүд</p>
-        </div>
-        {/* Light overlay to make background very subtle */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(255,255,255,0.7)", zIndex: 1 }}></div>
-      </section>
+      <MarketingListingHero slides={heroSlides} fallbackImageUrl={heroFallback}>
+        <h1 className="fw-bold" style={{ fontSize: "2.25rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>
+          Бизнес аялал
+        </h1>
+        <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>
+          Олон улсын бизнес аялал, үзэсгэлэн, үйлдвэртэй танилцах хөтөлбөрүүд
+        </p>
+      </MarketingListingHero>
 
       <div className="container trips-layout mt-5 mb-5">
         

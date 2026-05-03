@@ -23,6 +23,12 @@ export const ADMIN_NAV_MAIN: AdminNavItem[] = [
   { key: "investment_stats", href: "/admin/investment-stats", label: "Хөрөнгө оруулалт (график)", iconClass: "fas fa-chart-pie" },
   { key: "about", href: "/admin/about", label: "Бидний тухай", iconClass: "fas fa-info-circle" },
   { key: "settings", href: "/admin/settings", label: "Footer / Site тохиргоо", iconClass: "fas fa-sliders-h" },
+  {
+    key: "marketing_listing_heroes",
+    href: "/admin/marketing-listing-heroes",
+    label: "Нүүрний hero (аялал, эвент)",
+    iconClass: "fas fa-images",
+  },
   { key: "users", href: "/admin/users", label: "Хэрэглэгчид", iconClass: "fas fa-user-shield" },
 ];
 

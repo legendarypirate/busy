@@ -44,8 +44,8 @@ export type TripDetailsBookingContextValue = {
   tiers: TripCheckoutTier[];
   maxPassengers: number;
   capacityNote: string;
+  /** Trip departure (YYYY-MM-DD); matches admin trip start, not user-editable on this page. */
   departure: string;
-  setDeparture: (v: string) => void;
   counts: Record<string, number>;
   bump: (id: string, delta: number) => void;
   clearTier: (id: string) => void;
@@ -267,7 +267,6 @@ export function TripDetailsBookingRegisterProvider({
       maxPassengers,
       capacityNote,
       departure,
-      setDeparture,
       counts,
       bump,
       clearTier,

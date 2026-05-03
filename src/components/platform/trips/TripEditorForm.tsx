@@ -252,6 +252,20 @@ export default function TripEditorForm({
               <div className="tps-section-num">5a</div>
               <span className="tps-section-title">Захиалгын tier (нийтийн trip-details)</span>
             </div>
+            <div className="row g-3 align-items-start mb-3">
+              <div className="col-12 col-md-6 col-xl-4">
+                <label className="pm-label">Бүртгэл хаагдах огноо</label>
+                <input
+                  type="date"
+                  className="pm-input"
+                  name="trip_registration_close_date"
+                  defaultValue={extras.trip_registration_close_date}
+                />
+                <p className="form-text small text-muted mb-0">
+                  Нийтийн <code>/trip-details/:id</code> дээр харагдана. Хоосон бол мөр харуулахгүй.
+                </p>
+              </div>
+            </div>
             <div className="row g-3 align-items-start">
               <div className="col-12 col-xl-8">
                 <TripBookingTiersEditor
@@ -367,11 +381,12 @@ export default function TripEditorForm({
               <span className="tps-section-title">Trip-details — Тусламж</span>
             </div>
             <p className="small text-muted mb-3">
-              <code>/trip-details/:id</code> хуудсын баруун баганын «Тусламж» картад харагдана. Хоосон имэйл, чат
-              URL-д үндсийн утга (<code>travel@busy.mn</code>) эсвэл идэвгүй тайлбар ашиглагдана.
+              Нийтийн <code>/trip-details/:id</code> — «Тусламж» карт: доорх <strong>утас</strong>,{" "}
+              <strong>имэйл</strong>, <strong>онлайн чат</strong> холбоосыг энэ аялалд тохируулна. Имэйл хоосон бол{" "}
+              <code>travel@busy.mn</code>; чат URL хоосон бол чатын товч идэвгүй.
             </p>
             <div className="mb-3">
-              <label className="pm-label">Утасны дугаар (аяллын удирдагч)</label>
+              <label className="pm-label">Утас (аяллын удирдагч)</label>
               <input
                 type="tel"
                 className="pm-input"
@@ -382,18 +397,18 @@ export default function TripEditorForm({
               />
             </div>
             <div className="mb-3">
-              <label className="pm-label">Имэйл (зөвлөх / холбоо)</label>
+              <label className="pm-label">Имэйл (тусламж, зөвлөх)</label>
               <input
                 type="email"
                 className="pm-input"
                 name="trip_help_email"
-                placeholder="Хоосон бол travel@busy.mn"
+                placeholder="Жишээ: trips@company.mn — хоосон бол travel@busy.mn"
                 defaultValue={extras.trip_help_email}
                 autoComplete="email"
               />
             </div>
             <div className="mb-0">
-              <label className="pm-label">Онлайн чат — холбоос (URL)</label>
+              <label className="pm-label">Онлайн чат (URL)</label>
               <input
                 type="text"
                 className="pm-input"

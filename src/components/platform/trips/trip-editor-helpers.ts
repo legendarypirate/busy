@@ -82,6 +82,8 @@ export function readExtras(raw: unknown): {
   trip_help_email: string;
   /** Help card «Онлайн чат» href (https…, /path, #anchor); empty → tile disabled. */
   trip_help_chat_url: string;
+  /** YYYY-MM-DD; shown on public trip-details; empty → hidden. */
+  trip_registration_close_date: string;
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -95,6 +97,7 @@ export function readExtras(raw: unknown): {
     trip_manager_phone: String(d.trip_manager_phone ?? "").trim(),
     trip_help_email: String(d.trip_help_email ?? "").trim(),
     trip_help_chat_url: String(d.trip_help_chat_url ?? "").trim(),
+    trip_registration_close_date: String(d.trip_registration_close_date ?? "").trim(),
   };
 }
 

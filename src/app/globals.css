@@ -123,7 +123,8 @@ a {
 
 /* Marketing header: keep Bootstrap collapse content visible at lg+ if layer order / JS timing breaks it */
 @media (min-width: 992px) {
-  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.collapse.navbar-collapse {
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNav.collapse.navbar-collapse,
+  header.site-header nav.navbar-expand-lg.navbar-custom #navbarNavSite.collapse.navbar-collapse {
     display: flex !important;
     flex-basis: auto !important;
     flex-grow: 1;
@@ -132,5 +133,16 @@ a {
     visibility: visible;
     height: auto !important;
     overflow: visible;
+  }
+}
+
+/* Mobile: open collapse must not clip toggler / dropdowns (stacking + overflow) */
+@media (max-width: 991.98px) {
+  header.site-header {
+    overflow: visible !important;
+  }
+  header.site-header .navbar-custom .navbar-toggler {
+    position: relative;
+    z-index: 1080;
   }
 }

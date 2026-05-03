@@ -28,6 +28,19 @@ export default function Navbar() {
     setNavLang(isBniLang(raw) ? raw : "mn");
   }, []);
 
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 992px)");
+    const onMq = () => {
+      if (mq.matches) setMobileNavOpen(false);
+    };
+    mq.addEventListener("change", onMq);
+    return () => mq.removeEventListener("change", onMq);
+  }, []);
+
   const curLang = BNI_LANGUAGES[navLang];
   const langHref = (code: BniLangCode) => {
     const next = encodeURIComponent(pathname || "/");
@@ -44,15 +57,14 @@ export default function Navbar() {
         <button
           className="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
           aria-controls="navbarNav"
-          aria-expanded="false"
+          aria-expanded={mobileNavOpen}
           aria-label="Цэс нээх, хаах"
+          onClick={() => setMobileNavOpen((o) => !o)}
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className={`collapse navbar-collapse${mobileNavOpen ? " show" : ""}`} id="navbarNav">
           <ul className="navbar-nav mx-auto align-items-lg-center">
             <li className="nav-item">
               <Link className={`nav-link${pathname === "/" ? " active" : ""}`} href="/">

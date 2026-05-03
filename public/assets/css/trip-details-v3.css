@@ -427,22 +427,30 @@ a.trd-btn-trip-register {
     font-size: 1rem;
     flex-shrink: 0;
 }
-.trd-bi-date-input {
+.trd-bi-date-row--static {
+    cursor: default;
+}
+.trd-bi-date-static {
     flex: 1;
     min-width: 0;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-weight: 700;
-    font-size: 0.92rem;
-    color: var(--trd-text);
-    outline: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
 }
-.trd-bi-date-chev {
+.trd-bi-date-static__label {
+    font-size: 0.68rem;
+    font-weight: 600;
     color: var(--trd-text-muted);
-    font-size: 0.65rem;
-    flex-shrink: 0;
-    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.trd-bi-date-value {
+    font: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--trd-text);
+    line-height: 1.2;
 }
 .trd-bi-capacity {
     margin: 0 0 14px;

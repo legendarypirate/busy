@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useId } from "react";
 import { useTripDetailsBooking } from "@/components/trip-details/trip-details-booking-context";
 import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
+import { formatMnDate } from "@/lib/format-date";
 
 export type { TripCheckoutTier };
 
@@ -20,6 +20,15 @@ function formatMnt(n: number): string {
   return n.toLocaleString("mn-MN", { maximumFractionDigits: 0 });
 }
 
+/** `YYYY-MM-DD` from trip → display (avoids UTC date shift). */
+function departureIsoToDisplay(iso: string): string {
+  const t = iso.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  const d = new Date(`${t}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return t;
+  return formatMnDate(d).replace(/-/g, ".");
+}
+
 /**
  * Book panel + tier selector; checkout state lives in `TripDetailsBookingRegisterProvider`.
  */
@@ -30,8 +39,8 @@ export function TripDetailsBookSidebarClient({
   capacityNote,
   children,
 }: Props) {
-  const formId = useId();
-  const { departure, setDeparture, counts, bump, clearTier, totalPax, checkoutTotalMnt } = useTripDetailsBooking();
+  const { departure, counts, bump, clearTier, totalPax, checkoutTotalMnt } = useTripDetailsBooking();
+  const departureDisplay = departureIsoToDisplay(departure);
 
   const checkoutSub =
     totalPax === 0 ? "Түвшин сонгоно уу · нийт төлбөр" : `${totalPax} хүн · нийт төлбөр`;
@@ -45,23 +54,14 @@ export function TripDetailsBookSidebarClient({
       <div className="trd-bi-card trd-aside-card">
         <h3 className="trd-bi-title">Захиалгын мэдээлэл</h3>
 
-        <div className="trd-bi-date-row">
-          <label htmlFor={`${formId}-dep`} className="visually-hidden">
-            Эхлэх огноо
-          </label>
+        <div className="trd-bi-date-row trd-bi-date-row--static" role="group" aria-label="Эхлэх огноо">
           <span className="trd-bi-date-icon" aria-hidden="true">
             <i className="fa-regular fa-calendar" />
           </span>
-          <input
-            id={`${formId}-dep`}
-            type="date"
-            className="trd-bi-date-input"
-            value={departure}
-            onChange={(e) => setDeparture(e.target.value)}
-          />
-          <span className="trd-bi-date-chev" aria-hidden="true">
-            <i className="fa-solid fa-chevron-down" />
-          </span>
+          <div className="trd-bi-date-static">
+            <span className="trd-bi-date-static__label">Эхлэх огноо</span>
+            <span className="trd-bi-date-value">{departureDisplay}</span>
+          </div>
         </div>
 
         {capacityNote ? <p className="trd-bi-capacity">{capacityNote}</p> : null}
