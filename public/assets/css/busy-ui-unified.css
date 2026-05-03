@@ -1,0 +1,95 @@
+/**
+ * BUSY.mn — sitewide UI consistency (loaded last in root layout).
+ * Fixes unstyled marketing CTAs and aligns Bootstrap chrome with design tokens.
+ */
+
+:root {
+  --busy-ui-radius: 10px;
+  --busy-ui-radius-sm: 8px;
+}
+
+/* Marketing CTAs — often used without `.btn` */
+a.btn-brand,
+button.btn-brand,
+.btn.btn-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--busy-ui-radius);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  border: none;
+  background: linear-gradient(135deg, var(--brand-secondary, #001f5b), #0a3d8f);
+  color: #fff !important;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+a.btn-brand:hover,
+button.btn-brand:hover,
+.btn.btn-brand:hover {
+  filter: brightness(1.06);
+  color: #fff !important;
+}
+
+a.btn-brand-outline,
+button.btn-brand-outline,
+.btn.btn-brand-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--busy-ui-radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: #fff;
+  color: var(--brand-primary, #001f5b) !important;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+a.btn-brand-outline:hover,
+button.btn-brand-outline:hover,
+.btn.btn-brand-outline:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--brand-primary, #001f5b) !important;
+}
+
+/* Bootstrap — default radius without clobbering pills / circles */
+.btn:not(.rounded-0):not(.rounded-circle):not(.rounded-pill) {
+  border-radius: var(--busy-ui-radius) !important;
+}
+
+.btn-sm:not(.rounded-circle):not(.rounded-pill) {
+  border-radius: var(--busy-ui-radius-sm) !important;
+}
+
+.btn-lg:not(.rounded-circle):not(.rounded-pill) {
+  border-radius: 12px !important;
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  border-radius: var(--busy-ui-radius-sm) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(29, 78, 216, 0.12);
+}
+
+textarea.form-control {
+  min-height: 120px;
+}

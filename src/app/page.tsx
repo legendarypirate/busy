@@ -208,64 +208,10 @@ export default async function HomePage() {
     <main className="home-page-v3">
       {SHOW_HOME_HERO_V3_SECTION ? <HomeHeroV3Section data={data} /> : null}
 
-      {/* International Business Trips */}
-      <section className="py-5">
-        <div className="container">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="section-title-v2 m-0">Олон улсын бизнес аялал</h2>
-            <Link href="/trips" className="text-primary small text-decoration-none">Бүгдийг харах</Link>
-          </div>
-          <div className="trips-v3-grid">
-            {data.businessTrips && data.businessTrips.length > 0 ? (
-              data.businessTrips.slice(0, 3).map((trip) => {
-                const tTitle = trip.destination || "Бизнес аялал";
-                const tImage = mediaUrl(trip.coverImageUrl) || PLACEHOLDER_TRIP;
-                const tDate = trip.startDate ? `${formatMnDate(trip.startDate)}${trip.endDate ? ` - ${formatMnDate(trip.endDate).slice(5)}` : ""}` : "Огноо удахгүй";
-                const tDesc = trip.description || "Бизнес аяллын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.";
-                const tStatus = trip.statusLabel || "Идэвхтэй";
-                
-                return (
-                  <div className="trip-card-exact" key={trip.id}>
-                    <div className="trip-exact-img-wrap">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={tImage} className="trip-exact-img" alt={tTitle} />
-                      <span className={`trip-status-tag ${tStatus !== 'Идэвхтэй' ? 'inactive' : ''}`}>{tStatus}</span>
-                    </div>
-                    <div className="trip-exact-body">
-                      <h3 className="trip-exact-title">{tTitle}</h3>
-                      <div className="trip-exact-date text-primary">{tDate}</div>
-                      <p className="trip-exact-desc">{tDesc.slice(0, 120)}...</p>
-                      <div className="trip-exact-btns">
-                        <button
-                          type="button"
-                          className="btn-qpay js-trip-register-btn"
-                          data-trip-id={String(trip.id)}
-                          data-trip-title={tTitle}
-                        >
-                          Захиалах
-                        </button>
-                        <Link href={`/trip-details/${trip.id}`} className="btn-exact-outline text-center">Дэлгэрэнгүй</Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="trip-card-exact">
-                <div className="trip-exact-body">
-                  <h3 className="trip-exact-title">Одоогоор аялал алга</h3>
-                  <p className="trip-exact-desc">Шинэ аялал нэмэгдэхэд энд автоматаар харагдана.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* Core Activities Section */}
       <section className="py-5">
         <div className="container">
-          <h2 className="section-title-v2 mb-4">Үндсэн үйл ажиллагаа</h2>
+          <h2 className="section-title-v2 mb-4">Танд санал болгох</h2>
           <div className="activities-tabs">
             <button type="button" className="activity-tab active">Эвэнт / Уулзалт</button>
           </div>
@@ -331,6 +277,60 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* International Business Trips */}
+      <section className="py-5">
+        <div className="container">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 className="section-title-v2 m-0">Олон улсын бизнес аялал</h2>
+            <Link href="/trips" className="text-primary small text-decoration-none">Бүгдийг харах</Link>
+          </div>
+          <div className="trips-v3-grid">
+            {data.businessTrips && data.businessTrips.length > 0 ? (
+              data.businessTrips.slice(0, 3).map((trip) => {
+                const tTitle = trip.destination || "Бизнес аялал";
+                const tImage = mediaUrl(trip.coverImageUrl) || PLACEHOLDER_TRIP;
+                const tDate = trip.startDate ? `${formatMnDate(trip.startDate)}${trip.endDate ? ` - ${formatMnDate(trip.endDate).slice(5)}` : ""}` : "Огноо удахгүй";
+                const tDesc = trip.description || "Бизнес аяллын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.";
+                const tStatus = trip.statusLabel || "Идэвхтэй";
+
+                return (
+                  <div className="trip-card-exact" key={trip.id}>
+                    <div className="trip-exact-img-wrap">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={tImage} className="trip-exact-img" alt={tTitle} />
+                      <span className={`trip-status-tag ${tStatus !== "Идэвхтэй" ? "inactive" : ""}`}>{tStatus}</span>
+                    </div>
+                    <div className="trip-exact-body">
+                      <h3 className="trip-exact-title">{tTitle}</h3>
+                      <div className="trip-exact-date text-primary">{tDate}</div>
+                      <p className="trip-exact-desc">{tDesc.slice(0, 120)}...</p>
+                      <div className="trip-exact-btns">
+                        <button
+                          type="button"
+                          className="btn-qpay js-trip-register-btn"
+                          data-trip-id={String(trip.id)}
+                          data-trip-title={tTitle}
+                        >
+                          Захиалах
+                        </button>
+                        <Link href={`/trip-details/${trip.id}`} className="btn-exact-outline text-center">Дэлгэрэнгүй</Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="trip-card-exact">
+                <div className="trip-exact-body">
+                  <h3 className="trip-exact-title">Одоогоор аялал алга</h3>
+                  <p className="trip-exact-desc">Шинэ аялал нэмэгдэхэд энд автоматаар харагдана.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FooterContactList } from "@/components/FooterContactList";
+import { FooterSocialLinks } from "@/components/FooterSocialLinks";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,20 +14,11 @@ export default function Footer() {
             <p className="desc">
               Бизнес аялал, хурал, эвент үүсгэхэд зориулагдсан платформ
             </p>
-            <div className="footer-social">
-              <Link href="#" className="social-circle"><i className="fa-brands fa-facebook-f"></i></Link>
-              <Link href="#" className="social-circle"><i className="fa-brands fa-linkedin-in"></i></Link>
-              <Link href="#" className="social-circle"><i className="fa-brands fa-youtube"></i></Link>
-              <Link href="#" className="social-circle"><i className="fa-brands fa-twitter"></i></Link>
-            </div>
+            <FooterSocialLinks />
           </div>
           <div>
             <h4 className="footer-col-title">Холбоо барих</h4>
-            <ul className="footer-links">
-              <li><i className="fa-solid fa-phone me-2"></i> +976 7000 1010</li>
-              <li><i className="fa-solid fa-envelope me-2"></i> info@busy.mn</li>
-              <li><i className="fa-solid fa-location-dot me-2"></i> Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1</li>
-            </ul>
+            <FooterContactList />
           </div>
           <div>
             <h4 className="footer-col-title">Хэрэгтэй холбоосууд</h4>

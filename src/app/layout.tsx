@@ -36,6 +36,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/css/busy-ai-v3.css" />
         <link rel="stylesheet" href="/assets/css/platform-v4.css" />
         <link rel="stylesheet" href="/assets/css/auth-pages.css" />
+        <link rel="stylesheet" href="/assets/css/busy-ui-unified.css" />
       </head>
       <body className="page-home">
         <header className="site-header sticky-top border-bottom bg-white" style={{ zIndex: 1030 }}>

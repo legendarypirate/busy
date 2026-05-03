@@ -3,6 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  SHOW_PUBLIC_NAV_BUSY_AI,
+  SHOW_PUBLIC_NAV_COMPANIES,
+  SHOW_PUBLIC_NAV_INVESTMENTS,
+  SHOW_PUBLIC_NAV_MEMBERS,
+} from "@/lib/public-marketing-flags";
 
 type Props = {
   displayName: string;
@@ -15,8 +21,12 @@ export default function PlatformTopNav({ displayName, photoUrl }: Props) {
     { href: "/platform", label: "Нүүр", match: /^\/platform\/?$/ },
     { href: "/platform/trips", label: "Бизнес аялал", match: /^\/platform\/trips/ },
     { href: "/platform/events", label: "Хурал эвент", match: /^\/platform\/events/ },
-    { href: "/platform/partners", label: "Үйлдвэр холболт", match: /^\/platform\/partners/ },
-    { href: "/platform/opportunities", label: "Хөрөнгө оруулалт", match: /^\/platform\/opportunities/ },
+    ...(SHOW_PUBLIC_NAV_COMPANIES
+      ? [{ href: "/platform/partners", label: "Үйлдвэр холболт", match: /^\/platform\/partners/ }]
+      : []),
+    ...(SHOW_PUBLIC_NAV_INVESTMENTS
+      ? [{ href: "/platform/opportunities", label: "Хөрөнгө оруулалт", match: /^\/platform\/opportunities/ }]
+      : []),
   ];
 
   const avatarSrc =
@@ -36,15 +46,25 @@ export default function PlatformTopNav({ displayName, photoUrl }: Props) {
             {t.label}
           </Link>
         ))}
-        <Link href="/members" className="pl-top-link">
-          Гишүүд
+        {SHOW_PUBLIC_NAV_MEMBERS ? (
+          <Link
+            href="/members"
+            className={`pl-top-link${pathname.startsWith("/members") || pathname.startsWith("/company") ? " active" : ""}`}
+          >
+            Гишүүд
+          </Link>
+        ) : null}
+        <Link href="/news" className={`pl-top-link${pathname.startsWith("/news") ? " active" : ""}`}>
+          Мэдээлэл
         </Link>
-        <Link href="/news" className="pl-top-link">
-          Мэдлэг
+        <Link href="/contact" className={`pl-top-link${pathname.startsWith("/contact") ? " active" : ""}`}>
+          Холбоо барих
         </Link>
-        <Link href="/busy-ai" className="pl-top-link">
-          BUSY AI
-        </Link>
+        {SHOW_PUBLIC_NAV_BUSY_AI ? (
+          <Link href="/busy-ai" className={`pl-top-link${pathname.startsWith("/busy-ai") ? " active" : ""}`}>
+            BUSY AI
+          </Link>
+        ) : null}
       </div>
       <div className="ms-auto d-flex align-items-center gap-3">
         <button type="button" className="btn btn-link text-muted p-1" title="Хайх">

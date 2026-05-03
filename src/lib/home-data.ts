@@ -8,7 +8,7 @@ type PartnerMemberRow = { id: number; name: string; company: string | null; phot
 
 export type HomePartner = { name: string; logo: string; href: string };
 
-/** Upcoming BNI events for home «Үндсэн үйл ажиллагаа» (from `bni_events`). */
+/** Upcoming BNI events for home «Танд санал болгох» (from `bni_events`). */
 export type HomeCoreEvent = {
   id: string;
   title: string;

@@ -8,7 +8,13 @@ import {
   type BniLangCode,
   isBniLang,
 } from "@/lib/nav-php-parity";
-import { SHOW_PUBLIC_HEADER_LOGIN_REGISTER } from "@/lib/public-marketing-flags";
+import {
+  SHOW_PUBLIC_HEADER_LOGIN_REGISTER,
+  SHOW_PUBLIC_NAV_BUSY_AI,
+  SHOW_PUBLIC_NAV_COMPANIES,
+  SHOW_PUBLIC_NAV_INVESTMENTS,
+  SHOW_PUBLIC_NAV_MEMBERS,
+} from "@/lib/public-marketing-flags";
 
 /** Matches `includes/header.php` `<nav>` children (paths adapted for Next App Router). */
 const NAV = [
@@ -18,9 +24,18 @@ const NAV = [
   { href: "/companies", label: "Үйлдвэр холболт", id: "companies" },
   { href: "/investments", label: "Хөрөнгө оруулалт", id: "investments" },
   { href: "/members", label: "Гишүүд", id: "members" },
-  { href: "/news", label: "Мэдлэг", id: "news" },
+  { href: "/news", label: "Мэдээлэл", id: "news" },
   { href: "/busy-ai", label: "BUSY AI", id: "busy_ai" },
+  { href: "/contact", label: "Холбоо барих", id: "contact" },
 ] as const;
+
+function isNavItemVisible(pageId: (typeof NAV)[number]["id"]): boolean {
+  if (pageId === "companies") return SHOW_PUBLIC_NAV_COMPANIES;
+  if (pageId === "investments") return SHOW_PUBLIC_NAV_INVESTMENTS;
+  if (pageId === "members") return SHOW_PUBLIC_NAV_MEMBERS;
+  if (pageId === "busy_ai") return SHOW_PUBLIC_NAV_BUSY_AI;
+  return true;
+}
 
 function navActive(pathname: string, href: string, pageId: string): boolean {
   if (href === "/") {
@@ -36,6 +51,9 @@ function navActive(pathname: string, href: string, pageId: string): boolean {
     return true;
   }
   if (pageId === "busy_ai" && pathname.startsWith("/busy-ai")) {
+    return true;
+  }
+  if (pageId === "contact" && pathname.startsWith("/contact")) {
     return true;
   }
   if (pageId === "members" && (pathname.startsWith("/members") || pathname.startsWith("/company"))) {
@@ -104,7 +122,7 @@ export function SiteHeaderNav({
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav mx-auto align-items-lg-center">
-            {NAV.map((item) => (
+            {NAV.filter((item) => isNavItemVisible(item.id)).map((item) => (
               <li className="nav-item" key={item.href}>
                 <Link
                   className={`nav-link${navActive(pathname, item.href, item.id) ? " active" : ""}`}

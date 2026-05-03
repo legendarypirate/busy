@@ -9,7 +9,13 @@ import {
   type BniLangCode,
   isBniLang,
 } from "@/lib/nav-php-parity";
-import { SHOW_PUBLIC_HEADER_LOGIN_REGISTER } from "@/lib/public-marketing-flags";
+import {
+  SHOW_PUBLIC_HEADER_LOGIN_REGISTER,
+  SHOW_PUBLIC_NAV_BUSY_AI,
+  SHOW_PUBLIC_NAV_COMPANIES,
+  SHOW_PUBLIC_NAV_INVESTMENTS,
+  SHOW_PUBLIC_NAV_MEMBERS,
+} from "@/lib/public-marketing-flags";
 
 /** Marketing top bar — same primary links as `SiteHeaderNav` / PHP header. */
 export default function Navbar() {
@@ -63,34 +69,47 @@ export default function Navbar() {
                 Хурал/Эвент
               </Link>
             </li>
-            <li className="nav-item">
-              <Link className={`nav-link${pathname.startsWith("/companies") ? " active" : ""}`} href="/companies">
-                Үйлдвэр холболт
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={`nav-link${pathname.startsWith("/investments") ? " active" : ""}`} href="/investments">
-                Хөрөнгө оруулалт
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link
-                className={`nav-link${pathname.startsWith("/members") || pathname.startsWith("/company") ? " active" : ""}`}
-                href="/members"
-              >
-                Гишүүд
-              </Link>
-            </li>
+            {SHOW_PUBLIC_NAV_COMPANIES ? (
+              <li className="nav-item">
+                <Link className={`nav-link${pathname.startsWith("/companies") ? " active" : ""}`} href="/companies">
+                  Үйлдвэр холболт
+                </Link>
+              </li>
+            ) : null}
+            {SHOW_PUBLIC_NAV_INVESTMENTS ? (
+              <li className="nav-item">
+                <Link className={`nav-link${pathname.startsWith("/investments") ? " active" : ""}`} href="/investments">
+                  Хөрөнгө оруулалт
+                </Link>
+              </li>
+            ) : null}
+            {SHOW_PUBLIC_NAV_MEMBERS ? (
+              <li className="nav-item">
+                <Link
+                  className={`nav-link${pathname.startsWith("/members") || pathname.startsWith("/company") ? " active" : ""}`}
+                  href="/members"
+                >
+                  Гишүүд
+                </Link>
+              </li>
+            ) : null}
             <li className="nav-item">
               <Link className={`nav-link${pathname.startsWith("/news") ? " active" : ""}`} href="/news">
-                Мэдлэг
+                Мэдээлэл
               </Link>
             </li>
             <li className="nav-item">
-              <Link className={`nav-link${pathname.startsWith("/busy-ai") ? " active" : ""}`} href="/busy-ai">
-                BUSY AI
+              <Link className={`nav-link${pathname.startsWith("/contact") ? " active" : ""}`} href="/contact">
+                Холбоо барих
               </Link>
             </li>
+            {SHOW_PUBLIC_NAV_BUSY_AI ? (
+              <li className="nav-item">
+                <Link className={`nav-link${pathname.startsWith("/busy-ai") ? " active" : ""}`} href="/busy-ai">
+                  BUSY AI
+                </Link>
+              </li>
+            ) : null}
           </ul>
           <div className="d-flex align-items-center gap-2 ms-lg-auto flex-wrap mt-3 mt-lg-0">
             <div className="dropdown">
