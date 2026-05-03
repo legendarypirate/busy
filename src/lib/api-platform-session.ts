@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { PLATFORM_ACCOUNT_REF_COOKIE, readCookieLastValueFromHeader } from "@/lib/platform-session-cookies";
+import { PLATFORM_ACCOUNT_REF_COOKIE, readCookieValueFromHeader } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 import type { PlatformAccount, PlatformProfile } from "@prisma/client";
@@ -27,15 +27,12 @@ function parseAccountId(raw: string | undefined): bigint | null {
   }
 }
 
-/** Same resolution as `getPlatformSession` (last cookie wins; httpOnly id wins if ref disagrees). */
+/** Same resolution order as `getPlatformSession` (raw `Cookie` header, then parsed jar). */
 function resolveAccountIdFromRequest(req: NextRequest): bigint | null {
   const raw = req.headers.get("cookie");
-  const idHttp = readCookieLastValueFromHeader(raw, "bni_platform_account_id")?.trim();
-  const idRef = readCookieLastValueFromHeader(raw, PLATFORM_ACCOUNT_REF_COOKIE)?.trim();
   const fromHeader =
-    idHttp && idRef && idHttp !== idRef
-      ? parseAccountId(idHttp)
-      : parseAccountId(idHttp || idRef);
+    parseAccountId(readCookieValueFromHeader(raw, "bni_platform_account_id")) ??
+    parseAccountId(readCookieValueFromHeader(raw, PLATFORM_ACCOUNT_REF_COOKIE));
   if (fromHeader) return fromHeader;
 
   return (

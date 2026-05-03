@@ -1,9 +1,6 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  PLATFORM_ACCOUNT_REF_COOKIE,
-  readCookieLastValueFromHeader,
-} from "@/lib/platform-session-cookies";
+import { PLATFORM_ACCOUNT_REF_COOKIE } from "@/lib/platform-session-cookies";
 import { prisma } from "@/lib/prisma";
 import { fetchBusyAuthzForAccount } from "@/lib/busy-rbac";
 
@@ -51,12 +48,10 @@ export async function loadPlatformUserByAccountId(id: bigint): Promise<PlatformU
 
 /** Cookie-based session via Next `cookies()` only (same cookies as login / Google callback). */
 export async function getPlatformSession(): Promise<PlatformUser | null> {
-  const rawHeader = (await headers()).get("cookie") ?? "";
-  const idHttp = readCookieLastValueFromHeader(rawHeader, "bni_platform_account_id")?.trim();
-  const idRef = readCookieLastValueFromHeader(rawHeader, PLATFORM_ACCOUNT_REF_COOKIE)?.trim();
-  /** Prefer httpOnly id if both shards disagree (ref is not httpOnly). */
+  const jar = await cookies();
   const idRaw =
-    idHttp && idRef && idHttp !== idRef ? idHttp : idHttp || idRef || (await cookies()).get("bni_platform_account_id")?.value?.trim() || (await cookies()).get(PLATFORM_ACCOUNT_REF_COOKIE)?.value?.trim();
+    jar.get("bni_platform_account_id")?.value?.trim() ||
+    jar.get(PLATFORM_ACCOUNT_REF_COOKIE)?.value?.trim();
 
   if (!idRaw) {
     return null;
