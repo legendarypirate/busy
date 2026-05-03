@@ -5,7 +5,7 @@ import type {
   TripFormResponseWorkflowStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary";
+import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary-format";
 import { assertTripEditableByAccount } from "@/lib/trip-registration-form/service";
 import { MVP_TRIP_FORM_QUESTION_TYPES } from "@/lib/trip-registration-form/types";
 

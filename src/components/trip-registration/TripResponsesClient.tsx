@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary";
+import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary-format";
 import { cn } from "@/lib/utils";
 
 type Row = {
