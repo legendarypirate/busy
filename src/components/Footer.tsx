@@ -30,9 +30,9 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="footer-col-title">Админ хэсэг</h4>
-            <p className="small text-muted mb-3">Гишүүн байгууллагын админ нэвтрэх хэсэг.</p>
-            <Link href="/auth/login" className="btn-footer-login">Нэвтрэх</Link>
+            <h4 className="footer-col-title">Платформ</h4>
+            <p className="small text-muted mb-3">Аялал, хурал, эвентын бүртгэл болон удирдлагыг нэг дороос.</p>
+            <Link href="/platform" className="btn-footer-login">Платформ руу</Link>
           </div>
         </div>
         <div className="pt-4 border-top">

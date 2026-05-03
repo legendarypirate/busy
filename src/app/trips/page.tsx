@@ -230,10 +230,11 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
                 
                 <div className="featured-trip-footer">
                   <div>
-                    <div className="featured-trip-price">
-                      {ftrip.priceMnt ? `₮${Number(ftrip.priceMnt).toLocaleString()}` : 'Үнэ шинэчлэгдэнэ'}
-                      <span>/ 1 хүнд</span>
-                    </div>
+                    {ftrip.priceMnt ? (
+                      <div className="featured-trip-price">
+                        {`₮${Number(ftrip.priceMnt).toLocaleString()}`}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="featured-trip-actions">
                     <div className="seats-badge">
@@ -270,12 +271,13 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
                       <div className="d-flex justify-content-between align-items-center">
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Үлдсэн суудал <span style={{ fontWeight: 700, color: "var(--text-main)", marginLeft: "0.2rem" }}>{trip.seatsLabel || '-'}</span></div>
                       </div>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div className="featured-trip-price" style={{ fontSize: "1.1rem" }}>
-                          {trip.priceMnt ? `₮${Number(trip.priceMnt).toLocaleString()}` : 'Үнэ шинэчлэгдэнэ'}
-                          <span style={{ fontSize: "0.7rem" }}>/ 1 хүнд</span>
+                      {trip.priceMnt ? (
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="featured-trip-price" style={{ fontSize: "1.1rem" }}>
+                            {`₮${Number(trip.priceMnt).toLocaleString()}`}
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
                       <Link href={`/trip-details/${trip.id}`} className="btn-brand-outline w-100 text-center py-1 mt-1" style={{ color: "var(--brand-primary)", borderColor: "#bfdbfe" }}>Дэлгэрэнгүй</Link>
                     </div>
                   </div>
