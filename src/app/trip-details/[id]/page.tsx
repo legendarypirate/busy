@@ -124,6 +124,30 @@ function tripManagerTelParts(raw: string): { href: string; label: string } | nul
   return { href, label };
 }
 
+const TRIP_HELP_EMAIL_DEFAULT = "travel@busy.mn";
+
+/** Display + mailto from admin email; empty uses site default. */
+function tripHelpEmailParts(raw: string): { label: string; href: string } {
+  let a = raw.trim();
+  if (a.toLowerCase().startsWith("mailto:")) {
+    a = a.slice("mailto:".length).split("?")[0].trim();
+  }
+  if (!a) a = TRIP_HELP_EMAIL_DEFAULT;
+  return { label: a, href: `mailto:${a}` };
+}
+
+/** Chat / messenger link for help tile; empty → no link. */
+function normalizeTripHelpChatHref(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (t.startsWith("#")) return t;
+  if (t.startsWith("/")) return t;
+  const lower = t.toLowerCase();
+  if (lower.startsWith("mailto:") || lower.startsWith("tel:")) return t;
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t.replace(/^\/+/, "")}`;
+}
+
 export default async function TripDetailsPage({ params }: Props) {
   const { id } = await params;
   const tripId = parseInt(id, 10);
@@ -195,6 +219,9 @@ export default async function TripDetailsPage({ params }: Props) {
 
   const tripLocationDisplay = extras.location.trim() || dest || "—";
   const tripManagerCall = tripManagerTelParts(extras.trip_manager_phone);
+  const tripHelpEmail = tripHelpEmailParts(extras.trip_help_email);
+  const tripHelpChatHref = normalizeTripHelpChatHref(extras.trip_help_chat_url);
+  const tripHelpChatExternal = tripHelpChatHref != null && /^https?:\/\//i.test(tripHelpChatHref);
 
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
 
@@ -443,8 +470,27 @@ export default async function TripDetailsPage({ params }: Props) {
                       <span>Аяллын удирдагчийн утас тохируулаагүй</span>
                     </div>
                   )}
-                  <Link href="mailto:travel@busy.mn" className="trd-help-tile"><i className="fa-solid fa-envelope"></i><span>travel@busy.mn</span></Link>
-                  <Link href="#trd-section-help" className="trd-help-tile trd-help-tile--wide"><i className="fa-solid fa-comments"></i><span>Онлайн чат</span></Link>
+                  <Link href={tripHelpEmail.href} className="trd-help-tile">
+                    <i className="fa-solid fa-envelope"></i>
+                    <span>{tripHelpEmail.label}</span>
+                  </Link>
+                  {tripHelpChatHref ? (
+                    <Link
+                      href={tripHelpChatHref}
+                      className="trd-help-tile trd-help-tile--wide"
+                      {...(tripHelpChatExternal
+                        ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                        : {})}
+                    >
+                      <i className="fa-solid fa-comments"></i>
+                      <span>Онлайн чат</span>
+                    </Link>
+                  ) : (
+                    <div className="trd-help-tile trd-help-tile--wide opacity-50" role="status">
+                      <i className="fa-solid fa-comments"></i>
+                      <span>Онлайн чатын холбоос тохируулаагүй</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

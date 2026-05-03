@@ -78,6 +78,10 @@ export function readExtras(raw: unknown): {
   trip_details_hero_url: string;
   /** Shown on `/trip-details/:id` help card; callable trip manager (admin). */
   trip_manager_phone: string;
+  /** Help card email; empty → site default on public page. */
+  trip_help_email: string;
+  /** Help card «Онлайн чат» href (https…, /path, #anchor); empty → tile disabled. */
+  trip_help_chat_url: string;
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -89,6 +93,8 @@ export function readExtras(raw: unknown): {
     booking_status_note: String(d.booking_status_note ?? "").trim(),
     trip_details_hero_url: String(d.trip_details_hero_url ?? "").trim(),
     trip_manager_phone: String(d.trip_manager_phone ?? "").trim(),
+    trip_help_email: String(d.trip_help_email ?? "").trim(),
+    trip_help_chat_url: String(d.trip_help_chat_url ?? "").trim(),
   };
 }
 

@@ -364,14 +364,14 @@ export default function TripEditorForm({
           <div className="tps-form-section mt-3">
             <div className="tps-section-head">
               <div className="tps-section-num">8b</div>
-              <span className="tps-section-title">Trip-details — тусламжийн утас</span>
+              <span className="tps-section-title">Trip-details — Тусламж</span>
             </div>
             <p className="small text-muted mb-3">
-              <code>/trip-details/:id</code> хуудсын «Тусламж» хэсэгт харагдана. Оролцогчид энэ дугаараар аяллын
-              зохион байгуулагч руу шууд залгана.
+              <code>/trip-details/:id</code> хуудсын баруун баганын «Тусламж» картад харагдана. Хоосон имэйл, чат
+              URL-д үндсийн утга (<code>travel@busy.mn</code>) эсвэл идэвгүй тайлбар ашиглагдана.
             </p>
-            <div className="mb-0">
-              <label className="pm-label">Утасны дугаар</label>
+            <div className="mb-3">
+              <label className="pm-label">Утасны дугаар (аяллын удирдагч)</label>
               <input
                 type="tel"
                 className="pm-input"
@@ -380,6 +380,31 @@ export default function TripEditorForm({
                 defaultValue={extras.trip_manager_phone}
                 autoComplete="tel"
               />
+            </div>
+            <div className="mb-3">
+              <label className="pm-label">Имэйл (зөвлөх / холбоо)</label>
+              <input
+                type="email"
+                className="pm-input"
+                name="trip_help_email"
+                placeholder="Хоосон бол travel@busy.mn"
+                defaultValue={extras.trip_help_email}
+                autoComplete="email"
+              />
+            </div>
+            <div className="mb-0">
+              <label className="pm-label">Онлайн чат — холбоос (URL)</label>
+              <input
+                type="text"
+                className="pm-input"
+                name="trip_help_chat_url"
+                placeholder="Жишээ: https://wa.me/976… эсвэл https://m.me/…"
+                defaultValue={extras.trip_help_chat_url}
+              />
+              <p className="small text-muted mt-1 mb-0">
+                WhatsApp, Messenger, Slack гэх мэт бүрэн <code>https://</code> хаяг. Хоосон бол чатын товч
+                идэвгүй.
+              </p>
             </div>
           </div>
 

@@ -113,6 +113,8 @@ function buildExtrasPayload(
   shortDesc: string,
   tripLoc: string,
   tripManagerPhone: string,
+  tripHelpEmail: string,
+  tripHelpChatUrl: string,
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
@@ -126,6 +128,16 @@ function buildExtrasPayload(
     payload.trip_manager_phone = tripManagerPhone.trim();
   } else {
     delete payload.trip_manager_phone;
+  }
+  if (tripHelpEmail.trim()) {
+    payload.trip_help_email = tripHelpEmail.trim();
+  } else {
+    delete payload.trip_help_email;
+  }
+  if (tripHelpChatUrl.trim()) {
+    payload.trip_help_chat_url = tripHelpChatUrl.trim();
+  } else {
+    delete payload.trip_help_chat_url;
   }
   payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
   payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
@@ -187,6 +199,8 @@ export async function executeSaveTrip(
   const shortDesc = String(formData.get("trip_short_description") ?? "").trim();
   const tripLoc = String(formData.get("trip_location") ?? "").trim();
   const tripManagerPhone = String(formData.get("trip_manager_phone") ?? "").trim();
+  const tripHelpEmail = String(formData.get("trip_help_email") ?? "").trim();
+  const tripHelpChatUrl = String(formData.get("trip_help_chat_url") ?? "").trim();
   const totalSeats = Math.max(0, Number(String(formData.get("trip_total_seats") ?? "30")) || 30);
   const advancePct = Math.max(0, Number(String(formData.get("trip_advance_percent") ?? "20")) || 20);
 
@@ -297,6 +311,8 @@ export async function executeSaveTrip(
     shortDesc,
     tripLoc,
     tripManagerPhone,
+    tripHelpEmail,
+    tripHelpChatUrl,
     totalSeats,
     advancePct,
     bookingTiersParsed,
