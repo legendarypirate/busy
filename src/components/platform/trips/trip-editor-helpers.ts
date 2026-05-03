@@ -36,11 +36,44 @@ export function parseHeroSlides(raw: string | null | undefined): string[] {
   }
 }
 
+/** Stored in `business_trips.extras_json` → `booking_tiers` (admin-configurable). */
+export type TripExtrasBookingTier = {
+  id: string;
+  label: string;
+  subtitle: string;
+  price_mnt: number;
+};
+
+function readBookingTiers(raw: unknown): TripExtrasBookingTier[] {
+  if (!Array.isArray(raw)) return [];
+  const out: TripExtrasBookingTier[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const r = row as Record<string, unknown>;
+    const label = String(r.label ?? "").trim();
+    const priceRaw = r.price_mnt ?? r.priceMnt;
+    const price_mnt = Math.max(0, Math.round(Number(priceRaw ?? 0)) || 0);
+    if (!label) continue;
+    const idRaw = String(r.id ?? "").trim();
+    const id = idRaw || `tier_${i}`;
+    out.push({
+      id,
+      label,
+      subtitle: String(r.subtitle ?? "").trim(),
+      price_mnt,
+    });
+  }
+  return out;
+}
+
 export function readExtras(raw: unknown): {
   short_description: string;
   location: string;
   total_seats: number;
   advance_percent: number;
+  booking_tiers: TripExtrasBookingTier[];
+  booking_status_note: string;
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -48,7 +81,18 @@ export function readExtras(raw: unknown): {
     location: String(d.location ?? ""),
     total_seats: Math.max(1, Number(d.total_seats ?? 30) || 30),
     advance_percent: Math.max(0, Number(d.advance_percent ?? 20) || 20),
+    booking_tiers: readBookingTiers(d.booking_tiers),
+    booking_status_note: String(d.booking_status_note ?? "").trim(),
   };
+}
+
+/** Default rows in admin when `booking_tiers` is still empty (BNI-style). */
+export function defaultEditorBookingTiers(basePriceMnt: number): TripExtrasBookingTier[] {
+  const base = Math.max(0, Math.round(basePriceMnt)) || 4_590_000;
+  return [
+    { id: "bni_member", label: "BNI гишүүн", subtitle: "", price_mnt: base },
+    { id: "non_member", label: "Гишүүн биш", subtitle: "", price_mnt: base + 300_000 },
+  ];
 }
 
 export function tripDaySpan(start: Date, end: Date): number {

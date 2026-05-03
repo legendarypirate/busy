@@ -6,8 +6,10 @@ import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEdito
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
+import TripBookingTiersEditor from "@/components/platform/trips/TripBookingTiersEditor";
 import {
   DEFAULT_TRIP_COVER,
+  defaultEditorBookingTiers,
   extrasFromTrip,
   fmtMoney,
   parseHeroSlides,
@@ -240,6 +242,40 @@ export default function TripEditorForm({
                   </div>
                 </div>
                 <div className="mt-2 small text-muted">Хувь эсвэл дүнгээр тооцно.</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="tps-form-section mt-4">
+            <div className="tps-section-head">
+              <div className="tps-section-num">5a</div>
+              <span className="tps-section-title">Захиалгын tier (нийтийн trip-details)</span>
+            </div>
+            <div className="row g-3 align-items-start">
+              <div className="col-12 col-xl-8">
+                <TripBookingTiersEditor
+                  hiddenName="trip_booking_tiers_json"
+                  initialTiers={
+                    extras.booking_tiers.length > 0
+                      ? extras.booking_tiers
+                      : defaultEditorBookingTiers(
+                          editTrip?.priceMnt != null ? Math.round(Number(editTrip.priceMnt)) : 4_590_000,
+                        )
+                  }
+                />
+              </div>
+              <div className="col-12 col-xl-4">
+                <label className="pm-label">Суудал / захиалгын төлөвийн текст</label>
+                <textarea
+                  className="pm-input"
+                  name="trip_booking_status_note"
+                  rows={4}
+                  placeholder="Жишээ: 20 суудал үлдсэн"
+                  defaultValue={extras.booking_status_note}
+                />
+                <div className="form-text small text-muted">
+                  Хоосон бол автоматаар «суудал үлдсэн» мэдээлэл харагдана.
+                </div>
               </div>
             </div>
           </div>

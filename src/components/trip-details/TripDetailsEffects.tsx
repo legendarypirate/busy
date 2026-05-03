@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Mirrors PHP `trip-details.php` footer script: FAQ, section tabs, day panels, consult scroll. */
+/** Mirrors PHP `trip-details.php` footer script: FAQ, section tabs, consult scroll. */
 export default function TripDetailsEffects() {
   useEffect(() => {
     const root = document.querySelector(".trd-body") as HTMLElement | null;
@@ -44,23 +44,6 @@ export default function TripDetailsEffects() {
             el.scrollIntoView(true);
           }
         }
-        return;
-      }
-
-      const timelineBtn = target.closest(".trd-timeline-btn[data-trd-day-index]") as HTMLElement | null;
-      if (timelineBtn) {
-        const ix = timelineBtn.getAttribute("data-trd-day-index");
-        if (ix == null) return;
-        root.querySelectorAll(".trd-timeline-btn[data-trd-day-index]").forEach((b) => {
-          const on = b.getAttribute("data-trd-day-index") === ix;
-          b.classList.toggle("active", on);
-          b.setAttribute("aria-selected", on ? "true" : "false");
-        });
-        root.querySelectorAll(".trd-day-panel[data-trd-day-panel]").forEach((p) => {
-          const on = p.getAttribute("data-trd-day-panel") === ix;
-          p.classList.toggle("is-active", on);
-          (p as HTMLElement).hidden = !on;
-        });
         return;
       }
 

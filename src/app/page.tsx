@@ -315,7 +315,7 @@ export default async function HomePage() {
                           data-trip-id={String(trip.id)}
                           data-trip-title={tTitle}
                         >
-                          Захиалах
+                          Шууд бүртгүүлэх
                         </button>
                         <Link href={`/trip-details/${trip.id}`} className="btn-exact-outline text-center">Дэлгэрэнгүй</Link>
                       </div>

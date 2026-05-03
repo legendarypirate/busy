@@ -1,14 +1,31 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import TripDetailsEffects from "@/components/trip-details/TripDetailsEffects";
+import { TripItineraryAccordion } from "@/components/trip-details/TripItineraryAccordion";
+import { TripBookingInfoPanel } from "@/components/trip-details/TripBookingInfoPanel";
 import { dbBusinessTrip } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
+import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
+
+function formatLocalYmd(d: Date): string {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const da = String(d.getDate()).padStart(2, "0");
+  return `${y}-${mo}-${da}`;
+}
+
+function parseSeatCapacity(label: string | null | undefined): number {
+  if (!label?.trim()) return 30;
+  const compact = label.replace(/\s/g, "");
+  const m = compact.match(/(\d+)/);
+  if (!m) return 30;
+  return Math.min(500, Math.max(1, parseInt(m[1], 10)));
+}
 
 export default async function TripDetailsPage({ params }: Props) {
   const { id } = await params;
@@ -48,8 +65,10 @@ export default async function TripDetailsPage({ params }: Props) {
     scheduleDays.push({
       id: `trd-plh-${i}`,
       label: `Өдөр ${i}`,
-      date: dDt.toISOString().split('T')[0],
-      heading: i === 1 ? 'Хөтөлбөр' : '',
+      date: dDt.toISOString().split("T")[0],
+      /** Preformatted on server — avoids Node vs browser `toLocaleDateString` hydration mismatch in accordion. */
+      dateDisplay: formatMnDate(dDt).replace(/-/g, "."),
+      heading: i === 1 ? "Хөтөлбөр" : "",
       banner_image: '',
       items: [
         {
@@ -79,7 +98,25 @@ export default async function TripDetailsPage({ params }: Props) {
 
   const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
 
-  const tripPrice = trip.priceMnt ? Number(trip.priceMnt).toLocaleString() : '4,590,000';
+  const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
+  const tripPrice = basePriceMnt.toLocaleString("mn-MN");
+  const seatCapacity = parseSeatCapacity(trip.seatsLabel);
+  const bookingDepartureIso = formatLocalYmd(startDate);
+  const extras = readExtras(trip.extrasJson);
+  const spotsHint = Math.min(20, seatCapacity);
+  let bookingPanelTiers = extras.booking_tiers
+    .filter((t) => t.label.trim() && Number.isFinite(t.price_mnt))
+    .map((t) => ({
+      id: t.id,
+      label: t.label.trim(),
+      subtitle: t.subtitle.trim(),
+      priceMnt: Math.max(0, Math.round(t.price_mnt)),
+    }));
+  if (bookingPanelTiers.length === 0) {
+    bookingPanelTiers = [{ id: "standard", label: "1 хүн", subtitle: "", priceMnt: basePriceMnt }];
+  }
+  const bookingCapacityNote =
+    extras.booking_status_note.trim() || `${spotsHint} суудал үлдсэн`;
   
   const formattedStartYear = startDate.getFullYear();
   const formattedEndYear = endDate.getFullYear();
@@ -175,70 +212,9 @@ export default async function TripDetailsPage({ params }: Props) {
               <a href="#trd-section-location" className="trd-tab">Байршил</a>
             </div>
 
-            {/* Itinerary Section */}
+            {/* Itinerary — vertical accordion */}
             <div id="trd-section-itinerary" className="mb-5 trd-scroll-anchor">
-              <div className="trd-timeline-nav" role="tablist">
-                {scheduleDays.map((dayRow, ti) => {
-                  const dayDateFmt = formatMnDate(new Date(dayRow.date)).replace(/-/g, '.');
-                  const dayLabel = dayRow.label || `Өдөр ${ti + 1}`;
-                  return (
-                    <button
-                      key={ti}
-                      type="button"
-                      className={`trd-timeline-btn ${ti === 0 ? "active" : ""}`}
-                      data-trd-day-index={String(ti)}
-                      aria-selected={ti === 0 ? "true" : "false"}
-                    >
-                      {dayLabel}
-                      {dayDateFmt && <span className="opacity-50 ms-2">{dayDateFmt}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {scheduleDays.map((dayRow, pi) => {
-                const banner = dayRow.banner_image || tripCover;
-                const dayHeading = dayRow.heading || '';
-                const dayLabel = dayRow.label || `Өдөр ${pi + 1}`;
-                const items = dayRow.items || [];
-                
-                return (
-                  <div
-                    key={pi}
-                    className={`trd-day-panel ${pi === 0 ? "is-active" : ""}`}
-                    data-trd-day-panel={String(pi)}
-                    hidden={pi !== 0}
-                  >
-                    <div className="trd-day-detail">
-                      <div className="trd-day-img">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={banner} alt={dayLabel} />
-                        <div className="trd-day-label">
-                          <div className="fw-bold h4 mb-0">{dayLabel}</div>
-                          {dayHeading && <div className="small opacity-75">{dayHeading}</div>}
-                        </div>
-                      </div>
-                      <div className="trd-day-events">
-                        {items.map((it, idx) => {
-                          const tTime = it.time || '';
-                          const tTitle = it.title || '';
-                          const tDesc = it.description || '';
-                          if (!tTitle && !tDesc) return null;
-                          return (
-                            <div key={idx} className="trd-event">
-                              <div className="trd-event-time">{tTime || '—'}</div>
-                              <div className="trd-event-content">
-                                {tTitle && <div className="trd-event-title">{tTitle}</div>}
-                                {tDesc && <div className="trd-event-desc" dangerouslySetInnerHTML={{ __html: tDesc.replace(/\n/g, '<br/>') }}></div>}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <TripItineraryAccordion days={scheduleDays} fallbackCover={tripCover} />
             </div>
 
             {/* About Section */}
@@ -331,6 +307,14 @@ export default async function TripDetailsPage({ params }: Props) {
                   <div className="trd-trust-chip"><i className="fa-solid fa-star"></i><span>Зэрэглэл</span></div>
                 </div>
               </div>
+
+              <TripBookingInfoPanel
+                key={tripId}
+                defaultDepartureIso={bookingDepartureIso}
+                tiers={bookingPanelTiers}
+                maxPassengers={seatCapacity}
+                capacityNote={bookingCapacityNote}
+              />
 
               <div id="trd-section-location" className="trd-map-card trd-aside-card trd-scroll-anchor">
                 <div className="trd-aside-card__title">Маршрут</div>

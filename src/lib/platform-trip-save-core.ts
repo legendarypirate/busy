@@ -1,5 +1,7 @@
 import { Prisma, type BusinessTrip } from "@prisma/client";
 import { destroyCloudinaryBySecureUrl, writePlatformUploadImage } from "@/lib/platform-write-image";
+import type { TripExtrasBookingTier } from "@/components/platform/trips/trip-editor-helpers";
+import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { syncTripRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-registration-form-from-json";
 
@@ -85,18 +87,41 @@ function parseItinerary(raw: string): Prisma.InputJsonValue | null {
   }
 }
 
+function parseBookingTiersFormJson(raw: string): TripExtrasBookingTier[] {
+  try {
+    const v = JSON.parse(raw.trim() || "[]") as unknown;
+    return readExtras({ booking_tiers: Array.isArray(v) ? v : [] }).booking_tiers;
+  } catch {
+    return [];
+  }
+}
+
 function buildExtrasPayload(
   shortDesc: string,
   tripLoc: string,
   totalSeats: number,
   advancePercent: number,
+  bookingTiers: TripExtrasBookingTier[],
+  bookingStatusNote: string,
 ): Prisma.InputJsonValue {
-  return {
+  const payload: Record<string, unknown> = {
     short_description: shortDesc.trim() || null,
     location: tripLoc.trim() || null,
     total_seats: Number.isFinite(totalSeats) ? totalSeats : 30,
     advance_percent: Number.isFinite(advancePercent) ? advancePercent : 20,
   };
+  if (bookingTiers.length > 0) {
+    payload.booking_tiers = bookingTiers.map((t, idx) => ({
+      id: (t.id || "").trim() || `t_${idx}`,
+      label: t.label.trim(),
+      subtitle: t.subtitle.trim() || null,
+      price_mnt: Math.max(0, Math.round(t.price_mnt)),
+    }));
+  }
+  if (bookingStatusNote.trim()) {
+    payload.booking_status_note = bookingStatusNote.trim();
+  }
+  return payload as Prisma.InputJsonValue;
 }
 
 export type SaveTripCoreResult =
@@ -210,7 +235,9 @@ export async function executeSaveTrip(
 
   const registrationParsed = parseJsonRegistration(regRaw);
   const itineraryParsed = parseItinerary(itineraryRaw);
-  const tripExtras = buildExtrasPayload(shortDesc, tripLoc, totalSeats, advancePct);
+  const bookingTiersParsed = parseBookingTiersFormJson(String(formData.get("trip_booking_tiers_json") ?? "[]"));
+  const bookingStatusNote = String(formData.get("trip_booking_status_note") ?? "").trim();
+  const tripExtras = buildExtrasPayload(shortDesc, tripLoc, totalSeats, advancePct, bookingTiersParsed, bookingStatusNote);
 
   const common = {
     destination,
