@@ -36,6 +36,7 @@ export default async function AdminTripRegistrationResponsesPage({ params }: Pro
       backHref="/admin/trips"
       backLabel="Аяллын жагсаалт"
       sections={sections}
+      exportDownloadHref={`/api/admin/trips/${tripId}/registration-responses/export`}
     />
   );
 }

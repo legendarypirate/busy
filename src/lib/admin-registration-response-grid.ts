@@ -47,12 +47,16 @@ function signatureOf(answers: AdminGridMergedAnswer[]): string {
   return ids.join("|");
 }
 
-function columnsFromFirstRow(answers: AdminGridMergedAnswer[]): AdminGridQuestionCol[] {
-  const out: AdminGridQuestionCol[] = [];
-  const seen = new Set<string>();
+/** Extend column list with any new question ids from this row (same form era, partial rows). */
+function mergeQuestionColumns(
+  existing: AdminGridQuestionCol[],
+  answers: AdminGridMergedAnswer[],
+): AdminGridQuestionCol[] {
+  const byId = new Map(existing.map((c) => [c.id, c.label]));
+  const out = [...existing];
   for (const a of answers) {
-    if (seen.has(a.questionId)) continue;
-    seen.add(a.questionId);
+    if (byId.has(a.questionId)) continue;
+    byId.set(a.questionId, a.questionLabel.trim() || a.questionId);
     out.push({ id: a.questionId, label: a.questionLabel.trim() || a.questionId });
   }
   return out;
@@ -73,11 +77,13 @@ export function buildRegistrationGridSections(sortedAsc: AdminGridResponseInput[
       current = {
         sectionNo: sections.length + 1,
         signature: sig,
-        questionColumns: columnsFromFirstRow(row.answers),
+        questionColumns: [],
         responses: [],
       };
       sections.push(current);
     }
+
+    current.questionColumns = mergeQuestionColumns(current.questionColumns, row.answers);
 
     const cellByQuestionId: Record<string, string> = {};
     for (const a of row.answers) {

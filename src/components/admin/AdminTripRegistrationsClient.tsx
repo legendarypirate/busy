@@ -67,8 +67,44 @@ function statusBadgeClass(status: string): string {
   }
 }
 
+function AnswersCompactTable({ answers }: { answers: AdminTripRegistrationRow["answers"] }) {
+  if (answers.length === 0) {
+    return <p className="mb-0 small text-muted">Хариултын мөр байхгүй.</p>;
+  }
+  return (
+    <div className="table-responsive border rounded-2">
+      <table className="table table-sm table-bordered mb-0 align-middle" style={{ fontSize: "0.8125rem" }}>
+        <tbody>
+          {answers.map((a, idx) => (
+            <tr key={a.id}>
+              <th
+                scope="row"
+                className="text-muted text-break fw-normal bg-light"
+                style={{ width: "36%", minWidth: "7rem", verticalAlign: "top" }}
+              >
+                {idx + 1}. {a.label}
+              </th>
+              <td className="text-break" style={{ verticalAlign: "top" }}>
+                <span className="fw-medium">{(a.value ?? "").trim() || "—"}</span>
+                {a.fileUrl?.trim() ? (
+                  <div className="mt-1">
+                    <a href={a.fileUrl.trim()} target="_blank" rel="noopener noreferrer" className="small">
+                      Файл нээх
+                    </a>
+                  </div>
+                ) : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTripRegistrationRow[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [inlineId, setInlineId] = useState<string | null>(null);
 
   const active = useMemo(() => rows.find((r) => r.id === openId) ?? null, [rows, openId]);
 
@@ -92,6 +128,15 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
     return () => window.removeEventListener("keydown", onKey);
   }, [openId, close]);
 
+  useEffect(() => {
+    if (!inlineId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setInlineId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [inlineId]);
+
   return (
     <>
       <div className="table-responsive border rounded-3 overflow-hidden bg-white">
@@ -102,7 +147,12 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
               <th className="py-3">Аялал</th>
               <th className="py-3">Илгээсэн</th>
               <th className="py-3">Төлөв</th>
-              <th className="py-3 text-center">Хариулт</th>
+              <th className="py-3 text-center">
+                Хариулт
+                <span className="d-block fw-normal" style={{ fontSize: "0.65rem", letterSpacing: 0 }}>
+                  (тоог дарна уу)
+                </span>
+              </th>
               <th className="py-3 text-center">Захиалга</th>
               <th className="pe-3 py-3 text-end" style={{ width: "1%" }}>
                 {" "}
@@ -110,9 +160,9 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
+            {rows.flatMap((r) => {
               const orderText = formatOrderSummaryMn(r.orderSummary);
-              return (
+              const mainRow = (
                 <tr key={r.id} className="small">
                   <td className="ps-3 text-nowrap text-muted">{fmtLocal(r.submittedAt)}</td>
                   <td>
@@ -142,7 +192,18 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                       </span>
                     </div>
                   </td>
-                  <td className="text-center text-muted">{r.answers.length}</td>
+                  <td className="text-center">
+                    <button
+                      type="button"
+                      className={`btn btn-sm border-0 text-decoration-underline px-1 ${
+                        inlineId === r.id ? "text-primary fw-semibold" : "text-muted"
+                      }`}
+                      title="Нэг товшилтоор асуулт-хариултыг харуулах / нуух"
+                      onClick={() => setInlineId((cur) => (cur === r.id ? null : r.id))}
+                    >
+                      {r.answers.length}
+                    </button>
+                  </td>
                   <td className="text-center">
                     {orderText ? (
                       <span className="badge bg-primary text-white rounded-pill">Тийм</span>
@@ -153,7 +214,7 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                   <td className="pe-3 text-end">
                     <button
                       type="button"
-                      className="btn btn-sm btn-outline-primary rounded-pill px-3"
+                      className="btn btn-sm btn-outline-primary px-2 py-1"
                       onClick={() => setOpenId(r.id)}
                     >
                       Дэлгэрэнгүй
@@ -161,6 +222,19 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                   </td>
                 </tr>
               );
+              if (inlineId !== r.id) return [mainRow];
+              return [
+                mainRow,
+                <tr key={`${r.id}-inline`} className="bg-light">
+                  <td colSpan={7} className="ps-3 pe-3 py-2 border-top-0">
+                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                      <span className="small fw-semibold text-body">Асуулт — хариулт</span>
+                      <button type="button" className="btn btn-close btn-sm" aria-label="Хаах" onClick={() => setInlineId(null)} />
+                    </div>
+                    <AnswersCompactTable answers={r.answers} />
+                  </td>
+                </tr>,
+              ];
             })}
           </tbody>
         </table>
@@ -286,25 +360,7 @@ export default function AdminTripRegistrationsClient({ rows }: { rows: AdminTrip
                 <h3 className="text-uppercase text-muted fw-semibold mb-2" style={{ fontSize: "0.65rem", letterSpacing: "0.08em" }}>
                   Хариултууд ({active.answers.length})
                 </h3>
-                <ul className="list-unstyled mb-0 d-flex flex-column gap-2">
-                  {active.answers.map((a, idx) => (
-                    <li key={a.id} className="rounded-3 border bg-white p-3">
-                      <div className="text-muted mb-1" style={{ fontSize: "0.7rem" }}>
-                        {idx + 1}. {a.label}
-                      </div>
-                      <div className="text-break fw-medium" style={{ lineHeight: 1.5 }}>
-                        {(a.value ?? "").trim() || "—"}
-                      </div>
-                      {a.fileUrl?.trim() ? (
-                        <div className="mt-2">
-                          <a href={a.fileUrl.trim()} target="_blank" rel="noopener noreferrer" className="small">
-                            Хавсаргасан файл нээх
-                          </a>
-                        </div>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
+                <AnswersCompactTable answers={active.answers} />
               </section>
             </div>
 

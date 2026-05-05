@@ -17,6 +17,8 @@ type Props = {
   backLabel: string;
   sections: AdminGridSection[];
   emptyMessage?: string;
+  /** GET URL that returns UTF-8 CSV (Excel). */
+  exportDownloadHref?: string;
 };
 
 export default function AdminRegistrationResponseGrid({
@@ -26,15 +28,26 @@ export default function AdminRegistrationResponseGrid({
   backLabel,
   sections,
   emptyMessage = "Энэ аялалд / эвентэд илгээсэн хариулт байхгүй байна.",
+  exportDownloadHref,
 }: Props) {
   const hasAny = sections.some((s) => s.responses.length > 0);
 
   return (
     <div>
-      <div className="mb-3">
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
         <Link href={backHref} className="btn btn-sm btn-outline-secondary">
           ← {backLabel}
         </Link>
+        {exportDownloadHref ? (
+          <a
+            href={exportDownloadHref}
+            className="btn btn-sm btn-success"
+            title="Бүх хариултыг нэг Excel (CSV) файл болгон татах"
+          >
+            <i className="fas fa-file-excel me-1" aria-hidden />
+            Excel татах
+          </a>
+        ) : null}
       </div>
       <h1 className="h4 fw-bold mb-1">{title}</h1>
       {subtitle ? <p className="text-muted small mb-3">{subtitle}</p> : null}

@@ -104,22 +104,22 @@ export default async function AdminTripsPage({ searchParams }: Props) {
                 <td>{fmtMoney(r.priceMnt)}</td>
                 <td className="text-end text-nowrap">
                   <div
-                    className="d-inline-flex align-items-stretch border rounded overflow-hidden"
+                    className="d-inline-flex align-items-stretch border rounded-2 overflow-hidden shadow-sm"
                     role="group"
                     aria-label="Үйлдэл"
-                    style={{ fontSize: "0.7rem" }}
                   >
                     <Link
                       href={`/admin/trips/${r.id}/registration-responses`}
-                      className="btn btn-sm btn-outline-secondary px-1 py-0 lh-1 border-0 rounded-0"
+                      className="btn btn-sm btn-outline-secondary px-2 py-1 lh-sm border-0 rounded-0"
                       title="Хариултууд (хүснэг)"
                       aria-label="Хариултууд"
                     >
-                      <i className="fas fa-table" style={{ fontSize: "0.65rem" }} aria-hidden />
+                      <i className="fas fa-table" style={{ fontSize: "0.85rem" }} aria-hidden />
                     </Link>
                     <Link
                       href={`/admin/trips?edit_trip=${r.id}`}
-                      className="btn btn-sm btn-outline-primary px-1 py-0 lh-1 border-0 rounded-0 border-start"
+                      className="btn btn-sm btn-outline-primary px-2 py-1 lh-sm border-0 rounded-0 border-start"
+                      style={{ fontSize: "0.8rem" }}
                       title="Засах"
                     >
                       Засах

@@ -14,7 +14,7 @@ export default function AdminTripDeleteButton({ action, tripId, destination, com
       <input type="hidden" name="trip_id" value={tripId} />
       <button
         type="submit"
-        className={`btn btn-outline-danger ${compact ? "btn-sm px-1 py-0 lh-1 h-100 rounded-0 border-0 border-start" : "btn-sm"}`}
+        className={`btn btn-outline-danger ${compact ? "btn-sm px-2 py-1 lh-sm h-100 rounded-0 border-0 border-start" : "btn-sm"}`}
         title="Устгах"
         aria-label="Устгах"
         onClick={(e) => {
@@ -27,7 +27,7 @@ export default function AdminTripDeleteButton({ action, tripId, destination, com
           }
         }}
       >
-        <i className="fas fa-trash" style={compact ? { fontSize: "0.7rem" } : undefined} aria-hidden />
+        <i className="fas fa-trash" style={compact ? { fontSize: "0.85rem" } : undefined} aria-hidden />
         {!compact ? (
           <>
             {" "}

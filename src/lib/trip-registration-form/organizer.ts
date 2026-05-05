@@ -295,8 +295,28 @@ function csvEscape(cell: string): string {
   return cell;
 }
 
-export async function buildTripFormResponsesCsv(formId: string, accountId: bigint): Promise<{ filename: string; body: string }> {
-  const form = await getTripFormForOrganizer(formId, accountId);
+/** Loads form + live questions for CSV (no permission check). */
+async function loadTripRegistrationFormForCsvExport(formId: string) {
+  return prisma.tripRegistrationForm.findUnique({
+    where: { id: formId },
+    include: {
+      trip: { select: { id: true, destination: true, startDate: true, endDate: true, coverImageUrl: true } },
+      event: { select: { id: true, title: true, startsAt: true, endsAt: true } },
+      questions: {
+        where: { retiredFromForm: false },
+        orderBy: { sortOrder: "asc" },
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      },
+    },
+  });
+}
+
+/**
+ * One UTF-8 CSV (Excel opens it) for all responses on this form.
+ * Includes snapshot-only columns for retired / re-imported questions.
+ */
+export async function buildTripFormResponsesCsvFromFormId(formId: string): Promise<{ filename: string; body: string }> {
+  const form = await loadTripRegistrationFormForCsvExport(formId);
   if (!form) {
     const e = new Error("NOT_FOUND");
     (e as Error & { status?: number }).status = 404;
@@ -367,6 +387,37 @@ export async function buildTripFormResponsesCsv(formId: string, accountId: bigin
 
   const safeTitle = form.title.replace(/[^\w\u0400-\u04FF]+/g, "_").slice(0, 60) || "responses";
   return { filename: `${safeTitle}_hariultuud.csv`, body: "\uFEFF" + lines.join("\n") };
+}
+
+export async function buildTripFormResponsesCsv(formId: string, accountId: bigint): Promise<{ filename: string; body: string }> {
+  await assertFormEditableByAccount(formId, accountId);
+  return buildTripFormResponsesCsvFromFormId(formId);
+}
+
+/** Admin: one CSV for the trip’s registration form (published form preferred). */
+export async function buildAdminTripRegistrationExportCsv(tripId: number): Promise<{ filename: string; body: string }> {
+  const published = await prisma.tripRegistrationForm.findFirst({
+    where: { tripId, isPublished: true },
+    select: { id: true },
+  });
+  const fallback = await prisma.tripRegistrationForm.findFirst({
+    where: { tripId },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true },
+  });
+  const formRef = published ?? fallback;
+  if (!formRef) {
+    const e = new Error("NOT_FOUND");
+    (e as Error & { status?: number }).status = 404;
+    throw e;
+  }
+  const { body } = await buildTripFormResponsesCsvFromFormId(formRef.id);
+  const trip = await prisma.businessTrip.findUnique({
+    where: { id: tripId },
+    select: { destination: true },
+  });
+  const slug = (trip?.destination?.trim() || `trip_${tripId}`).replace(/[^\w\u0400-\u04FF]+/g, "_").slice(0, 50);
+  return { filename: `${slug}_trip${tripId}_hariultuud.csv`, body };
 }
 
 export function extractParticipantSnapshotFromAnswers(

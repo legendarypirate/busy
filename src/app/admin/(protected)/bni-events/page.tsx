@@ -41,11 +41,11 @@ export default async function AdminBniEventsPage() {
                 <td className="text-end text-nowrap">
                   <Link
                     href={`/admin/events/${String(r.id)}/registration-responses`}
-                    className="btn btn-sm btn-outline-secondary px-1 py-0 lh-1"
+                    className="btn btn-sm btn-outline-secondary px-2 py-1 lh-sm border rounded-2 shadow-sm"
                     title="Хариултууд (хүснэг)"
                     aria-label="Хариултууд"
                   >
-                    <i className="fas fa-table" style={{ fontSize: "0.65rem" }} aria-hidden />
+                    <i className="fas fa-table" style={{ fontSize: "0.85rem" }} aria-hidden />
                   </Link>
                 </td>
               </tr>
