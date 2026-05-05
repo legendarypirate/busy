@@ -102,20 +102,34 @@ export default async function AdminTripsPage({ searchParams }: Props) {
                 <td className="small">{toInputDate(r.endDate)}</td>
                 <td className="small">{r.statusLabel ?? "—"}</td>
                 <td>{fmtMoney(r.priceMnt)}</td>
-                <td className="text-end">
-                  <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
+                <td className="text-end text-nowrap">
+                  <div
+                    className="d-inline-flex align-items-stretch border rounded overflow-hidden"
+                    role="group"
+                    aria-label="Үйлдэл"
+                    style={{ fontSize: "0.7rem" }}
+                  >
                     <Link
                       href={`/admin/trips/${r.id}/registration-responses`}
-                      className="btn btn-sm btn-outline-secondary"
-                      title="Бүртгэлийн хариултууд (хүснэг)"
-                      aria-label="Бүртгэлийн хариултууд"
+                      className="btn btn-sm btn-outline-secondary px-1 py-0 lh-1 border-0 rounded-0"
+                      title="Хариултууд (хүснэг)"
+                      aria-label="Хариултууд"
                     >
-                      <i className="fas fa-table" aria-hidden />
+                      <i className="fas fa-table" style={{ fontSize: "0.65rem" }} aria-hidden />
                     </Link>
-                    <Link href={`/admin/trips?edit_trip=${r.id}`} className="btn btn-sm btn-outline-primary">
+                    <Link
+                      href={`/admin/trips?edit_trip=${r.id}`}
+                      className="btn btn-sm btn-outline-primary px-1 py-0 lh-1 border-0 rounded-0 border-start"
+                      title="Засах"
+                    >
                       Засах
                     </Link>
-                    <AdminTripDeleteButton action={adminDeleteTripAction} tripId={r.id} destination={r.destination} />
+                    <AdminTripDeleteButton
+                      compact
+                      action={adminDeleteTripAction}
+                      tripId={r.id}
+                      destination={r.destination}
+                    />
                   </div>
                 </td>
               </tr>

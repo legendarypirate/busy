@@ -42,27 +42,40 @@ export default function AdminRegistrationResponseGrid({
       {!hasAny ? <p className="text-muted small">{emptyMessage}</p> : null}
 
       {sections.map((sec) => (
-        <section key={sec.signature || `empty-${sec.sectionNo}`} className="mb-5">
-          <h2 className="h6 fw-semibold border-bottom pb-2 mb-3">
-            Хэсэг {sec.sectionNo}
-            <span className="text-muted fw-normal ms-2">
-              — {sec.questionColumns.length} асуулт, {sec.responses.length} хариулт
-            </span>
-          </h2>
+        <section key={sec.signature || `empty-${sec.sectionNo}`} className="mb-4">
+          {sec.sectionNo > 1 ? (
+            <p className="fw-bold mb-2 mt-4 pt-2 border-top">Асуулт өөрчлөгдсөний дараа</p>
+          ) : null}
+          {sec.responses.length > 0 ? (
+            <p className="small text-muted mb-2">
+              {sec.questionColumns.length} асуулт · {sec.responses.length} оролцогчийн хариулт
+            </p>
+          ) : null}
 
           {sec.responses.length === 0 ? (
             <p className="text-muted small mb-0">Энэ багцад мөр байхгүй.</p>
           ) : (
-            <div className="table-responsive border rounded-3 bg-white">
-              <table className="table table-bordered table-sm align-middle mb-0" style={{ minWidth: 640 }}>
+            <div className="table-responsive border rounded-2 bg-white shadow-sm">
+              <table
+                className="table table-bordered table-sm align-middle mb-0"
+                style={{ minWidth: 480, fontSize: "0.8125rem" }}
+              >
                 <thead className="table-light">
-                  <tr className="small text-secondary">
-                    <th className="text-nowrap">#</th>
-                    <th className="text-nowrap">Огноо</th>
-                    <th className="text-nowrap">Илгээсэн</th>
-                    {sec.questionColumns.map((c) => (
-                      <th key={c.id} className="text-wrap" style={{ minWidth: 140 }}>
-                        {c.label}
+                  <tr>
+                    <th className="text-nowrap text-center" style={{ width: "2.5rem" }}>
+                      #
+                    </th>
+                    <th className="text-nowrap" style={{ minWidth: "9rem" }}>
+                      Оролцогч
+                    </th>
+                    {sec.questionColumns.map((c, qi) => (
+                      <th
+                        key={c.id}
+                        className="text-center text-nowrap fw-semibold"
+                        title={c.label}
+                        style={{ minWidth: "4.5rem" }}
+                      >
+                        Q{qi + 1}
                       </th>
                     ))}
                   </tr>
@@ -70,14 +83,18 @@ export default function AdminRegistrationResponseGrid({
                 <tbody>
                   {sec.responses.map((r, idx) => (
                     <tr key={r.id}>
-                      <td className="text-muted small">{idx + 1}</td>
-                      <td className="text-nowrap small text-muted">{fmtLocal(r.submittedAt)}</td>
-                      <td className="small fw-medium">{r.who}</td>
+                      <td className="text-center text-muted">{idx + 1}</td>
+                      <td className="small">
+                        <div className="fw-medium">{r.who}</div>
+                        <div className="text-muted" style={{ fontSize: "0.75rem" }}>
+                          {fmtLocal(r.submittedAt)}
+                        </div>
+                      </td>
                       {sec.questionColumns.map((c) => (
                         <td
                           key={c.id}
-                          className="small"
-                          style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", maxWidth: 360 }}
+                          className="small align-top"
+                          style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", maxWidth: 280 }}
                         >
                           {linkifyCell(r.cellByQuestionId[c.id] ?? "—")}
                         </td>

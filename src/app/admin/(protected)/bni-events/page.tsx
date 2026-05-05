@@ -38,14 +38,14 @@ export default async function AdminBniEventsPage() {
                 <td className="small">{r.eventType}</td>
                 <td className="small">{r.startsAt.toISOString().slice(0, 16)}</td>
                 <td className="small">{r.endsAt.toISOString().slice(0, 16)}</td>
-                <td className="text-end">
+                <td className="text-end text-nowrap">
                   <Link
                     href={`/admin/events/${String(r.id)}/registration-responses`}
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Бүртгэлийн хариултууд (хүснэг)"
-                    aria-label="Бүртгэлийн хариултууд"
+                    className="btn btn-sm btn-outline-secondary px-1 py-0 lh-1"
+                    title="Хариултууд (хүснэг)"
+                    aria-label="Хариултууд"
                   >
-                    <i className="fas fa-table" aria-hidden />
+                    <i className="fas fa-table" style={{ fontSize: "0.65rem" }} aria-hidden />
                   </Link>
                 </td>
               </tr>

@@ -35,7 +35,7 @@ export default async function AdminEventRegistrationResponsesPage({ params }: Pr
   return (
     <AdminRegistrationResponseGrid
       title={`Эвент #${trimmed} — ${ev.title?.trim() || "Хурал"}`}
-      subtitle="Excel хэлбэрийн хүснэг. Формын асуултын багц өөрчлөгдвөл шинэ хэсэг эхэлнэ."
+      subtitle="Мөр бүр = нэг илгээлт. Q1, Q2 … дээр хулганаар бүрэн асуултыг харна. Асуулт өөрчлөгдвөл доор шинэ хүснэг."
       backHref="/admin/bni-events"
       backLabel="Хурлын жагсаалт"
       sections={sections}
