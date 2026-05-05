@@ -2,6 +2,9 @@
  * Local dev only: upserts one platform admin (email + bcrypt password).
  * Run: `npm run db:seed` (requires DATABASE_URL and `npx prisma generate`).
  * Refuses to run when NODE_ENV=production.
+ *
+ * Before seeding supreme admin (`super_admin`), apply pending migrations so PostgreSQL
+ * has enum values: `npx prisma migrate deploy`
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
 
@@ -99,6 +102,15 @@ async function main() {
 
 main()
   .catch((e) => {
+    const msg = e && typeof e.message === "string" ? e.message : String(e);
+    if (msg.includes("PlatformRole") && (msg.includes("super_admin") || msg.includes("22P02"))) {
+      console.error("");
+      console.error("Database enum PlatformRole is missing super_admin / trip_manager / event_manager.");
+      console.error("Apply migrations from the project root, then seed again:");
+      console.error("  npx prisma migrate deploy");
+      console.error("  npm run db:seed");
+      console.error("");
+    }
     console.error(e);
     process.exit(1);
   })
