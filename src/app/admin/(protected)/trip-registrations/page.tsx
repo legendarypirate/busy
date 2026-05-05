@@ -2,6 +2,7 @@ import Link from "next/link";
 import AdminTripRegistrationsClient, {
   type AdminTripRegistrationRow,
 } from "@/components/admin/AdminTripRegistrationsClient";
+import { answersForOrganizerApi } from "@/lib/trip-registration-form/answers-snapshot";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Аяллын формын бүртгэл | Админ" };
@@ -26,7 +27,7 @@ async function loadResponses(where: { tripId?: number }) {
       participant: { select: { fullName: true, phone: true, email: true } },
       answers: {
         include: {
-          question: { select: { label: true, sortOrder: true } },
+          question: { select: { label: true, sortOrder: true, type: true } },
         },
       },
     },
@@ -37,9 +38,15 @@ function serializeTripRegistrationRows(
   rows: Awaited<ReturnType<typeof loadResponses>>,
 ): AdminTripRegistrationRow[] {
   return rows.map((r) => {
-    const sortedAnswers = [...r.answers].sort(
-      (a, b) => (a.question?.sortOrder ?? 0) - (b.question?.sortOrder ?? 0),
-    );
+    const merged = answersForOrganizerApi({
+      answersSnapshot: r.answersSnapshot,
+      answers: r.answers.map((a) => ({
+        questionId: a.questionId,
+        value: a.value,
+        fileUrl: a.fileUrl,
+        question: a.question,
+      })),
+    });
     return {
       id: r.id,
       submittedAt: r.submittedAt.toISOString(),
@@ -66,10 +73,10 @@ function serializeTripRegistrationRows(
             email: r.participant.email,
           }
         : null,
-      answers: sortedAnswers.map((a) => ({
-        id: a.id,
-        label: a.question?.label ?? a.questionId,
-        sortOrder: a.question?.sortOrder ?? 0,
+      answers: merged.map((a, idx) => ({
+        id: `${r.id}_${a.questionId}_${idx}`,
+        label: a.questionLabel,
+        sortOrder: idx,
         value: a.value,
         fileUrl: a.fileUrl,
       })),

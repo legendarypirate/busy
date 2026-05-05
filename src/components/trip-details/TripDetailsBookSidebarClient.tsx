@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { useTripDetailsBooking } from "@/components/trip-details/trip-details-booking-context";
 import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
-import { formatMnDate } from "@/lib/format-date";
 
 export type { TripCheckoutTier };
 
@@ -20,13 +19,12 @@ function formatMnt(n: number): string {
   return n.toLocaleString("mn-MN", { maximumFractionDigits: 0 });
 }
 
-/** `YYYY-MM-DD` from trip → display (avoids UTC date shift). */
+/** `YYYY-MM-DD` → `YYYY.MM.DD` (locale-agnostic; avoids Node vs browser ICU hydration mismatch). */
 function departureIsoToDisplay(iso: string): string {
   const t = iso.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
-  const d = new Date(`${t}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return t;
-  return formatMnDate(d).replace(/-/g, ".");
+  const [y, mo, da] = t.split("-");
+  return `${y}.${mo}.${da}`;
 }
 
 /**

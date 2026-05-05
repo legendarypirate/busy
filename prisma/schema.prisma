@@ -559,6 +559,8 @@ model TripFormQuestion {
   placeholder     String?              @db.VarChar(512)
   isRequired      Boolean              @default(false) @map("is_required")
   sortOrder       Int                  @default(0) @map("sort_order")
+  /** True: асуулт одоогийн формын JSON-д байхгүй боловч хуучин хариултад холбогдсон — устгахгүй. */
+  retiredFromForm Boolean              @default(false) @map("retired_from_form")
   validationRules Json?               @map("validation_rules")
   createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -594,6 +596,8 @@ model TripFormResponse {
   paymentStatus     TripFormMoneyStatus            @default(UNPAID) @map("payment_status")
   /** Trip detail checkout: tier counts, departure, totals (JSON). */
   orderSummary      Json?                          @map("order_summary")
+  /** Илгээх үеийн асуулт+хариултын бүрэн хуулбар (форм өөрчлөгдсөн ч харагдана). */
+  answersSnapshot   Json?                          @map("answers_snapshot")
   internalNote      String?                        @map("internal_note") @db.Text
   submittedAt       DateTime                       @default(now()) @map("submitted_at") @db.Timestamptz(6)
   createdAt         DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -5,6 +5,7 @@ import type {
   TripFormResponseWorkflowStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { answersForOrganizerApi, parseAnswersSnapshot } from "@/lib/trip-registration-form/answers-snapshot";
 import { formatOrderSummaryMn } from "@/lib/trip-registration-form/order-summary-format";
 import { assertEventFormEditableByAccount, assertTripEditableByAccount } from "@/lib/trip-registration-form/service";
 import { MVP_TRIP_FORM_QUESTION_TYPES } from "@/lib/trip-registration-form/types";
@@ -58,7 +59,11 @@ export async function getTripFormForOrganizer(formId: string, accountId: bigint)
     include: {
       trip: { select: { id: true, destination: true, startDate: true, endDate: true, coverImageUrl: true } },
       event: { select: { id: true, title: true, startsAt: true, endsAt: true } },
-      questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+      questions: {
+        where: { retiredFromForm: false },
+        orderBy: { sortOrder: "asc" },
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      },
     },
   });
 }
@@ -118,7 +123,7 @@ export async function addTripFormQuestion(
   }
 
   const last = await prisma.tripFormQuestion.findFirst({
-    where: { formId },
+    where: { formId, retiredFromForm: false },
     orderBy: { sortOrder: "desc" },
     select: { sortOrder: true },
   });
@@ -232,13 +237,21 @@ export async function deleteTripFormQuestion(questionId: string, accountId: bigi
     throw e;
   }
   await assertFormEditableByAccount(q.formId, accountId);
+  const cnt = await prisma.tripFormResponseAnswer.count({ where: { questionId } });
+  if (cnt > 0) {
+    await prisma.tripFormQuestion.update({
+      where: { id: questionId },
+      data: { retiredFromForm: true, sortOrder: 999_000 },
+    });
+    return;
+  }
   await prisma.tripFormQuestion.delete({ where: { id: questionId } });
 }
 
 export async function reorderTripFormQuestions(formId: string, accountId: bigint, orderedQuestionIds: string[]) {
   await assertFormEditableByAccount(formId, accountId);
   const existing = await prisma.tripFormQuestion.findMany({
-    where: { formId },
+    where: { formId, retiredFromForm: false },
     select: { id: true },
   });
   const set = new Set(existing.map((x) => x.id));
@@ -269,7 +282,9 @@ export async function listTripFormResponses(formId: string, accountId: bigint) {
     where: { formId },
     orderBy: { submittedAt: "desc" },
     include: {
-      answers: { include: { question: { select: { id: true, label: true, type: true } } } },
+      answers: {
+        include: { question: { select: { id: true, label: true, type: true, sortOrder: true, retiredFromForm: true } } },
+      },
       participant: { select: { id: true } },
     },
   });
@@ -292,8 +307,31 @@ export async function buildTripFormResponsesCsv(formId: string, accountId: bigin
   const responses = await prisma.tripFormResponse.findMany({
     where: { formId },
     orderBy: { submittedAt: "asc" },
-    include: { answers: true },
+    select: {
+      id: true,
+      submittedAt: true,
+      status: true,
+      paymentStatus: true,
+      orderSummary: true,
+      answersSnapshot: true,
+      answers: true,
+    },
   });
+
+  type Col = { key: string; header: string };
+  const cols: Col[] = questions.map((q) => ({ key: `q:${q.id}`, header: q.label }));
+  const seenCol = new Set(cols.map((c) => c.key));
+  for (const r of responses) {
+    const snap = parseAnswersSnapshot(r.answersSnapshot);
+    if (!snap) continue;
+    for (const s of snap) {
+      const key = `q:${s.questionId}`;
+      if (!seenCol.has(key)) {
+        seenCol.add(key);
+        cols.push({ key, header: s.label });
+      }
+    }
+  }
 
   const headers = [
     "response_id",
@@ -301,22 +339,25 @@ export async function buildTripFormResponsesCsv(formId: string, accountId: bigin
     "workflow_status",
     "payment_status",
     "order_summary",
-    ...questions.map((q) => q.label),
+    ...cols.map((c) => c.header),
   ];
   const lines = [headers.map(csvEscape).join(",")];
 
   for (const r of responses) {
     const byQ = new Map(r.answers.map((a) => [a.questionId, (a.value ?? "").replace(/\r\n/g, "\n")]));
     const fileByQ = new Map(r.answers.map((a) => [a.questionId, a.fileUrl ?? ""]));
+    const snap = parseAnswersSnapshot(r.answersSnapshot);
+    const snapById = new Map((snap ?? []).map((s) => [s.questionId, s]));
     const cells = [
       r.id,
       r.submittedAt.toISOString(),
       r.status,
       r.paymentStatus,
       formatOrderSummaryMn(r.orderSummary).replace(/\n/g, " | "),
-      ...questions.map((q) => {
-        const t = (byQ.get(q.id) ?? "").trim();
-        const f = (fileByQ.get(q.id) ?? "").trim();
+      ...cols.map(({ key }) => {
+        const qid = key.slice(2);
+        const t = (byQ.get(qid) ?? (snapById.get(qid)?.value ?? "")).trim();
+        const f = (fileByQ.get(qid) ?? (snapById.get(qid)?.fileUrl ?? "")).trim();
         if (f) return t ? `${t} | ${f}` : f;
         return t;
       }),
@@ -414,7 +455,11 @@ export async function convertTripFormResponseToParticipant(responseId: string, a
     where: { id: responseId },
     include: {
       answers: true,
-      form: { include: { questions: { orderBy: { sortOrder: "asc" } } } },
+      form: {
+        include: {
+          questions: { orderBy: { sortOrder: "asc" } },
+        },
+      },
       participant: { select: { id: true } },
     },
   });
@@ -437,7 +482,25 @@ export async function convertTripFormResponseToParticipant(responseId: string, a
     throw e;
   }
 
-  const snap = extractParticipantSnapshotFromAnswers(response.form.questions, response.answers);
+  const mergedFlat = answersForOrganizerApi({
+    answersSnapshot: response.answersSnapshot,
+    answers: response.answers.map((a) => ({
+      questionId: a.questionId,
+      value: a.value,
+      fileUrl: a.fileUrl,
+      question:
+        response.form.questions.find((q) => q.id === a.questionId) ??
+        null,
+    })),
+  });
+  const questionsForExtract = mergedFlat.map((a) => ({
+    id: a.questionId,
+    label: a.questionLabel,
+    type: a.questionType,
+    isRequired: false,
+  }));
+  const answersForExtract = mergedFlat.map((a) => ({ questionId: a.questionId, value: a.value }));
+  const snap = extractParticipantSnapshotFromAnswers(questionsForExtract, answersForExtract);
 
   await prisma.$transaction(async (tx) => {
     await tx.tripParticipant.create({

@@ -54,6 +54,7 @@ export default async function AdminTripsPage({ searchParams }: Props) {
           </Link>
         </div>
         <TripEditorForm
+          key={editTripId > 0 ? `trip-editor-${editTripId}` : "trip-editor-new"}
           greetingName={greetingName}
           editTrip={editTrip}
           formAction="/api/platform/trips/save?return=admin"

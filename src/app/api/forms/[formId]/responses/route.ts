@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { answersForOrganizerApi } from "@/lib/trip-registration-form/answers-snapshot";
 import { listTripFormResponses } from "@/lib/trip-registration-form/organizer";
 
 type Ctx = { params: Promise<{ formId: string }> };
@@ -27,13 +28,15 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         internalNote: r.internalNote,
         orderSummary: r.orderSummary,
         hasParticipant: Boolean(r.participant),
-        answers: r.answers.map((a) => ({
-          questionId: a.questionId,
-          questionLabel: a.question.label,
-          questionType: a.question.type,
-          value: a.value,
-          fileUrl: a.fileUrl,
-        })),
+        answers: answersForOrganizerApi({
+          answersSnapshot: r.answersSnapshot,
+          answers: r.answers.map((a) => ({
+            questionId: a.questionId,
+            value: a.value,
+            fileUrl: a.fileUrl,
+            question: a.question,
+          })),
+        }),
       })),
     });
   } catch (e) {

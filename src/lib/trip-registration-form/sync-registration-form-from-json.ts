@@ -1,6 +1,7 @@
 import type { TripFormQuestionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { newTripFormPublicSlug } from "@/lib/trip-registration-form/public-slug";
+import { upsertTripFormQuestionsFromLegacyRows } from "@/lib/trip-registration-form/sync-form-questions-upsert";
 
 export type LegacyRegistrationRow = {
   name: string;
@@ -108,7 +109,19 @@ export async function syncTripRegistrationFormFromLegacyJson(tripId: number, reg
   if (rows.length === 0) {
     const forms = await prisma.tripRegistrationForm.findMany({ where: { tripId }, select: { id: true } });
     for (const f of forms) {
-      await prisma.tripFormQuestion.deleteMany({ where: { formId: f.id } });
+      const qs = await prisma.tripFormQuestion.findMany({ where: { formId: f.id }, select: { id: true } });
+      for (const q of qs) {
+        const cnt = await prisma.tripFormResponseAnswer.count({ where: { questionId: q.id } });
+        if (cnt > 0) {
+          await prisma.tripFormQuestion.update({
+            where: { id: q.id },
+            data: { retiredFromForm: true, sortOrder: 999_000 },
+          });
+        } else {
+          await prisma.tripFormQuestionOption.deleteMany({ where: { questionId: q.id } });
+          await prisma.tripFormQuestion.delete({ where: { id: q.id } });
+        }
+      }
       await prisma.tripRegistrationForm.update({
         where: { id: f.id },
         data: { isPublished: false },
@@ -125,7 +138,8 @@ export async function syncTripRegistrationFormFromLegacyJson(tripId: number, reg
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(
+    async (tx) => {
     let form = await tx.tripRegistrationForm.findFirst({
       where: { tripId },
       orderBy: { createdAt: "asc" },
@@ -166,38 +180,8 @@ export async function syncTripRegistrationFormFromLegacyJson(tripId: number, reg
       data: { isPublished: false },
     });
 
-    await tx.tripFormQuestion.deleteMany({ where: { formId: form.id } });
-
-    let sortOrder = 0;
-    for (const row of rows) {
-      const type = legacyStringToTripType(row.type);
-      const questionId = stableLegacyQuestionId(row.name, sortOrder);
-      const isRequired = row.required === 1;
-
-      const q = await tx.tripFormQuestion.create({
-        data: {
-          id: questionId,
-          formId: form.id,
-          label: row.label.trim(),
-          description: null,
-          type,
-          placeholder: row.placeholder.trim() || null,
-          isRequired,
-          sortOrder: sortOrder++,
-        },
-      });
-
-      if (needsTripOptions(type)) {
-        const opts = row.options.length > 0 ? row.options : ["Сонголт 1", "Сонголт 2"];
-        await tx.tripFormQuestionOption.createMany({
-          data: opts.map((label, i) => ({
-            questionId: q.id,
-            label,
-            value: label,
-            sortOrder: i,
-          })),
-        });
-      }
-    }
-  });
+    await upsertTripFormQuestionsFromLegacyRows(tx, form.id, rows);
+    },
+    { maxWait: 15_000, timeout: 60_000 },
+  );
 }

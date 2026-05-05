@@ -163,6 +163,7 @@ export default async function TripsPanel({ searchParams }: Props) {
       </div>
 
       <TripEditorForm
+        key={editTripId > 0 ? `trip-editor-${editTripId}` : "trip-editor-new"}
         greetingName={greetingName}
         editTrip={editTrip}
         formAction="/api/platform/trips/save"

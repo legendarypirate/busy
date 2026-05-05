@@ -13,6 +13,7 @@ async function legacyRowsFromEventTripForm(eventId: bigint): Promise<LegacyRegis
     orderBy: { createdAt: "asc" },
     select: {
       questions: {
+        where: { retiredFromForm: false },
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,

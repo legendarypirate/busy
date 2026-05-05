@@ -12,6 +12,7 @@ import {
   orderSummaryToPrismaJson,
   parseAndValidateOrderSummaryForTrip,
 } from "@/lib/trip-registration-form/order-summary";
+import { buildAnswersSnapshot } from "@/lib/trip-registration-form/answers-snapshot";
 import {
   assertTripFormSubmissionValid,
   filterAnswersToFormQuestions,
@@ -123,7 +124,11 @@ export async function getPublishedFormBundleBySlug(publicSlug: string) {
     include: {
       trip: { select: { id: true, destination: true, startDate: true, endDate: true, coverImageUrl: true } },
       event: { select: { id: true, title: true, startsAt: true, endsAt: true } },
-      questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+      questions: {
+        where: { retiredFromForm: false },
+        orderBy: { sortOrder: "asc" },
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      },
     },
   });
   return form;
@@ -139,6 +144,7 @@ export async function submitPublicFormResponse(input: {
     where: { publicSlug: input.publicSlug, isPublished: true },
     include: {
       questions: {
+        where: { retiredFromForm: false },
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,
@@ -167,6 +173,7 @@ export async function submitPublicFormResponse(input: {
   assertTripFormSubmissionValid(snapshots, input.answers);
 
   const answersToStore = filterAnswersToFormQuestions(snapshots, input.answers);
+  const answersSnapshot = buildAnswersSnapshot(snapshots, answersToStore);
 
   const response = await prisma.$transaction(async (tx) => {
     const r = await tx.tripFormResponse.create({
@@ -178,6 +185,7 @@ export async function submitPublicFormResponse(input: {
         status: "SUBMITTED",
         paymentStatus: "UNPAID",
         ...(input.orderSummary != null ? { orderSummary: input.orderSummary } : {}),
+        ...(answersSnapshot.length > 0 ? { answersSnapshot: answersSnapshot as Prisma.InputJsonValue } : {}),
       },
     });
     if (answersToStore.length) {
@@ -295,7 +303,11 @@ export async function getPublishedTripRegistrationDrawerSchema(tripId: number): 
     where: { tripId, isPublished: true },
     include: {
       trip: { select: { destination: true } },
-      questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+      questions: {
+        where: { retiredFromForm: false },
+        orderBy: { sortOrder: "asc" },
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      },
     },
   });
   if (form) {
@@ -395,7 +407,11 @@ export async function getPublishedEventRegistrationDrawerSchema(eventId: bigint)
       where: { eventId, isPublished: true },
       include: {
         event: { select: { title: true } },
-        questions: { orderBy: { sortOrder: "asc" }, include: { options: { orderBy: { sortOrder: "asc" } } } },
+        questions: {
+          where: { retiredFromForm: false },
+          orderBy: { sortOrder: "asc" },
+          include: { options: { orderBy: { sortOrder: "asc" } } },
+        },
       },
     });
 

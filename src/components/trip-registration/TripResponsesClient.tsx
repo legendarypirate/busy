@@ -19,7 +19,7 @@ type Row = {
   internalNote: string | null;
   orderSummary: unknown;
   hasParticipant: boolean;
-  answers: { questionLabel: string; value: string | null; fileUrl: string | null }[];
+  answers: { questionLabel: string; questionType: string; value: string | null; fileUrl: string | null }[];
 };
 
 const WORKFLOW_OPTIONS: TripFormResponseWorkflowStatus[] = [
