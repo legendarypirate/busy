@@ -36,9 +36,10 @@ export default async function AdminEventRegistrationResponsesPage({ params }: Pr
     <AdminRegistrationResponseGrid
       title={`Эвент #${trimmed} — ${ev.title?.trim() || "Хурал"}`}
       subtitle="Мөр бүр = нэг илгээлт. Q1, Q2 … дээр хулганаар бүрэн асуултыг харна. Асуулт өөрчлөгдвөл доор шинэ хүснэг."
-      backHref="/admin/bni-events"
-      backLabel="Хурлын жагсаалт"
+      backHref="/admin/meetings"
+      backLabel="Хурал / эвент руу"
       sections={sections}
+      exportDownloadHref={`/api/admin/events/${trimmed}/registration-responses/export`}
     />
   );
 }

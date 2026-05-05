@@ -420,6 +420,33 @@ export async function buildAdminTripRegistrationExportCsv(tripId: number): Promi
   return { filename: `${slug}_trip${tripId}_hariultuud.csv`, body };
 }
 
+/** Admin: one CSV for the event’s registration form (published form preferred). */
+export async function buildAdminEventRegistrationExportCsv(eventId: bigint): Promise<{ filename: string; body: string }> {
+  const published = await prisma.tripRegistrationForm.findFirst({
+    where: { eventId, isPublished: true },
+    select: { id: true },
+  });
+  const fallback = await prisma.tripRegistrationForm.findFirst({
+    where: { eventId },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true },
+  });
+  const formRef = published ?? fallback;
+  if (!formRef) {
+    const e = new Error("NOT_FOUND");
+    (e as Error & { status?: number }).status = 404;
+    throw e;
+  }
+  const { body } = await buildTripFormResponsesCsvFromFormId(formRef.id);
+  const ev = await prisma.bniEvent.findUnique({
+    where: { id: eventId },
+    select: { title: true },
+  });
+  const idStr = eventId.toString();
+  const slug = (ev?.title?.trim() || `event_${idStr}`).replace(/[^\w\u0400-\u04FF]+/g, "_").slice(0, 50);
+  return { filename: `${slug}_event${idStr}_hariultuud.csv`, body };
+}
+
 export function extractParticipantSnapshotFromAnswers(
   questions: Pick<TripFormQuestion, "id" | "label" | "type" | "isRequired">[],
   answers: { questionId: string; value: string | null }[],

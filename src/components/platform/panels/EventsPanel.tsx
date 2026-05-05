@@ -242,25 +242,77 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
                     </td>
                     <td className="small text-muted">{formatEventDisplayUb(new Date(ev.startsAt))}</td>
                     <td>{fmtMoney(ev.priceMnt)}</td>
-                    <td className="text-end">
-                      <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
-                        <Link href={`/events/${ev.id}`} target="_blank" className="btn btn-sm btn-outline-primary" title="Detail">
-                          <i className="fa-solid fa-eye" />
-                        </Link>
-                        <Link href={`/events/${ev.id}`} target="_blank" className="btn btn-sm btn-outline-secondary" title="Бүртгэл">
-                          <i className="fa-solid fa-user-plus" />
-                        </Link>
-                        <Link href={`${basePath}?edit_event=${ev.id}`} className="btn btn-sm btn-outline-secondary">
-                          Засах
-                        </Link>
-                        <form action={deleteEventAction} className="d-inline">
-                          {venue === "admin" ? <input type="hidden" name="return_context" value="admin" /> : null}
-                          <input type="hidden" name="event_id" value={ev.id.toString()} />
-                          <button type="submit" className="btn btn-sm btn-outline-danger">
-                            <i className="fa-solid fa-trash" />
-                          </button>
-                        </form>
-                      </div>
+                    <td className="text-end text-nowrap">
+                      {venue === "admin" ? (
+                        <div
+                          className="d-inline-flex align-items-stretch border rounded-2 overflow-hidden shadow-sm"
+                          role="group"
+                          aria-label="Үйлдэл"
+                        >
+                          <Link
+                            href={`/admin/events/${ev.id}/registration-responses`}
+                            className="btn btn-sm btn-outline-secondary px-2 py-1 lh-sm border-0 rounded-0"
+                            title="Бүртгэлийн хариултууд (хүснэг)"
+                            aria-label="Хариултууд"
+                          >
+                            <i className="fas fa-table" style={{ fontSize: "0.85rem" }} aria-hidden />
+                          </Link>
+                          <Link
+                            href={`/events/${ev.id}`}
+                            target="_blank"
+                            className="btn btn-sm btn-outline-primary px-2 py-1 lh-sm border-0 rounded-0 border-start"
+                            title="Detail"
+                          >
+                            <i className="fa-solid fa-eye" style={{ fontSize: "0.85rem" }} />
+                          </Link>
+                          <Link
+                            href={`/events/${ev.id}`}
+                            target="_blank"
+                            className="btn btn-sm btn-outline-secondary px-2 py-1 lh-sm border-0 rounded-0 border-start"
+                            title="Бүртгэл"
+                          >
+                            <i className="fa-solid fa-user-plus" style={{ fontSize: "0.85rem" }} />
+                          </Link>
+                          <Link
+                            href={`${basePath}?edit_event=${ev.id}`}
+                            className="btn btn-sm btn-outline-secondary px-2 py-1 lh-sm border-0 rounded-0 border-start"
+                            style={{ fontSize: "0.8rem" }}
+                            title="Засах"
+                          >
+                            Засах
+                          </Link>
+                          <form action={deleteEventAction} className="m-0 d-inline-flex align-self-stretch">
+                            <input type="hidden" name="return_context" value="admin" />
+                            <input type="hidden" name="event_id" value={ev.id.toString()} />
+                            <button
+                              type="submit"
+                              className="btn btn-sm btn-outline-danger px-2 py-1 lh-sm h-100 rounded-0 border-0 border-start"
+                              title="Устгах"
+                              aria-label="Устгах"
+                            >
+                              <i className="fa-solid fa-trash" style={{ fontSize: "0.85rem" }} />
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
+                          <Link href={`/events/${ev.id}`} target="_blank" className="btn btn-sm btn-outline-primary" title="Detail">
+                            <i className="fa-solid fa-eye" />
+                          </Link>
+                          <Link href={`/events/${ev.id}`} target="_blank" className="btn btn-sm btn-outline-secondary" title="Бүртгэл">
+                            <i className="fa-solid fa-user-plus" />
+                          </Link>
+                          <Link href={`${basePath}?edit_event=${ev.id}`} className="btn btn-sm btn-outline-secondary">
+                            Засах
+                          </Link>
+                          <form action={deleteEventAction} className="d-inline">
+                            <input type="hidden" name="event_id" value={ev.id.toString()} />
+                            <button type="submit" className="btn btn-sm btn-outline-danger">
+                              <i className="fa-solid fa-trash" />
+                            </button>
+                          </form>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
