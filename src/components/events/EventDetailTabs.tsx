@@ -41,7 +41,7 @@ export default function EventDetailTabs({
 
   return (
     <div className="content-section" id="huralEventTabs">
-      <div className="content-tabs" role="tablist">
+      <div className="content-tabs" role="tablist" aria-label="Эвентийн хэсгүүд">
         {TABS.map((t) => (
           <button
             key={t.id}
