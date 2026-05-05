@@ -34,7 +34,14 @@ function iconClass(cat: string): string {
 }
 
 function normalizeDays(raw: unknown): TripItineraryDay[] {
-  if (!Array.isArray(raw) || raw.length === 0) {
+  const arr =
+    Array.isArray(raw)
+      ? raw
+      : raw && typeof raw === "object" && Array.isArray((raw as { days?: unknown }).days)
+        ? ((raw as { days?: unknown }).days as unknown[])
+        : [];
+
+  if (arr.length === 0) {
     return [
       {
         day: 1,
@@ -44,7 +51,7 @@ function normalizeDays(raw: unknown): TripItineraryDay[] {
       },
     ];
   }
-  return raw
+  return arr
     .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
     .map((d, idx) => {
       const day = Math.max(1, Number(d.day ?? idx + 1));
