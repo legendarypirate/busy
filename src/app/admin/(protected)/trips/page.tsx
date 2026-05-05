@@ -88,7 +88,9 @@ export default async function AdminTripsPage({ searchParams }: Props) {
               <th>Дуусах</th>
               <th>Төлөв</th>
               <th>Үнэ</th>
-              <th className="text-end">Үйлдэл</th>
+              <th className="text-end" style={{ width: "1%" }}>
+                Үйлдэл
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -102,6 +104,14 @@ export default async function AdminTripsPage({ searchParams }: Props) {
                 <td>{fmtMoney(r.priceMnt)}</td>
                 <td className="text-end">
                   <div className="d-inline-flex flex-wrap gap-2 justify-content-end">
+                    <Link
+                      href={`/admin/trips/${r.id}/registration-responses`}
+                      className="btn btn-sm btn-outline-secondary"
+                      title="Бүртгэлийн хариултууд (хүснэг)"
+                      aria-label="Бүртгэлийн хариултууд"
+                    >
+                      <i className="fas fa-table" aria-hidden />
+                    </Link>
                     <Link href={`/admin/trips?edit_trip=${r.id}`} className="btn btn-sm btn-outline-primary">
                       Засах
                     </Link>

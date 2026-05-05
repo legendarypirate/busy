@@ -78,6 +78,8 @@ type Props = {
 export default function TripItineraryBuilder({ hiddenName, initialJson }: Props) {
   const [days, setDays] = useState<TripItineraryDay[]>(() => normalizeDays(initialJson));
   const [activeDay, setActiveDay] = useState(() => normalizeDays(initialJson)[0]?.day ?? 1);
+  const [bannerBusy, setBannerBusy] = useState<Record<number, boolean>>({});
+  const [bannerMsg, setBannerMsg] = useState<Record<number, string | null>>({});
 
   const payload = useMemo(() => JSON.stringify({ days }), [days]);
 
@@ -146,6 +148,31 @@ export default function TripItineraryBuilder({ hiddenName, initialJson }: Props)
       return next.length ? next : normalizeDays(undefined);
     });
   };
+
+  async function onDayBannerFile(dayNum: number, file: File) {
+    setBannerBusy((prev) => ({ ...prev, [dayNum]: true }));
+    setBannerMsg((prev) => ({ ...prev, [dayNum]: null }));
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/platform/trip-itinerary-day-banner-upload", {
+        method: "POST",
+        body: fd,
+        credentials: "same-origin",
+      });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; error?: string };
+      if (!res.ok || !data.ok || !data.url) {
+        setBannerMsg((prev) => ({
+          ...prev,
+          [dayNum]: data.error ?? `Алдаа (${res.status})`,
+        }));
+        return;
+      }
+      upsertDay(dayNum, { banner: data.url });
+    } finally {
+      setBannerBusy((prev) => ({ ...prev, [dayNum]: false }));
+    }
+  }
 
   return (
     <>
@@ -217,14 +244,40 @@ export default function TripItineraryBuilder({ hiddenName, initialJson }: Props)
                 />
               </div>
               <div className="mb-3">
-                <label className="pm-label small">Өдрийн баннер (зургийн URL)</label>
-                <input
-                  type="url"
-                  className="pm-input"
-                  placeholder="https://…"
-                  value={d.banner}
-                  onChange={(e) => upsertDay(d.day, { banner: e.target.value })}
-                />
+                <label className="pm-label small">Өдрийн баннер</label>
+                <p className="small text-muted mb-2">
+                  Зураг сонгоод Cloudinary руу ачаална (тохиргоогүй бол серверт локал). Дараа нь шинэ файл эсвэл доорх
+                  холбоосоор солино.
+                </p>
+                <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                  <label
+                    className={`btn btn-sm btn-outline-secondary mb-0 ${bannerBusy[d.day] ? "disabled" : ""}`}
+                    style={{ cursor: bannerBusy[d.day] ? "wait" : "pointer" }}
+                  >
+                    {bannerBusy[d.day] ? "Илгээж…" : "Зураг оруулах"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="d-none"
+                      disabled={Boolean(bannerBusy[d.day])}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (f) void onDayBannerFile(d.day, f);
+                      }}
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    className="pm-input flex-grow-1"
+                    style={{ minWidth: "12rem" }}
+                    placeholder="Зургийн URL (заавал биш)"
+                    value={d.banner}
+                    onChange={(e) => upsertDay(d.day, { banner: e.target.value })}
+                    aria-label="Өдрийн баннерын холбоос"
+                  />
+                </div>
+                {bannerMsg[d.day] ? <div className="small text-danger">{bannerMsg[d.day]}</div> : null}
               </div>
 
               <div className="tps-timeline" id={`timeline_${d.day}`}>
