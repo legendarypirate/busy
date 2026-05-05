@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { legacyRoleAllowsEventAdminApi } from "@/lib/admin-access";
 import { writeAdminEventDetailHeroUpload } from "@/lib/platform-write-image";
 
 export const runtime = "nodejs";
@@ -9,7 +10,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
 /** Single image for event public detail hero (envelope `hero_image_url`). Admin-only. */
 export async function POST(req: NextRequest) {
   const user = await getApiPlatformUser(req);
-  if (!user || user.legacyRole !== "admin") {
+  if (!user || !legacyRoleAllowsEventAdminApi(user.legacyRole)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 

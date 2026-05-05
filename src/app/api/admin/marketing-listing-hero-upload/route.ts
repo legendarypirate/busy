@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { legacyRoleAllowsFullAdminApi } from "@/lib/admin-access";
 import { writeAdminMarketingListingHeroUpload } from "@/lib/platform-write-image";
 
 export const runtime = "nodejs";
@@ -9,7 +10,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
 /** Multipart: one or more `files` (repeat key or array). Admin-only; Cloudinary when configured. */
 export async function POST(req: NextRequest) {
   const user = await getApiPlatformUser(req);
-  if (!user || user.legacyRole !== "admin") {
+  if (!user || !legacyRoleAllowsFullAdminApi(user.legacyRole)) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 

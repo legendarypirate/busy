@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ADMIN_NAV_BNI, ADMIN_NAV_MAIN, type AdminNavItem } from "@/lib/admin-nav";
+import type { AdminNavItem } from "@/lib/admin-nav";
 
 function navClass(active: boolean): string {
   return `list-group-item list-group-item-action${active ? " active" : ""}`;
@@ -27,10 +27,16 @@ export default function AdminChromeClient({
   children,
   userName,
   userEmail,
+  navMain,
+  navBni,
+  showBniHeader,
 }: {
   children: ReactNode;
   userName: string;
   userEmail: string;
+  navMain: AdminNavItem[];
+  navBni: AdminNavItem[];
+  showBniHeader: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const [toggled, setToggled] = useState(false);
@@ -64,11 +70,15 @@ export default function AdminChromeClient({
             </Link>
           </div>
           <div className="list-group list-group-flush">
-            {ADMIN_NAV_MAIN.map((item) => (
+            {navMain.map((item) => (
               <NavLink key={item.key} item={item} pathname={pathname} />
             ))}
-            <div className="list-group-item small text-uppercase text-muted fw-bold py-2 px-3 bg-light">BNI платформ</div>
-            {ADMIN_NAV_BNI.map((item) => (
+            {showBniHeader ? (
+              <div className="list-group-item small text-uppercase text-muted fw-bold py-2 px-3 bg-light">
+                BNI платформ
+              </div>
+            ) : null}
+            {navBni.map((item) => (
               <NavLink key={item.key} item={item} pathname={pathname} />
             ))}
           </div>

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
+import { legacyRoleAllowsEventAdminApi } from "@/lib/admin-access";
 import { buildAdminEventRegistrationExportCsv } from "@/lib/trip-registration-form/organizer";
 
 export const runtime = "nodejs";
@@ -16,7 +17,7 @@ function statusFromError(e: unknown): number {
 /** UTF-8 CSV (Excel) — all registration responses for this event (admin). */
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const user = await getApiPlatformUser(_req);
-  if (!user || user.legacyRole !== "admin") {
+  if (!user || !legacyRoleAllowsEventAdminApi(user.legacyRole)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

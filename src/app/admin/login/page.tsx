@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { isAdminPanelRole } from "@/lib/admin-session";
 import { getPlatformSession } from "@/lib/platform-session";
 import AdminLoginForm from "./AdminLoginForm";
 
@@ -37,7 +38,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
         where: { id: u.id },
         select: { role: true, status: true },
       });
-      if (row?.status === "active" && row.role === "admin") {
+      if (row?.status === "active" && isAdminPanelRole(row.role)) {
         redirect("/admin");
       }
     } catch {
@@ -57,8 +58,10 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
               </div>
               <h1 className="bni-auth-title">Админ нэвтрэх</h1>
               <p className="bni-auth-lead text-muted mb-0">
-                Зөвхөн <span className="fw-semibold text-body-secondary">platform</span> өгөгдлийн санд{" "}
-                <span className="fw-semibold text-body-secondary">admin</span> эрхтэй дансаар нэвтэрнэ үү.
+                Одоогоор зөвхөн{" "}
+                <span className="fw-semibold text-body-secondary">supreme admin</span>,{" "}
+                <span className="fw-semibold text-body-secondary">аялал</span> эсвэл{" "}
+                <span className="fw-semibold text-body-secondary">эвент менежер</span> эрхтэй дансаар нэвтэрнэ үү.
               </p>
             </div>
             <AdminLoginForm nextPath={nextPath} defaultEmail={defaultEmail} />

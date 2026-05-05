@@ -6,10 +6,13 @@
  * - Requires PRODUCTION_ADMIN_EMAIL and PRODUCTION_ADMIN_PASSWORD (min 12 chars).
  * - Loads DATABASE_URL from the environment (use the same .env as the app).
  *
+ * Optional: PRODUCTION_ADMIN_ROLE=super_admin (default: admin).
+ *
  * Example (on the VPS, from app directory):
  *   ALLOW_PRODUCTION_ADMIN=1 \
  *   PRODUCTION_ADMIN_EMAIL="you@yourdomain.mn" \
  *   PRODUCTION_ADMIN_PASSWORD='use-a-long-random-password' \
+ *   PRODUCTION_ADMIN_ROLE=super_admin \
  *   node scripts/promote-production-admin.cjs
  */
 /* eslint-disable no-console */
@@ -31,6 +34,8 @@ async function main() {
   const email = (process.env.PRODUCTION_ADMIN_EMAIL || "").trim().toLowerCase();
   const password = process.env.PRODUCTION_ADMIN_PASSWORD || "";
   const displayName = (process.env.PRODUCTION_ADMIN_DISPLAY_NAME || "Admin").trim() || "Admin";
+  const role = (process.env.PRODUCTION_ADMIN_ROLE || "admin").trim();
+  const allowedRoles = ["admin", "super_admin"];
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     console.error("Set PRODUCTION_ADMIN_EMAIL to a valid email.");
@@ -38,6 +43,11 @@ async function main() {
   }
   if (password.length < 12) {
     console.error("PRODUCTION_ADMIN_PASSWORD must be at least 12 characters.");
+    process.exit(1);
+  }
+
+  if (!allowedRoles.includes(role)) {
+    console.error(`PRODUCTION_ADMIN_ROLE must be one of: ${allowedRoles.join(", ")}`);
     process.exit(1);
   }
 
@@ -53,7 +63,7 @@ async function main() {
     create: {
       email,
       passwordHash,
-      role: "admin",
+      role,
       status: "active",
       profile: {
         create: { displayName },
@@ -61,7 +71,7 @@ async function main() {
     },
     update: {
       passwordHash,
-      role: "admin",
+      role,
       status: "active",
     },
   });

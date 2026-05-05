@@ -1,12 +1,23 @@
 import type { PlatformRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requirePlatformUserManagement } from "@/lib/admin-access";
 import { updatePlatformAccountRoleAction } from "./actions";
 
 export const metadata = { title: "Платформ хэрэглэгчид | Админ" };
 
-const ROLES: PlatformRole[] = ["visitor", "member", "director", "admin"];
+const ROLES: PlatformRole[] = [
+  "visitor",
+  "member",
+  "director",
+  "admin",
+  "super_admin",
+  "trip_manager",
+  "event_manager",
+];
 
 export default async function AdminBniPlatformUsersPage() {
+  await requirePlatformUserManagement("/admin/bni-platform-users");
+
   const rows = await prisma.platformAccount.findMany({
     orderBy: { id: "desc" },
     take: 300,
@@ -17,7 +28,8 @@ export default async function AdminBniPlatformUsersPage() {
     <div>
       <h1 className="h4 fw-bold mb-3">Платформ хэрэглэгчид</h1>
       <p className="text-muted small mb-3">
-        <code>bni_platform_accounts</code> + profile. Legacy role (visitor/member/director/admin).
+        <code>bni_platform_accounts</code> — supreme/admin эрхтэй хэрэглэгч эндээс{" "}
+        <strong>trip_manager</strong> / <strong>event_manager</strong> зэрэг томилгоо өгнө.
       </p>
       <div className="table-responsive">
         <table className="table table-hover table-sm">

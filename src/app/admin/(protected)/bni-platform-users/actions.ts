@@ -4,12 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PlatformRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/admin-session";
+import { requirePlatformUserManagement } from "@/lib/admin-access";
 
-const ROLES: PlatformRole[] = ["visitor", "member", "director", "admin"];
+const ROLES: PlatformRole[] = [
+  "visitor",
+  "member",
+  "director",
+  "admin",
+  "super_admin",
+  "trip_manager",
+  "event_manager",
+];
 
 export async function updatePlatformAccountRoleAction(formData: FormData): Promise<void> {
-  await requireAdminUser("/admin/bni-platform-users");
+  await requirePlatformUserManagement("/admin/bni-platform-users");
   const idStr = String(formData.get("account_id") ?? "").trim();
   const roleRaw = String(formData.get("role") ?? "").trim() as PlatformRole;
   if (!idStr || !ROLES.includes(roleRaw)) redirect("/admin/bni-platform-users");

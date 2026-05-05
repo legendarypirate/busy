@@ -29,7 +29,12 @@ export async function assertEventFormEditableByAccount(eventId: bigint, accountI
     (e as Error & { status?: number }).status = 403;
     throw e;
   }
-  if (acc.role === "admin" || acc.role === "director") {
+  if (
+    acc.role === "admin" ||
+    acc.role === "super_admin" ||
+    acc.role === "director" ||
+    acc.role === "event_manager"
+  ) {
     return;
   }
   const e = new Error("FORBIDDEN");
@@ -49,7 +54,13 @@ export async function assertTripEditableByAccount(tripId: number, accountId: big
   }
   if (trip.managerAccountId !== null && trip.managerAccountId !== accountId) {
     const acc = await prisma.platformAccount.findUnique({ where: { id: accountId }, select: { role: true } });
-    if (!acc || (acc.role !== "admin" && acc.role !== "director")) {
+    if (
+      !acc ||
+      (acc.role !== "admin" &&
+        acc.role !== "super_admin" &&
+        acc.role !== "director" &&
+        acc.role !== "trip_manager")
+    ) {
       const e = new Error("FORBIDDEN");
       (e as Error & { status?: number }).status = 403;
       throw e;

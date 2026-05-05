@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { ensureOrganizerRoleForEligibleAccount } from "@/lib/busy-rbac";
-import { defaultPostAdminLoginPath } from "@/lib/admin-session";
+import { defaultAdminLandingPath, isAdminPanelRole } from "@/lib/admin-session";
 import { setPlatformSessionCookies } from "@/lib/platform-session-cookies";
 
 export type AdminLoginFormState = {
@@ -47,7 +47,7 @@ export async function adminLoginAction(_prev: AdminLoginFormState, formData: For
     return { errorKey: "invalid", email: emailRaw };
   }
 
-  if (account.role !== "admin") {
+  if (!isAdminPanelRole(account.role)) {
     return { errorKey: "forbidden", email: emailRaw };
   }
 
@@ -78,5 +78,5 @@ export async function adminLoginAction(_prev: AdminLoginFormState, formData: For
   await setPlatformSessionCookies(account.id, display);
   await ensureOrganizerRoleForEligibleAccount(account.id);
 
-  redirect(defaultPostAdminLoginPath(next));
+  redirect(defaultAdminLandingPath(account.role, next));
 }

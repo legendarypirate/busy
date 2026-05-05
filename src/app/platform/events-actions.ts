@@ -20,7 +20,13 @@ async function assertAdminForEventCrud(accountId: bigint): Promise<void> {
     where: { id: accountId },
     select: { role: true, status: true },
   });
-  if (!row || row.status !== "active" || row.role !== "admin") {
+  const okRole =
+    row &&
+    row.status === "active" &&
+    (row.role === "admin" ||
+      row.role === "super_admin" ||
+      row.role === "event_manager");
+  if (!okRole) {
     redirect(`/admin/login?next=${encodeURIComponent(ADMIN_EVENTS_PATH)}`);
   }
 }

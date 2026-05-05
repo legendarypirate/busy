@@ -14,6 +14,9 @@ enum PlatformRole {
   member
   director
   admin
+  super_admin
+  trip_manager
+  event_manager
 }
 
 enum PlatformAccountStatus {

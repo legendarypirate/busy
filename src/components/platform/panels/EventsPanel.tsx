@@ -97,7 +97,11 @@ export default async function EventsPanel({ searchParams, venue = "platform" }: 
   if (!session) {
     redirect(venue === "admin" ? "/admin/login?next=/admin/meetings" : "/auth/login?next=/platform/events");
   }
-  if (venue === "admin" && session.role !== "admin") {
+  const adminVenueOk =
+    session.role === "admin" ||
+    session.role === "super_admin" ||
+    session.role === "event_manager";
+  if (venue === "admin" && !adminVenueOk) {
     redirect(`/admin/login?next=${encodeURIComponent("/admin/meetings")}`);
   }
 
