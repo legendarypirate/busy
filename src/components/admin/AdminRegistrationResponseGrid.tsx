@@ -81,14 +81,19 @@ export default function AdminRegistrationResponseGrid({
                     <th className="text-nowrap" style={{ minWidth: "9rem" }}>
                       Оролцогч
                     </th>
-                    {sec.questionColumns.map((c, qi) => (
+                    {sec.questionColumns.map((c) => (
                       <th
                         key={c.id}
-                        className="text-center text-nowrap fw-semibold"
-                        title={c.label}
-                        style={{ minWidth: "4.5rem" }}
+                        className="small fw-semibold text-start align-top"
+                        style={{
+                          minWidth: "7.5rem",
+                          maxWidth: "16rem",
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                          lineHeight: 1.35,
+                        }}
                       >
-                        Q{qi + 1}
+                        {c.label.trim() || c.id}
                       </th>
                     ))}
                   </tr>

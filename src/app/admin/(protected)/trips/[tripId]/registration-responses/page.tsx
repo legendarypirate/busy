@@ -32,7 +32,7 @@ export default async function AdminTripRegistrationResponsesPage({ params }: Pro
   return (
     <AdminRegistrationResponseGrid
       title={`Аялал #${tripId} — ${trip.destination?.trim() || "Бизнес аялал"}`}
-      subtitle="Мөр бүр = нэг илгээлт. Багана Q1, Q2 … — бүрэн асуултыг header дээр хулганаар (tooltip) харна. Асуултын багц өөрчлөгдвөл доор шинэ хүснэг эхэлнэ."
+      subtitle="Мөр бүр = нэг илгээлт. Багана бүрт бүрэн асуултын гарчиг. Асуултын багц өөрчлөгдвөл доор шинэ хүснэг эхэлнэ."
       backHref="/admin/trips"
       backLabel="Аяллын жагсаалт"
       sections={sections}
