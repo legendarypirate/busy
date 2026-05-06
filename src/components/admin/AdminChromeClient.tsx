@@ -108,11 +108,6 @@ export default function AdminChromeClient({
                       </Link>
                     </li>
                     <li>
-                      <Link className="dropdown-item" href="/platform" prefetch={false}>
-                        Платформ
-                      </Link>
-                    </li>
-                    <li>
                       <hr className="dropdown-divider" />
                     </li>
                     <li>
