@@ -869,6 +869,28 @@ a.trd-btn-trip-register {
     }
 }
 .trd-about-img { border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.1); }
+.trd-about-box {
+    max-width: 760px;
+    background: #fff;
+    border: 1px solid var(--trd-border);
+    border-radius: 24px;
+    padding: 28px 32px;
+}
+.trd-about-content {
+    color: var(--trd-text-muted);
+    font-size: 0.96rem;
+    line-height: 1.75;
+}
+@media (max-width: 767.98px) {
+    .trd-about-box {
+        padding: 20px;
+        border-radius: 18px;
+    }
+    .trd-about-content {
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+}
 
 /* Comparison Table (Included/Not) */
 .trd-comp-grid {

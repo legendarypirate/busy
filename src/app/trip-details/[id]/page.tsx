@@ -414,11 +414,10 @@ export default async function TripDetailsPage({ params }: Props) {
             </div>
 
             {/* About Section — admin text only (no placeholder image; avoids cramped two-column layout). */}
-            <div id="trd-section-about" className="mb-5 trd-scroll-anchor" style={{ maxWidth: 720 }}>
+            <div id="trd-section-about" className="mb-5 trd-scroll-anchor trd-about-box">
               <h2 className="fw-bold mb-4">Аяллын тухай</h2>
               <div
-                className="text-muted lead text-break"
-                style={{ lineHeight: 1.65 }}
+                className="trd-about-content text-break"
                 dangerouslySetInnerHTML={{ __html: tripAbout.replace(/\n/g, "<br/>") }}
               />
             </div>
