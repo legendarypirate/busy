@@ -144,6 +144,12 @@ export function readExtras(raw: unknown): {
   trip_faqs: TripExtrasFaq[];
   /** Payment steps shown in trip details page. */
   trip_payment_steps: TripExtrasPaymentStep[];
+  /** PDF invoice seller side info (admin-configurable). */
+  trip_invoice_seller_name: string;
+  trip_invoice_seller_address: string;
+  trip_invoice_seller_phone: string;
+  trip_invoice_seller_email: string;
+  trip_invoice_seller_bank_account: string;
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -164,6 +170,11 @@ export function readExtras(raw: unknown): {
     trip_notes_html: String(d.trip_notes_html ?? "").trim(),
     trip_faqs: readFaqList(d.trip_faqs),
     trip_payment_steps: readPaymentStepList(d.trip_payment_steps),
+    trip_invoice_seller_name: String(d.trip_invoice_seller_name ?? "").trim(),
+    trip_invoice_seller_address: String(d.trip_invoice_seller_address ?? "").trim(),
+    trip_invoice_seller_phone: String(d.trip_invoice_seller_phone ?? "").trim(),
+    trip_invoice_seller_email: String(d.trip_invoice_seller_email ?? "").trim(),
+    trip_invoice_seller_bank_account: String(d.trip_invoice_seller_bank_account ?? "").trim(),
   };
 }
 

@@ -451,6 +451,63 @@ export default function TripEditorForm({
               placeholder="Жишээ: Паспортын хугацаа 6+ сар хүчинтэй байх шаардлагатай."
               defaultValue={extras.trip_notes_html || extras.trip_notes.join("<br/>")}
             />
+            <hr className="my-4" />
+            <h6 className="fw-bold mb-3">PDF Нэхэмжлэх — Нэхэмжлэгч талын мэдээлэл</h6>
+            <p className="small text-muted mb-3">
+              Нэхэмжлэхийн PDF дээрх «Нэхэмжлэгч» баганын мэдээлэл. Хоосон орхивол системийн default утга ашиглана.
+            </p>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="pm-label">Байгууллагын нэр</label>
+                <input
+                  type="text"
+                  className="pm-input"
+                  name="trip_invoice_seller_name"
+                  defaultValue={extras.trip_invoice_seller_name}
+                  placeholder="Жишээ: ТЭРГҮҮН ГЭРЭГЭ ЭХК"
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="pm-label">Утас</label>
+                <input
+                  type="text"
+                  className="pm-input"
+                  name="trip_invoice_seller_phone"
+                  defaultValue={extras.trip_invoice_seller_phone}
+                  placeholder="Жишээ: +976 9300-0022"
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="pm-label">Имэйл</label>
+                <input
+                  type="text"
+                  className="pm-input"
+                  name="trip_invoice_seller_email"
+                  defaultValue={extras.trip_invoice_seller_email}
+                  placeholder="Жишээ: busy.mn@busy.mn"
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="pm-label">Банкны данс</label>
+                <input
+                  type="text"
+                  className="pm-input"
+                  name="trip_invoice_seller_bank_account"
+                  defaultValue={extras.trip_invoice_seller_bank_account}
+                  placeholder="Жишээ: 26000 500 500396 6474 (ХААН БАНК)"
+                />
+              </div>
+              <div className="col-12">
+                <label className="pm-label">Хаяг</label>
+                <textarea
+                  className="pm-input"
+                  name="trip_invoice_seller_address"
+                  rows={2}
+                  defaultValue={extras.trip_invoice_seller_address}
+                  placeholder="Жишээ: Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="tps-form-section mt-3">

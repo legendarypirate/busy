@@ -5,6 +5,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
 import { prisma } from "@/lib/prisma";
+import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 import {
   getPublishedTripRegistrationDrawerSchema,
   submitPublicFormResponseByTripId,
@@ -168,6 +169,13 @@ async function styledInvoicePdfBytes(params: {
   amountMnt: number;
   fullName: string;
   answers: { label: string; value: string }[];
+  sellerInfo: {
+    companyName: string;
+    address: string;
+    phone: string;
+    email: string;
+    bankAccount: string;
+  };
 }): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
@@ -273,11 +281,11 @@ async function styledInvoicePdfBytes(params: {
   };
 
   const sellerRows: [string, string][] = [
-    ["Байгууллагын нэр:", "ТЭРГҮҮН ГЭРЭГЭ ЭХК"],
-    ["Хаяг:", "Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1"],
-    ["Утас:", "+976 9300-0022"],
-    ["Имэйл:", "busy.mn@busy.mn"],
-    ["Банкны данс:", "26000 500 500396 6474 (ХААН БАНК)"],
+    ["Байгууллагын нэр:", params.sellerInfo.companyName],
+    ["Хаяг:", params.sellerInfo.address],
+    ["Утас:", params.sellerInfo.phone],
+    ["Имэйл:", params.sellerInfo.email],
+    ["Банкны данс:", params.sellerInfo.bankAccount],
     ["Гүйлгээний утга:", params.orderRef],
   ];
   const payerRows: [string, string][] = [
@@ -415,6 +423,13 @@ async function sendInvoiceEmail(input: {
   amountMnt: number;
   fullName: string;
   answers: { label: string; value: string }[];
+  sellerInfo: {
+    companyName: string;
+    address: string;
+    phone: string;
+    email: string;
+    bankAccount: string;
+  };
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
   const from = process.env.MAIL_FROM_ADDRESS?.trim() || "noreply@busy.mn";
@@ -552,6 +567,18 @@ export async function POST(req: NextRequest, ctx: Ctx) {
           { status: 400 },
         );
       }
+      const tripRow = await prisma.businessTrip.findUnique({
+        where: { id: tripId },
+        select: { extrasJson: true },
+      });
+      const tripExtras = readExtras(tripRow?.extrasJson ?? null);
+      const sellerInfo = {
+        companyName: tripExtras.trip_invoice_seller_name || "ТЭРГҮҮН ГЭРЭГЭ ЭХК",
+        address: tripExtras.trip_invoice_seller_address || "Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1",
+        phone: tripExtras.trip_invoice_seller_phone || "+976 9300-0022",
+        email: tripExtras.trip_invoice_seller_email || "busy.mn@busy.mn",
+        bankAccount: tripExtras.trip_invoice_seller_bank_account || "26000 500 500396 6474 (ХААН БАНК)",
+      };
       await sendInvoiceEmail({
         to: email,
         orderRef,
@@ -559,6 +586,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         amountMnt: totalMnt,
         fullName: extractFullNameFromAnswers(body.answers, schema) || String(fullName || "").trim(),
         answers: buildAnswerRows(body.answers, schema),
+        sellerInfo,
       });
       await prisma.paymentOrder.create({
         data: {

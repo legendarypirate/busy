@@ -124,6 +124,11 @@ function buildExtrasPayload(
   tripExcludedItems: string[],
   tripNotes: string[],
   tripNotesHtml: string,
+  tripInvoiceSellerName: string,
+  tripInvoiceSellerAddress: string,
+  tripInvoiceSellerPhone: string,
+  tripInvoiceSellerEmail: string,
+  tripInvoiceSellerBankAccount: string,
   tripFaqs: TripExtrasFaq[],
   tripPaymentSteps: TripExtrasPaymentStep[],
   totalSeats: number,
@@ -176,6 +181,16 @@ function buildExtrasPayload(
   } else {
     delete payload.trip_notes_html;
   }
+  if (tripInvoiceSellerName.trim()) payload.trip_invoice_seller_name = tripInvoiceSellerName.trim();
+  else delete payload.trip_invoice_seller_name;
+  if (tripInvoiceSellerAddress.trim()) payload.trip_invoice_seller_address = tripInvoiceSellerAddress.trim();
+  else delete payload.trip_invoice_seller_address;
+  if (tripInvoiceSellerPhone.trim()) payload.trip_invoice_seller_phone = tripInvoiceSellerPhone.trim();
+  else delete payload.trip_invoice_seller_phone;
+  if (tripInvoiceSellerEmail.trim()) payload.trip_invoice_seller_email = tripInvoiceSellerEmail.trim();
+  else delete payload.trip_invoice_seller_email;
+  if (tripInvoiceSellerBankAccount.trim()) payload.trip_invoice_seller_bank_account = tripInvoiceSellerBankAccount.trim();
+  else delete payload.trip_invoice_seller_bank_account;
   if (tripFaqs.length > 0) {
     payload.trip_faqs = tripFaqs.map((row) => ({
       question: row.question.trim(),
@@ -268,6 +283,11 @@ export async function executeSaveTrip(
     .map((v) => String(v).trim())
     .filter(Boolean);
   const tripNotesHtml = String(formData.get("trip_notes_html") ?? "").trim();
+  const tripInvoiceSellerName = String(formData.get("trip_invoice_seller_name") ?? "").trim();
+  const tripInvoiceSellerAddress = String(formData.get("trip_invoice_seller_address") ?? "").trim();
+  const tripInvoiceSellerPhone = String(formData.get("trip_invoice_seller_phone") ?? "").trim();
+  const tripInvoiceSellerEmail = String(formData.get("trip_invoice_seller_email") ?? "").trim();
+  const tripInvoiceSellerBankAccount = String(formData.get("trip_invoice_seller_bank_account") ?? "").trim();
   const faqQuestions = formData.getAll("trip_faq_question[]").map((v) => String(v).trim());
   const faqAnswers = formData.getAll("trip_faq_answer[]").map((v) => String(v).trim());
   const tripFaqs: TripExtrasFaq[] = [];
@@ -405,6 +425,11 @@ export async function executeSaveTrip(
     tripExcludedItems,
     tripNotes,
     tripNotesHtml,
+    tripInvoiceSellerName,
+    tripInvoiceSellerAddress,
+    tripInvoiceSellerPhone,
+    tripInvoiceSellerEmail,
+    tripInvoiceSellerBankAccount,
     tripFaqs,
     tripPaymentSteps,
     totalSeats,
