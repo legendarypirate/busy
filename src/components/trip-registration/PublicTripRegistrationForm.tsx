@@ -54,6 +54,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
     return init;
   });
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   function setVal(questionId: string, v: string) {
@@ -80,29 +81,49 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
     return m ? m.length : 0;
   }
 
-  function validate(): string | null {
+  function validate(): { formError: string | null; byField: Record<string, string> } {
+    const byField: Record<string, string> = {};
     for (const q of sorted) {
       if (!q.isRequired) continue;
       const v = stripFormText(values[q.id] ?? "");
       if (q.type === "CHECKBOXES") {
-        if (!v) return `"${q.label}" заавал бөглөнө үү`;
+        if (!v) {
+          byField[q.id] = "Заавал бөглөнө.";
+          return { formError: `"${q.label}" заавал бөглөнө үү`, byField };
+        }
       } else if (q.type === "FILE_UPLOAD") {
-        if (v && !/^https?:\/\//i.test(v)) return `"${q.label}" зөв файлын холбоос оруулна уу`;
-        if (q.isRequired && !v) return `"${q.label}" заавал бөглөнө үү`;
+        if (v && !/^https?:\/\//i.test(v)) {
+          byField[q.id] = "Зөв URL оруулна уу (https://...).";
+          return { formError: `"${q.label}" зөв файлын холбоос оруулна уу`, byField };
+        }
+        if (q.isRequired && !v) {
+          byField[q.id] = "Заавал бөглөнө.";
+          return { formError: `"${q.label}" заавал бөглөнө үү`, byField };
+        }
       } else if (!v) {
-        return `"${q.label}" заавал бөглөнө үү`;
+        byField[q.id] = "Заавал бөглөнө.";
+        return { formError: `"${q.label}" заавал бөглөнө үү`, byField };
       }
       if (q.type === "EMAIL" && v) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `"${q.label}" зөв имэйл оруулна уу`;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+          byField[q.id] = "Имэйл форматаа шалгана уу.";
+          return { formError: `"${q.label}" зөв имэйл оруулна уу`, byField };
+        }
       }
       if (q.type === "PHONE" && v) {
-        if (countPhoneDigits(v) < 8) return `"${q.label}" зөв утас оруулна уу`;
+        if (countPhoneDigits(v) < 8) {
+          byField[q.id] = "Утасны дугаар хамгийн багадаа 8 оронтой.";
+          return { formError: `"${q.label}" зөв утас оруулна уу`, byField };
+        }
       }
     }
     for (const q of sorted) {
       const v = stripFormText(values[q.id] ?? "");
       if (q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") {
-        if (v && !q.options.some((o) => o.value === v)) return `"${q.label}" сонголтыг зөв сонгоно уу`;
+        if (v && !q.options.some((o) => o.value === v)) {
+          byField[q.id] = "Жагсаалтаас зөв сонголт хийнэ үү.";
+          return { formError: `"${q.label}" сонголтыг зөв сонгоно уу`, byField };
+        }
       }
       if (q.type === "CHECKBOXES" && v) {
         const parts = v.includes("\u0001")
@@ -113,22 +134,28 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
               .filter(Boolean);
         const allowed = new Set(q.options.map((o) => o.value));
         for (const p of parts) {
-          if (!allowed.has(p)) return `"${q.label}" сонголтыг зөв сонгоно уу`;
+          if (!allowed.has(p)) {
+            byField[q.id] = "Сонголтоо шалгана уу.";
+            return { formError: `"${q.label}" сонголтыг зөв сонгоно уу`, byField };
+          }
         }
       }
       if (q.type === "NUMBER" && v && !Number.isFinite(Number(v))) {
-        return `"${q.label}" тоо оруулна уу`;
+        byField[q.id] = "Тоо оруулна уу.";
+        return { formError: `"${q.label}" тоо оруулна уу`, byField };
       }
     }
-    return null;
+    return { formError: null, byField };
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const vErr = validate();
-    if (vErr) {
-      setError(vErr);
+    setFieldErrors({});
+    const vRes = validate();
+    if (vRes.formError) {
+      setFieldErrors(vRes.byField);
+      setError(vRes.formError);
       return;
     }
     setBusy(true);
@@ -181,6 +208,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 ? "Илгээхэд алдаа гарлаа. Мэдээллээ шалгана уу."
                 : "Алдаа гарлаа.",
         );
+        setFieldErrors({});
         return;
       }
       const rid = data.responseId ?? "";
@@ -227,7 +255,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type={q.type === "EMAIL" ? "email" : q.type === "PHONE" ? "tel" : "text"}
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 placeholder={q.placeholder ?? ""}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
@@ -237,7 +265,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
               {q.type === "LONG_TEXT" ? (
                 <textarea
                   id={`q-${q.id}`}
-                  className={ui.textarea + " mt-1 min-h-[140px]"}
+                  className={`${ui.textarea} mt-1 min-h-[140px] ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 placeholder={q.placeholder ?? ""}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
@@ -248,7 +276,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type="number"
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 placeholder={q.placeholder ?? ""}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
@@ -259,7 +287,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type="date"
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
               />
@@ -311,7 +339,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
               {q.type === "DROPDOWN" ? (
                 <select
                   id={`q-${q.id}`}
-                  className={ui.select + " mt-1"}
+                  className={`${ui.select} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
               >
@@ -328,7 +356,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type="url"
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 placeholder="Файлын холбоос (URL)"
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
@@ -339,7 +367,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type="time"
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                 value={values[q.id] ?? ""}
                 onChange={(e) => setVal(q.id, e.target.value)}
               />
@@ -361,12 +389,13 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 <input
                   id={`q-${q.id}`}
                   type="text"
-                  className={ui.input + " mt-1"}
+                  className={`${ui.input} mt-1 ${fieldErrors[q.id] ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`}
                   placeholder={q.placeholder ?? ""}
                   value={values[q.id] ?? ""}
                   onChange={(e) => setVal(q.id, e.target.value)}
                 />
               ) : null}
+              {fieldErrors[q.id] ? <p className="mt-2 text-xs font-medium text-red-600">{fieldErrors[q.id]}</p> : null}
             </div>
           ))}
 
