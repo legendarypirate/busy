@@ -363,9 +363,21 @@ async function styledInvoicePdfBytes(params: {
     cx += cols[i];
   });
   y -= headH;
+  // Header column separators for clearer table borders
+  let headSepX = tX;
+  for (let i = 0; i < cols.length - 1; i++) {
+    headSepX += cols[i];
+    page.drawLine({
+      start: { x: headSepX, y: y + headH },
+      end: { x: headSepX, y },
+      thickness: 0.6,
+      color: rgb(0.27, 0.36, 0.47),
+    });
+  }
   for (const row of rowsData) {
-    const itemLines = wrapServiceLines(row[1], cols[1] - 28, 9.2);
-    const rowH = Math.max(28, 12 + itemLines.length * 12);
+    const rowFontSize = 8.6;
+    const itemLines = wrapServiceLines(row[1], cols[1] - 28, rowFontSize);
+    const rowH = Math.max(28, 12 + itemLines.length * 11);
     page.drawRectangle({ x: tX, y: y - rowH, width: tW, height: rowH, borderWidth: 0.6, borderColor: lineColor });
     const midY = y - rowH / 2 + 3.6;
 
@@ -373,7 +385,7 @@ async function styledInvoicePdfBytes(params: {
     page.drawText(row[0], {
       x: tX + 6,
       y: midY,
-      size: 9.2,
+      size: rowFontSize,
       font: bodyFont,
       color: rgb(0.16, 0.2, 0.25),
     });
@@ -383,8 +395,8 @@ async function styledInvoicePdfBytes(params: {
     itemLines.forEach((ln, i) => {
       page.drawText(ln, {
         x: serviceX,
-        y: y - 18 - i * 12,
-        size: 9.2,
+        y: y - 17 - i * 11,
+        size: rowFontSize,
         font: bodyFont,
         color: rgb(0.16, 0.2, 0.25),
       });
@@ -394,9 +406,21 @@ async function styledInvoicePdfBytes(params: {
     const qtyX = tX + cols[0] + cols[1] + 6;
     const unitX = qtyX + cols[2];
     const totalX = unitX + cols[3];
-    page.drawText(row[2], { x: qtyX, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
-    page.drawText(row[3], { x: unitX + 6, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
-    page.drawText(row[4], { x: totalX + 6, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[2], { x: qtyX, y: midY, size: rowFontSize, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[3], { x: unitX + 6, y: midY, size: rowFontSize, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[4], { x: totalX + 6, y: midY, size: rowFontSize, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+
+    // Row column separators
+    let sepX = tX;
+    for (let i = 0; i < cols.length - 1; i++) {
+      sepX += cols[i];
+      page.drawLine({
+        start: { x: sepX, y },
+        end: { x: sepX, y: y - rowH },
+        thickness: 0.5,
+        color: lineColor,
+      });
+    }
 
     y -= rowH;
   }
