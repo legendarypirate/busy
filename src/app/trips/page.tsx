@@ -303,102 +303,6 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
             <Link href="/trips" className="btn-brand-outline px-5" style={{ borderRadius: 20 }}>Бүх аяллыг үзэх <i className="fa-solid fa-arrow-right ms-2" style={{ fontSize: "0.8rem" }}></i></Link>
           </div>
           
-          {/* Timeline Section */}
-          <div className="timeline-section mt-5">
-            <div className="timeline-header">
-              <h3 className="widget-title mb-0">Аяллын хөтөлбөр</h3>
-              <Link href={featuredTrip ? `/trip-details/${featuredTrip.id}` : '/trips'} className="btn-brand-outline btn-sm d-inline-flex align-items-center text-decoration-none" style={{ fontSize: "0.75rem", padding: "0.3rem 0.8rem", borderColor: "var(--border-color)" }}>Бүрэн хөтөлбөрийг үзэх <i className="fa-solid fa-arrow-right ms-1"></i></Link>
-            </div>
-            
-            <div className="timeline-track">
-              <div className="timeline-node is-active" role="button" tabIndex={0}>
-                <div className="node-day">Өдөр 1</div>
-                <div className="node-circle active"><i className="fa-solid fa-plane-arrival" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Аялал эхлэх</div>
-                <div className="node-desc">Нислэг, буудал, зочид буудалд байрлах</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">Өдөр 2</div>
-                <div className="node-circle"><i className="fa-regular fa-handshake" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Бизнес уулзалт</div>
-                <div className="node-desc">Төрийн байгууллага, компаниудтай уулзалт</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">Өдөр 3</div>
-                <div className="node-circle"><i className="fa-solid fa-industry" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Үйлдвэр танилцах</div>
-                <div className="node-desc">Үйлдвэрийн айлчлал, презентаци</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">Өдөр 4</div>
-                <div className="node-circle"><i className="fa-solid fa-users-viewfinder" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">B2B сүлжээ</div>
-                <div className="node-desc">Сүлжээ үүсгэх, хамтын ажиллагаа</div>
-              </div>
-              <div className="timeline-node" role="button" tabIndex={0}>
-                <div className="node-day">Өдөр 5</div>
-                <div className="node-circle"><i className="fa-solid fa-plane-departure" style={{ fontSize: "1rem" }}></i></div>
-                <div className="node-title">Буцах аялал</div>
-                <div className="node-desc">Дүгнэлт, чөлөөт цаг, буцах нислэг</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Testimonials */}
-          <div className="testimonials-section mt-5">
-            <h3 className="widget-title mb-4">Оролцогчдын сэтгэгдэл</h3>
-            <div className="row g-3">
-              <div className="col-md-4">
-                <div className="testimonial-card">
-                  <div className="testimonial-header">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="https://ui-avatars.com/api/?name=E&background=random" className="testimonial-avatar" alt="Энхбат" />
-                    <div>
-                      <div className="testimonial-name">Г. Энхбат</div>
-                      <div className="testimonial-role">Гүйцэтгэх захирал, TechBridge LLC</div>
-                    </div>
-                  </div>
-                  <div className="testimonial-stars">
-                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i> 5.0
-                  </div>
-                  <div className="testimonial-text">&quot;Шинэ түншүүдтэй холбогдож, бодит төсөл эхлүүлсэн.&quot;</div>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="testimonial-card">
-                  <div className="testimonial-header">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="https://ui-avatars.com/api/?name=O&background=random" className="testimonial-avatar" alt="Отгонтуяа" />
-                    <div>
-                      <div className="testimonial-name">Б. Отгонтуяа</div>
-                      <div className="testimonial-role">Маркетинг менежер, EcoPack LLC</div>
-                    </div>
-                  </div>
-                  <div className="testimonial-stars">
-                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star-half-stroke"></i> 4.8
-                  </div>
-                  <div className="testimonial-text">&quot;Үйлдвэрийн айлчлал маш сонирхолтой, үр өгөөжтэй байлаа.&quot;</div>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="testimonial-card">
-                  <div className="testimonial-header">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="https://ui-avatars.com/api/?name=M&background=random" className="testimonial-avatar" alt="Мөнх-Эрдэнэ" />
-                    <div>
-                      <div className="testimonial-name">Ц. Мөнх-Эрдэнэ</div>
-                      <div className="testimonial-role">Үйлдвэр эрхлэгч, MonBuild XXK</div>
-                    </div>
-                  </div>
-                  <div className="testimonial-stars">
-                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i> 4.9
-                  </div>
-                  <div className="testimonial-text">&quot;Гадаад дэвшилтэт технологитой танилцаж, олон санаа авсан.&quot;</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         {/* Right Sidebar */}
@@ -447,31 +351,15 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
             <h3 className="widget-title">Тусламж хэрэгтэй юу?</h3>
             <p className="help-text">Аяллын талаар асуух зүйл байвал бидэнтэй холбогдоорой.</p>
             <div className="help-contact">
-              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> 7700-0900
+              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> +976 9300-0022
             </div>
             <div className="help-contact">
-              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> travel@busy.mn
+              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> busy.mn@busy.mn
             </div>
             <div className="help-contact mb-3">
-              <i className="fa-regular fa-clock" style={{ color: "var(--brand-primary)", width: 20 }}></i> Ажиллах цаг: 09:00 - 18:00
+              <i className="fa-solid fa-location-dot" style={{ color: "var(--brand-primary)", width: 20 }}></i> Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1
             </div>
             <button className="btn-brand-outline w-100">Холбогдох</button>
-          </div>
-          
-          <div className="faq-section mt-4">
-            <h3 className="widget-title">Түгээмэл асуултууд</h3>
-            <div className="faq-item">
-              <div className="faq-question">Аяллын үнэ юунд багтсан бэ? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-question">Виз мэдүүлэхэд туслах уу? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-question">Аяллын цуцлалт, буцаалтын нөхцөл? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-question">Бүртгүүлэх хугацаа хэзээ дуусах вэ? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
           </div>
         </aside>
 
