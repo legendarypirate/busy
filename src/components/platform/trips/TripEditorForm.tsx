@@ -7,6 +7,7 @@ import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEdito
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDescriptionEditor from "@/components/platform/forms/TripDescriptionEditor";
 import TripSimpleListEditor from "@/components/platform/forms/TripSimpleListEditor";
+import TripFaqEditor from "@/components/platform/forms/TripFaqEditor";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
 import TripBookingTiersEditor from "@/components/platform/trips/TripBookingTiersEditor";
@@ -450,6 +451,17 @@ export default function TripEditorForm({
               placeholder="Жишээ: Паспортын хугацаа 6+ сар хүчинтэй байх шаардлагатай."
               addLabel="Санамж нэмэх"
             />
+          </div>
+
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8e</div>
+              <span className="tps-section-title">Trip-details — Түгээмэл асуултууд</span>
+            </div>
+            <p className="small text-muted mb-3">
+              Асуулт, хариултыг 1-by-1 нэмнэ. FAQ хоосон бол нийтийн хуудсанд энэ section харагдахгүй.
+            </p>
+            <TripFaqEditor initialItems={extras.trip_faqs} />
           </div>
 
           <div className="tps-form-section mt-4">

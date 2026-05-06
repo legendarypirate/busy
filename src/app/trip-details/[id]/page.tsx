@@ -277,6 +277,7 @@ export default async function TripDetailsPage({ params }: Props) {
   const includedItems = extras.trip_included_items;
   const excludedItems = extras.trip_excluded_items;
   const tripNotes = extras.trip_notes;
+  const faqs = extras.trip_faqs;
   const hasComparison = includedItems.length > 0 || excludedItems.length > 0;
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
@@ -409,7 +410,7 @@ export default async function TripDetailsPage({ params }: Props) {
               <a href="#trd-section-about" className="trd-tab">Аяллын тухай</a>
               {hasComparison ? <a href="#trd-section-included" className="trd-tab">Юу багтсан</a> : null}
               {tripNotes.length > 0 ? <a href="#trd-section-notes" className="trd-tab">Санамж</a> : null}
-              <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
+              {faqs.length > 0 ? <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a> : null}
             </div>
 
             {/* About Section — admin text only (no placeholder image; avoids cramped two-column layout). */}
@@ -558,31 +559,21 @@ export default async function TripDetailsPage({ params }: Props) {
       </div>
 
       {/* FAQ Section */}
-      <div id="trd-section-faq" className="container mt-5 pt-5 pb-5 trd-scroll-anchor">
-        <h2 className="fw-bold mb-4">Түгээмэл асуултууд</h2>
-        <div className="row g-4">
-          <div className="col-md-6">
-            <div className="trd-faq-item">
-              <button className="trd-faq-trigger">Аяллын үнэ юунд багтсан бэ? <i className="fa-solid fa-chevron-down"></i></button>
-              <div className="trd-faq-content">Аяллын үнэнд олон улсын нислэгийн тийзнээс бусад бүх зардал багтсан болно. Үүнд зочид буудал, хоол, тээвэр, зөвлөх үйлчилгээ багтсан.</div>
-            </div>
-            <div className="trd-faq-item">
-              <button className="trd-faq-trigger">Виз мэдүүлэхэд туслах уу? <i className="fa-solid fa-chevron-down"></i></button>
-              <div className="trd-faq-content">Тийм ээ, манай баг таныг визний материал бүрдүүлэхэд зааварчилгаа өгч, туслах болно.</div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="trd-faq-item">
-              <button className="trd-faq-trigger">Цуцлалтын нөхцөл ямар вэ? <i className="fa-solid fa-chevron-down"></i></button>
-              <div className="trd-faq-content">Аялал эхлэхээс 30 хоногийн өмнө цуцалбал 100% буцаан олголттой.</div>
-            </div>
-            <div className="trd-faq-item">
-              <button className="trd-faq-trigger">QPay-ээр хэрхэн төлөх вэ? <i className="fa-solid fa-chevron-down"></i></button>
-              <div className="trd-faq-content">«Баталгаажуулах» дээр дарсны дараа бүтэн төлбөр эсвэл урьдчилгаагаа сонгоно. Дараа нь QPay-ийн QR код гарч, апп эсвэл вэбээр төлнө. Төлбөр орсны дараа баталгаажуулах имэйл илгээгдэнэ.</div>
-            </div>
+      {faqs.length > 0 ? (
+        <div id="trd-section-faq" className="container mt-5 pt-5 pb-5 trd-scroll-anchor">
+          <h2 className="fw-bold mb-4">Түгээмэл асуултууд</h2>
+          <div className="row g-4">
+            {faqs.map((faq, idx) => (
+              <div key={`faq-${idx}`} className="col-md-6">
+                <div className="trd-faq-item">
+                  <button className="trd-faq-trigger">{faq.question} <i className="fa-solid fa-chevron-down"></i></button>
+                  <div className="trd-faq-content">{faq.answer}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      ) : null}
 
     </div>
     </TripDetailsBookingRegisterProvider>

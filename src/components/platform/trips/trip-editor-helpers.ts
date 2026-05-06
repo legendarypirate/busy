@@ -44,6 +44,11 @@ export type TripExtrasBookingTier = {
   price_mnt: number;
 };
 
+export type TripExtrasFaq = {
+  question: string;
+  answer: string;
+};
+
 function readBookingTiers(raw: unknown): TripExtrasBookingTier[] {
   if (!Array.isArray(raw)) return [];
   const out: TripExtrasBookingTier[] = [];
@@ -77,6 +82,20 @@ function readStringList(raw: unknown): string[] {
   return out;
 }
 
+function readFaqList(raw: unknown): TripExtrasFaq[] {
+  if (!Array.isArray(raw)) return [];
+  const out: TripExtrasFaq[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const r = row as Record<string, unknown>;
+    const question = String(r.question ?? "").trim();
+    const answer = String(r.answer ?? "").trim();
+    if (!question || !answer) continue;
+    out.push({ question, answer });
+  }
+  return out;
+}
+
 export function readExtras(raw: unknown): {
   short_description: string;
   location: string;
@@ -100,6 +119,8 @@ export function readExtras(raw: unknown): {
   trip_excluded_items: string[];
   /** Reminder lines shown in trip details page. */
   trip_notes: string[];
+  /** FAQ rows shown in trip details page. */
+  trip_faqs: TripExtrasFaq[];
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -117,6 +138,7 @@ export function readExtras(raw: unknown): {
     trip_included_items: readStringList(d.trip_included_items),
     trip_excluded_items: readStringList(d.trip_excluded_items),
     trip_notes: readStringList(d.trip_notes),
+    trip_faqs: readFaqList(d.trip_faqs),
   };
 }
 

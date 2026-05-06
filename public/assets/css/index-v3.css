@@ -715,7 +715,7 @@
 }
 
 .trip-exact-img-wrap {
-    height: 180px;
+    height: clamp(210px, 22vw, 260px);
     position: relative;
 }
 
