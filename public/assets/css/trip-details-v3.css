@@ -14,7 +14,8 @@
 .trd-body {
     background-color: var(--trd-bg);
     font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
 }
 
 /* Hero: sit below solid navbar (avoid overlap / white seam) */
@@ -174,8 +175,9 @@
 @media (min-width: 992px) {
     .trd-aside-col {
         position: sticky;
-        top: calc(0.75rem + 72px);
+        top: 96px;
         align-self: start;
+        z-index: 20;
     }
     .trd-aside-inner {
         position: static;
