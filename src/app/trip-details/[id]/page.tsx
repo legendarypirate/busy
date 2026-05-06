@@ -400,7 +400,7 @@ export default async function TripDetailsPage({ params }: Props) {
           <div className="col-lg-8 order-2 order-lg-1">
             
             {/* Tabs (scroll to sections) */}
-            <div className="trd-tabs" role="tablist">
+            <div className="trd-tabs mt-3 mt-lg-4" role="tablist">
               <a href="#trd-section-about" className="trd-tab active">Аяллын тухай</a>
               <a href="#trd-section-itinerary" className="trd-tab">Хөтөлбөр</a>
               <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
