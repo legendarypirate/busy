@@ -226,6 +226,14 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 ? "Илгээхэд алдаа гарлаа. Мэдээллээ шалгана уу."
                 : "Алдаа гарлаа.",
         );
+        // Fallback: if backend didn't return questionId, re-run local validation and
+        // mark the first detectable field so user sees a red border.
+        if (!qid && err === "validation") {
+          const local = validate();
+          if (Object.keys(local.byField).length > 0) {
+            Object.assign(byField, local.byField);
+          }
+        }
         setFieldErrors(byField);
         return;
       }
