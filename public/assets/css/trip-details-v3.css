@@ -812,13 +812,13 @@ a.trd-btn-trip-register {
 }
 @media (min-width: 992px) {
     .trd-day-detail {
-        grid-template-columns: minmax(260px, 350px) 1fr;
-        gap: 40px;
+        grid-template-columns: 1fr;
+        gap: 28px;
         border-radius: 24px;
         padding: 32px;
     }
 }
-.trd-day-img { border-radius: 16px; overflow: hidden; position: relative; min-height: 200px; height: auto; aspect-ratio: 4 / 3; }
+.trd-day-img { border-radius: 16px; overflow: hidden; position: relative; min-height: 220px; height: auto; aspect-ratio: 16 / 6; width: 100%; }
 .trd-day-img img { width: 100%; height: 100%; object-fit: cover; }
 .trd-day-label { position: absolute; left: 20px; bottom: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #fff; padding: 12px 20px; border-radius: 12px; }
 
@@ -853,6 +853,14 @@ a.trd-btn-trip-register {
 .trd-event-content { flex-grow: 1; position: relative; z-index: 1; }
 .trd-event-title { font-size: 1.1rem; font-weight: 700; color: var(--trd-text); margin-bottom: 8px; }
 .trd-event-desc { font-size: 0.95rem; color: var(--trd-text-muted); line-height: 1.6; }
+@media (min-width: 992px) {
+    .trd-event {
+        background: #fff;
+        border: 1px solid var(--trd-border);
+        border-radius: 14px;
+        padding: 14px 16px;
+    }
+}
 
 /* About / Content */
 .trd-about-grid {

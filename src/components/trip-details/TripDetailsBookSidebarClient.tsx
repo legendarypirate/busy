@@ -41,7 +41,7 @@ export function TripDetailsBookSidebarClient({
   const departureDisplay = departureIsoToDisplay(departure);
 
   const checkoutSub =
-    totalPax === 0 ? "Түвшин сонгоно уу · нийт төлбөр" : `${totalPax} хүн · нийт төлбөр`;
+    totalPax === 0 ? "Түвшин сонгоно уу · урьдчилгаа төлбөр" : `${totalPax} хүн · урьдчилгаа төлбөр`;
 
   if (tiers.length === 0) {
     return null;

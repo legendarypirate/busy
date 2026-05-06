@@ -35,7 +35,7 @@ export function TripDetailsSocialShare({ sharePageUrl, shareTitle }: Props) {
           rel="noopener noreferrer"
           aria-label="X (Twitter) дээр хуваалцах"
         >
-          <i className="fa-brands fa-x-twitter" aria-hidden />
+          <i className="fa-brands fa-twitter" aria-hidden />
         </a>
       </div>
     </div>

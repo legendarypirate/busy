@@ -54,16 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     bits.join(" · ") || plainDesc || `${dest} — BUSY.mn олон улсын бизнес аялал.`;
 
   const base = marketingSiteOrigin();
-  let cover = mediaUrl(trip.coverImageUrl || "");
-  const heroUrl = mediaUrl(extras.trip_details_hero_url);
-  if (heroUrl) cover = heroUrl;
-  if (!cover) {
-    cover = "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1200&q=80";
-  }
-  const ogImage =
-    cover.startsWith("http://") || cover.startsWith("https://")
-      ? cover
-      : `${base}${cover.startsWith("/") ? cover : `/${cover}`}`;
+  const ogImage = `${base}/trip-details/${tripId}/opengraph-image`;
   const canonical = `${base}/trip-details/${tripId}`;
   const title = `${dest} | BUSY.mn`;
   const descShort = ogDescription.length > 300 ? `${ogDescription.slice(0, 297)}…` : ogDescription;
