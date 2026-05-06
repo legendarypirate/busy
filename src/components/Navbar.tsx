@@ -4,29 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  BNI_ALLOWED_LANGS,
-  BNI_LANGUAGES,
-  type BniLangCode,
-  isBniLang,
-} from "@/lib/nav-php-parity";
-import {
   SHOW_PUBLIC_HEADER_LOGIN_REGISTER,
   SHOW_PUBLIC_NAV_BUSY_AI,
   SHOW_PUBLIC_NAV_COMPANIES,
   SHOW_PUBLIC_NAV_INVESTMENTS,
   SHOW_PUBLIC_NAV_MEMBERS,
+  SHOW_PUBLIC_NAV_NEWS,
 } from "@/lib/public-marketing-flags";
 
 /** Marketing top bar — same primary links as `SiteHeaderNav` / PHP header. */
 export default function Navbar() {
   const pathname = usePathname() ?? "/";
-  const [navLang, setNavLang] = useState<BniLangCode>("mn");
-
-  useEffect(() => {
-    const m = typeof document !== "undefined" ? document.cookie.match(/(?:^|; )bni_lang=([^;]*)/) : null;
-    const raw = m?.[1] ? decodeURIComponent(m[1]) : "mn";
-    setNavLang(isBniLang(raw) ? raw : "mn");
-  }, []);
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   useEffect(() => {
@@ -40,12 +28,6 @@ export default function Navbar() {
     mq.addEventListener("change", onMq);
     return () => mq.removeEventListener("change", onMq);
   }, []);
-
-  const curLang = BNI_LANGUAGES[navLang];
-  const langHref = (code: BniLangCode) => {
-    const next = encodeURIComponent(pathname || "/");
-    return `/api/set-lang?lang=${encodeURIComponent(code)}&next=${next}`;
-  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light navbar-custom">
@@ -110,11 +92,13 @@ export default function Navbar() {
                 </Link>
               </li>
             ) : null}
-            <li className="nav-item">
-              <Link className={`nav-link${pathname.startsWith("/news") ? " active" : ""}`} href="/news">
-                Мэдээлэл
-              </Link>
-            </li>
+            {SHOW_PUBLIC_NAV_NEWS ? (
+              <li className="nav-item">
+                <Link className={`nav-link${pathname.startsWith("/news") ? " active" : ""}`} href="/news">
+                  Мэдээлэл
+                </Link>
+              </li>
+            ) : null}
             <li className="nav-item">
               <Link className={`nav-link${pathname.startsWith("/contact") ? " active" : ""}`} href="/contact">
                 Холбоо барих
@@ -129,35 +113,6 @@ export default function Navbar() {
             ) : null}
           </ul>
           <div className="d-flex align-items-center gap-2 ms-lg-auto flex-wrap mt-3 mt-lg-0">
-            <div className="dropdown">
-              <button
-                className="btn btn-light btn-sm rounded-pill border px-2 px-md-3 d-flex align-items-center gap-1"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                title="Хэл солих"
-              >
-                <span aria-hidden>{curLang.flag}</span>
-                <span className="fw-semibold small">{navLang.toUpperCase()}</span>
-                <i className="fa-solid fa-chevron-down small opacity-50 d-none d-sm-inline" aria-hidden />
-              </button>
-              <ul className="dropdown-menu dropdown-menu-end shadow border-0 py-2" style={{ borderRadius: 12, minWidth: "11rem" }}>
-                {BNI_ALLOWED_LANGS.map((lc) => {
-                  const row = BNI_LANGUAGES[lc];
-                  return (
-                    <li key={lc}>
-                      <a
-                        className={`dropdown-item py-2 d-flex align-items-center gap-2${navLang === lc ? " active" : ""}`}
-                        href={langHref(lc)}
-                      >
-                        <span aria-hidden>{row.flag}</span>
-                        <span>{row.name}</span>
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
             {SHOW_PUBLIC_HEADER_LOGIN_REGISTER ? (
               <>
                 <Link href="/auth/login" className="btn btn-light px-4 fw-medium rounded-pill border">

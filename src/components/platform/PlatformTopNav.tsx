@@ -8,6 +8,7 @@ import {
   SHOW_PUBLIC_NAV_COMPANIES,
   SHOW_PUBLIC_NAV_INVESTMENTS,
   SHOW_PUBLIC_NAV_MEMBERS,
+  SHOW_PUBLIC_NAV_NEWS,
 } from "@/lib/public-marketing-flags";
 
 type Props = {
@@ -54,9 +55,11 @@ export default function PlatformTopNav({ displayName, photoUrl }: Props) {
             Гишүүд
           </Link>
         ) : null}
-        <Link href="/news" className={`pl-top-link${pathname.startsWith("/news") ? " active" : ""}`}>
-          Мэдээлэл
-        </Link>
+        {SHOW_PUBLIC_NAV_NEWS ? (
+          <Link href="/news" className={`pl-top-link${pathname.startsWith("/news") ? " active" : ""}`}>
+            Мэдээлэл
+          </Link>
+        ) : null}
         <Link href="/contact" className={`pl-top-link${pathname.startsWith("/contact") ? " active" : ""}`}>
           Холбоо барих
         </Link>

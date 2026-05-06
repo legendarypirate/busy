@@ -96,6 +96,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
             message: "Заавал талбаруудыг бөглөж, зөв форматаар оруулна уу.",
             code: "validation",
             validationCode: e.code,
+            questionId: e.questionId ?? null,
+            questionLabel: e.questionLabel ?? null,
           },
           { status: e.status },
         );

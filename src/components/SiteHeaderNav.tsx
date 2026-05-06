@@ -4,17 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  BNI_ALLOWED_LANGS,
-  BNI_LANGUAGES,
-  type BniLangCode,
-  isBniLang,
-} from "@/lib/nav-php-parity";
-import {
   SHOW_PUBLIC_HEADER_LOGIN_REGISTER,
   SHOW_PUBLIC_NAV_BUSY_AI,
   SHOW_PUBLIC_NAV_COMPANIES,
   SHOW_PUBLIC_NAV_INVESTMENTS,
   SHOW_PUBLIC_NAV_MEMBERS,
+  SHOW_PUBLIC_NAV_NEWS,
 } from "@/lib/public-marketing-flags";
 
 /** Matches `includes/header.php` `<nav>` children (paths adapted for Next App Router). */
@@ -34,6 +29,7 @@ function isNavItemVisible(pageId: (typeof NAV)[number]["id"]): boolean {
   if (pageId === "companies") return SHOW_PUBLIC_NAV_COMPANIES;
   if (pageId === "investments") return SHOW_PUBLIC_NAV_INVESTMENTS;
   if (pageId === "members") return SHOW_PUBLIC_NAV_MEMBERS;
+  if (pageId === "news") return SHOW_PUBLIC_NAV_NEWS;
   if (pageId === "busy_ai") return SHOW_PUBLIC_NAV_BUSY_AI;
   return true;
 }
@@ -77,14 +73,12 @@ export type SiteHeaderNavProps = {
 };
 
 export function SiteHeaderNav({
-  initialLang,
+  initialLang: _initialLang,
   legacySiteUrl,
   headerAuthUseNext = true,
   platformUser,
 }: SiteHeaderNavProps) {
   const pathname = usePathname() ?? "/";
-  const navLang: BniLangCode = isBniLang(initialLang) ? initialLang : "mn";
-  const curLang = BNI_LANGUAGES[navLang];
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   useEffect(() => {
@@ -98,14 +92,6 @@ export function SiteHeaderNav({
     mq.addEventListener("change", onMq);
     return () => mq.removeEventListener("change", onMq);
   }, []);
-
-  const langHref = (code: BniLangCode) => {
-    if (legacySiteUrl && !headerAuthUseNext) {
-      return `${legacySiteUrl}/scripts/change-lang.php?lang=${encodeURIComponent(code)}`;
-    }
-    const next = encodeURIComponent(pathname || "/");
-    return `/api/set-lang?lang=${encodeURIComponent(code)}&next=${next}`;
-  };
 
   const loginHref =
     headerAuthUseNext || !legacySiteUrl ? "/auth/login" : `${legacySiteUrl}/auth/login.php`;
@@ -152,38 +138,6 @@ export function SiteHeaderNav({
             ))}
           </ul>
           <div className="d-flex align-items-center gap-2 ms-lg-auto flex-wrap mt-3 mt-lg-0">
-            <div className="dropdown">
-              <button
-                className="btn btn-light btn-sm rounded-pill border px-2 px-md-3 d-flex align-items-center gap-1"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                title="Хэл солих"
-              >
-                <span aria-hidden>{curLang.flag}</span>
-                <span className="fw-semibold small">{navLang.toUpperCase()}</span>
-                <i className="fa-solid fa-chevron-down small opacity-50 d-none d-sm-inline" aria-hidden />
-              </button>
-              <ul
-                className="dropdown-menu dropdown-menu-end shadow border-0 py-2"
-                style={{ borderRadius: 12, minWidth: "11rem" }}
-              >
-                {BNI_ALLOWED_LANGS.map((lc) => {
-                  const row = BNI_LANGUAGES[lc];
-                  return (
-                    <li key={lc}>
-                      <a
-                        className={`dropdown-item py-2 d-flex align-items-center gap-2${navLang === lc ? " active" : ""}`}
-                        href={langHref(lc)}
-                      >
-                        <span aria-hidden>{row.flag}</span>
-                        <span>{row.name}</span>
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
             {platformUser ? (
               <div className="dropdown">
                 <button

@@ -15,4 +15,5 @@ export const SHOW_PUBLIC_HEADER_LOGIN_REGISTER = false;
 export const SHOW_PUBLIC_NAV_COMPANIES = false;
 export const SHOW_PUBLIC_NAV_INVESTMENTS = false;
 export const SHOW_PUBLIC_NAV_MEMBERS = false;
+export const SHOW_PUBLIC_NAV_NEWS = false;
 export const SHOW_PUBLIC_NAV_BUSY_AI = false;

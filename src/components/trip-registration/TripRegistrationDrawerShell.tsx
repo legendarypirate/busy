@@ -17,6 +17,7 @@ type Props = {
   loading: boolean;
   schema: HomeTripDrawerSchemaItem[];
   feedback: Feedback;
+  fieldErrors?: Record<string, string>;
   formRef: RefObject<HTMLFormElement | null>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   beforeActions?: ReactNode;
@@ -31,6 +32,7 @@ export function TripRegistrationDrawerShell({
   loading,
   schema,
   feedback,
+  fieldErrors = {},
   formRef,
   onSubmit,
   beforeActions,
@@ -104,6 +106,7 @@ export function TripRegistrationDrawerShell({
                 );
 
                 if (q.type === "textarea") {
+                  const err = fieldErrors[q.name];
                   return (
                     <label key={q.name} className="trip-register-field">
                       {label}
@@ -112,15 +115,22 @@ export function TripRegistrationDrawerShell({
                         rows={3}
                         required={q.required}
                         placeholder={q.placeholder}
+                        style={err ? { borderColor: "#dc3545" } : undefined}
                       />
+                      {err ? <small className="text-danger">{err}</small> : null}
                     </label>
                   );
                 }
                 if (q.type === "select" && q.options?.length) {
+                  const err = fieldErrors[q.name];
                   return (
                     <label key={q.name} className="trip-register-field">
                       {label}
-                      <select name={`answers[${q.name}]`} required={q.required}>
+                      <select
+                        name={`answers[${q.name}]`}
+                        required={q.required}
+                        style={err ? { borderColor: "#dc3545" } : undefined}
+                      >
                         <option value="">Сонгох</option>
                         {q.options.map((op) => (
                           <option key={op} value={op}>
@@ -128,13 +138,19 @@ export function TripRegistrationDrawerShell({
                           </option>
                         ))}
                       </select>
+                      {err ? <small className="text-danger">{err}</small> : null}
                     </label>
                   );
                 }
                 if ((q.type === "radio" || q.type === "checkbox") && q.options?.length) {
                   const isRadio = q.type === "radio";
+                  const err = fieldErrors[q.name];
                   return (
-                    <fieldset key={q.name} className="trip-register-fieldset">
+                    <fieldset
+                      key={q.name}
+                      className="trip-register-fieldset"
+                      style={err ? { border: "1px solid #dc3545", borderRadius: 8, padding: 8 } : undefined}
+                    >
                       <legend>
                         {num}. {q.label}
                         {req}
@@ -156,11 +172,13 @@ export function TripRegistrationDrawerShell({
                           ))}
                         </div>
                       )}
+                      {err ? <small className="text-danger">{err}</small> : null}
                     </fieldset>
                   );
                 }
                 const inputType =
                   q.type === "number" ? "number" : q.type === "email" ? "email" : q.type === "tel" ? "tel" : "text";
+                const err = fieldErrors[q.name];
                 return (
                   <label key={q.name} className="trip-register-field">
                     {label}
@@ -169,7 +187,9 @@ export function TripRegistrationDrawerShell({
                       name={`answers[${q.name}]`}
                       required={q.required}
                       placeholder={q.placeholder}
+                      style={err ? { borderColor: "#dc3545" } : undefined}
                     />
+                    {err ? <small className="text-danger">{err}</small> : null}
                   </label>
                 );
               })}

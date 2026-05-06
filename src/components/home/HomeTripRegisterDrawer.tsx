@@ -28,18 +28,21 @@ export default function HomeTripRegisterDrawer() {
     text: "",
     kind: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
 
   const closeDrawer = useCallback(() => {
     setOpen(false);
     document.body.classList.remove("trip-register-open");
     setFeedback({ text: "", kind: "" });
+    setFieldErrors({});
   }, []);
 
   const loadSchema = useCallback(async (id: number) => {
     setLoading(true);
     setSchema([]);
     setFeedback({ text: "", kind: "" });
+    setFieldErrors({});
     try {
       const res = await fetch(`/api/public/trips/${id}/registration`, { cache: "no-store" });
       const data = await readResponseJson<{
@@ -113,17 +116,41 @@ export default function HomeTripRegisterDrawer() {
     }
     const answers = buildTripDrawerAnswersFromForm(schema, formRef.current);
     setFeedback({ text: "Илгээж байна...", kind: "loading" });
+    setFieldErrors({});
     try {
       const res = await fetch(`/api/public/trips/${tripId}/registration`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      const data = await readResponseJson<{ success?: boolean; message?: string }>(res);
+      const data = await readResponseJson<{
+        success?: boolean;
+        message?: string;
+        code?: string;
+        validationCode?: string;
+        questionId?: string | null;
+      }>(res);
       if (!res.ok || !data.success) {
+        const qid = (data.questionId ?? "").trim();
+        if (qid) {
+          const text =
+            data.validationCode === "email"
+              ? "Имэйл форматаа шалгана уу."
+              : data.validationCode === "phone"
+                ? "Утасны дугаар 8+ оронтой байх ёстой."
+                : data.validationCode === "choice"
+                  ? "Зөв сонголтыг сонгоно уу."
+                  : data.validationCode === "number"
+                    ? "Тоо оруулна уу."
+                    : data.validationCode === "file_url"
+                      ? "Зөв URL оруулна уу."
+                      : "Заавал бөглөнө.";
+          setFieldErrors({ [qid]: text });
+        }
         throw new Error(data.message || "Бүртгэл хадгалах үед алдаа гарлаа.");
       }
       setFeedback({ text: data.message || "Таны бүртгэлийг амжилттай хүлээн авлаа.", kind: "success" });
+      setFieldErrors({});
       formRef.current.reset();
       window.setTimeout(() => closeDrawer(), 5000);
     } catch (err) {
@@ -143,6 +170,7 @@ export default function HomeTripRegisterDrawer() {
       loading={loading}
       schema={schema}
       feedback={feedback}
+      fieldErrors={fieldErrors}
       formRef={formRef}
       onSubmit={onSubmit}
     />
