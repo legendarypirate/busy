@@ -92,8 +92,6 @@ export default function AdminLoginForm({ nextPath, defaultEmail }: Props) {
       <SubmitButton />
       <div className="bni-auth-footer">
         <Link href="/">Нүүр руу</Link>
-        {" · "}
-        <Link href="/auth/login">Платформын нэвтрэх</Link>
       </div>
     </form>
   );

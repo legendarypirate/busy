@@ -404,27 +404,31 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
 
         <aside className="trips-sidebar-right">
           <div className="sidebar-widget">
-            <h3 className="widget-title">Яагаад оролцох вэ?</h3>
+            <h3 className="widget-title">Яагаад энэ аялал?</h3>
             <div className="reason-item">
-              <div className="reason-icon"><i className="fa-solid fa-handshake-simple"></i></div>
-              <div className="reason-text">Шууд реферал, түншлэлийн боломж</div>
+              <div className="reason-icon"><i className="fa-solid fa-users-line"></i></div>
+              <div className="reason-text">Шинэ түнш, харилцагчтай холбогдох боломж</div>
             </div>
             <div className="reason-item">
-              <div className="reason-icon"><i className="fa-solid fa-graduation-cap"></i></div>
-              <div className="reason-text">Сургалт, туршлага солилцох</div>
+              <div className="reason-icon"><i className="fa-solid fa-building-user"></i></div>
+              <div className="reason-text">Салбарын тэргүүлэх компаниудтай уулзах</div>
             </div>
             <div className="reason-item">
-              <div className="reason-icon"><i className="fa-solid fa-chart-line"></i></div>
-              <div className="reason-text">Бизнесээ танилцуулах цогц талбар</div>
+              <div className="reason-icon"><i className="fa-solid fa-industry"></i></div>
+              <div className="reason-text">Үйлдвэр, технологитой танилцах</div>
             </div>
             <div className="reason-item">
-              <div className="reason-icon"><i className="fa-regular fa-calendar-check"></i></div>
-              <div className="reason-text">Тогтмол хуваарьтай уулзалт</div>
+              <div className="reason-icon"><i className="fa-regular fa-lightbulb"></i></div>
+              <div className="reason-text">Бизнесээ өргөжүүлэх бодит санаа, шийдэл</div>
             </div>
           </div>
 
           <div className="sidebar-widget">
-            <h3 className="widget-title">Тойм</h3>
+            <h3 className="widget-title">Хурдан статистик</h3>
+            <div className="stat-row">
+              <span style={{ color: "var(--text-muted)" }}>Нийт хурал</span>
+              <span style={{ fontWeight: 600 }}>{(totalUpcoming + totalPast).toLocaleString()}</span>
+            </div>
             <div className="stat-row">
               <span style={{ color: "var(--text-muted)" }}>Ирэх арга хэмжээ</span>
               <span style={{ fontWeight: 600 }}>{totalUpcoming.toLocaleString()}</span>
@@ -437,31 +441,25 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
               <span style={{ color: "var(--text-muted)" }}>Идэвхтэй бүлэг</span>
               <span style={{ fontWeight: 600 }}>{chaptersWithEvents.toLocaleString()}</span>
             </div>
+            <div className="stat-row">
+              <span style={{ color: "var(--text-muted)" }}>Хамгийн өндөр үнэлгээ</span>
+              <span style={{ fontWeight: 600 }}>4.9 / 5 <i className="fa-solid fa-star" style={{ color: "#fbbf24", fontSize: "0.75rem" }}></i></span>
+            </div>
           </div>
 
           <div className="sidebar-widget">
-            <h3 className="widget-title">Тусламж</h3>
-            <p className="help-text">Хурал, бүртгэлийн талаар лавлагаа авахыг хүсвэл холбогдоно уу.</p>
+            <h3 className="widget-title">Тусламж хэрэгтэй юу?</h3>
+            <p className="help-text">Хурал, бүртгэлийн талаар асуух зүйл байвал бидэнтэй холбогдоорой.</p>
             <div className="help-contact">
-              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> 7700-0900
+              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> +976 9300-0022
+            </div>
+            <div className="help-contact">
+              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> busy.mn@busy.mn
             </div>
             <div className="help-contact mb-3">
-              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> info@busy.mn
+              <i className="fa-solid fa-location-dot" style={{ color: "var(--brand-primary)", width: 20 }}></i> Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1
             </div>
-            <Link href="/trips" className="btn-brand-outline w-100 text-center text-decoration-none">Бизнес аялал үзэх</Link>
-          </div>
-          
-          <div className="faq-section mt-4">
-            <h3 className="widget-title">Түгээмэл асуулт</h3>
-            <div className="faq-item">
-              <div className="faq-question">Зочноор оролцох боломжтой юу? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-question">Бүртгэл хаагдсаны дараа яах вэ? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-question">Онлайн хурал байдаг уу? <i className="fa-solid fa-chevron-down"></i></div>
-            </div>
+            <button className="btn-brand-outline w-100">Холбогдох</button>
           </div>
         </aside>
 
