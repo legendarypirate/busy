@@ -49,6 +49,16 @@ export function TripDetailsBookSidebarClient({
 
   return (
     <>
+      <div className="trd-book-panel">
+        <div className="trd-price-row">
+          <div className="trd-price-tag">
+            {formatMnt(checkoutTotalMnt)} <span className="trd-price-cur">₮</span>
+          </div>
+          <div className="trd-price-sub">{checkoutSub}</div>
+        </div>
+        {children}
+      </div>
+
       <div className="trd-bi-card trd-aside-card">
         <h3 className="trd-bi-title">Захиалгын мэдээлэл</h3>
 
@@ -114,16 +124,6 @@ export function TripDetailsBookSidebarClient({
             </li>
           ))}
         </ul>
-      </div>
-
-      <div className="trd-book-panel">
-        <div className="trd-price-row">
-          <div className="trd-price-tag">
-            {formatMnt(checkoutTotalMnt)} <span className="trd-price-cur">₮</span>
-          </div>
-          <div className="trd-price-sub">{checkoutSub}</div>
-        </div>
-        {children}
       </div>
     </>
   );
