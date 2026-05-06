@@ -1,6 +1,10 @@
 import { Prisma, type BusinessTrip } from "@prisma/client";
 import { destroyCloudinaryBySecureUrl, writePlatformUploadImage } from "@/lib/platform-write-image";
-import type { TripExtrasBookingTier, TripExtrasFaq } from "@/components/platform/trips/trip-editor-helpers";
+import type {
+  TripExtrasBookingTier,
+  TripExtrasFaq,
+  TripExtrasPaymentStep,
+} from "@/components/platform/trips/trip-editor-helpers";
 import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { syncTripRegistrationFormFromLegacyJson } from "@/lib/trip-registration-form/sync-registration-form-from-json";
@@ -120,6 +124,7 @@ function buildExtrasPayload(
   tripExcludedItems: string[],
   tripNotes: string[],
   tripFaqs: TripExtrasFaq[],
+  tripPaymentSteps: TripExtrasPaymentStep[],
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
@@ -172,6 +177,14 @@ function buildExtrasPayload(
     }));
   } else {
     delete payload.trip_faqs;
+  }
+  if (tripPaymentSteps.length > 0) {
+    payload.trip_payment_steps = tripPaymentSteps.map((row) => ({
+      title: row.title.trim(),
+      note: row.note.trim() || null,
+    }));
+  } else {
+    delete payload.trip_payment_steps;
   }
   payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
   payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
@@ -257,6 +270,16 @@ export async function executeSaveTrip(
     const answer = faqAnswers[i] ?? "";
     if (!question || !answer) continue;
     tripFaqs.push({ question, answer });
+  }
+  const paymentStepTitles = formData.getAll("trip_payment_step_title[]").map((v) => String(v).trim());
+  const paymentStepNotes = formData.getAll("trip_payment_step_note[]").map((v) => String(v).trim());
+  const tripPaymentSteps: TripExtrasPaymentStep[] = [];
+  const stepLen = Math.max(paymentStepTitles.length, paymentStepNotes.length);
+  for (let i = 0; i < stepLen; i++) {
+    const title = paymentStepTitles[i] ?? "";
+    const note = paymentStepNotes[i] ?? "";
+    if (!title) continue;
+    tripPaymentSteps.push({ title, note });
   }
   const totalSeats = Math.max(0, Number(String(formData.get("trip_total_seats") ?? "30")) || 30);
   const advancePct = Math.max(0, Number(String(formData.get("trip_advance_percent") ?? "20")) || 20);
@@ -375,6 +398,7 @@ export async function executeSaveTrip(
     tripExcludedItems,
     tripNotes,
     tripFaqs,
+    tripPaymentSteps,
     totalSeats,
     advancePct,
     bookingTiersParsed,

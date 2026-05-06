@@ -8,6 +8,7 @@ import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDescriptionEditor from "@/components/platform/forms/TripDescriptionEditor";
 import TripSimpleListEditor from "@/components/platform/forms/TripSimpleListEditor";
 import TripFaqEditor from "@/components/platform/forms/TripFaqEditor";
+import TripPaymentStepsEditor from "@/components/platform/forms/TripPaymentStepsEditor";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
 import TripBookingTiersEditor from "@/components/platform/trips/TripBookingTiersEditor";
@@ -462,6 +463,18 @@ export default function TripEditorForm({
               Асуулт, хариултыг 1-by-1 нэмнэ. FAQ хоосон бол нийтийн хуудсанд энэ section харагдахгүй.
             </p>
             <TripFaqEditor initialItems={extras.trip_faqs} />
+          </div>
+
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8f</div>
+              <span className="tps-section-title">Trip-details — Төлбөрийн үе шат</span>
+            </div>
+            <p className="small text-muted mb-3">
+              Төлбөрийн алхмуудыг 1-by-1 нэмнэ. Жишээ нь: 3 эсвэл 4 алхамтай төлбөрийн явц.
+              Хоосон байвал нийтийн хуудсанд section харагдахгүй.
+            </p>
+            <TripPaymentStepsEditor initialItems={extras.trip_payment_steps} />
           </div>
 
           <div className="tps-form-section mt-4">

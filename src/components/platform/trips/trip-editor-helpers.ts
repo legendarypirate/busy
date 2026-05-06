@@ -49,6 +49,11 @@ export type TripExtrasFaq = {
   answer: string;
 };
 
+export type TripExtrasPaymentStep = {
+  title: string;
+  note: string;
+};
+
 function readBookingTiers(raw: unknown): TripExtrasBookingTier[] {
   if (!Array.isArray(raw)) return [];
   const out: TripExtrasBookingTier[] = [];
@@ -96,6 +101,20 @@ function readFaqList(raw: unknown): TripExtrasFaq[] {
   return out;
 }
 
+function readPaymentStepList(raw: unknown): TripExtrasPaymentStep[] {
+  if (!Array.isArray(raw)) return [];
+  const out: TripExtrasPaymentStep[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const r = row as Record<string, unknown>;
+    const title = String(r.title ?? "").trim();
+    const note = String(r.note ?? "").trim();
+    if (!title) continue;
+    out.push({ title, note });
+  }
+  return out;
+}
+
 export function readExtras(raw: unknown): {
   short_description: string;
   location: string;
@@ -121,6 +140,8 @@ export function readExtras(raw: unknown): {
   trip_notes: string[];
   /** FAQ rows shown in trip details page. */
   trip_faqs: TripExtrasFaq[];
+  /** Payment steps shown in trip details page. */
+  trip_payment_steps: TripExtrasPaymentStep[];
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -139,6 +160,7 @@ export function readExtras(raw: unknown): {
     trip_excluded_items: readStringList(d.trip_excluded_items),
     trip_notes: readStringList(d.trip_notes),
     trip_faqs: readFaqList(d.trip_faqs),
+    trip_payment_steps: readPaymentStepList(d.trip_payment_steps),
   };
 }
 
