@@ -7,8 +7,11 @@ import { formatMnDate } from "@/lib/format-date";
 import { mediaUrl } from "@/lib/media-url";
 import {
   SHOW_HOME_HERO_CREATE_TRIP_AND_EVENT_BUTTONS,
+  SHOW_HOME_FEATURED_MEMBERS_SECTION,
   SHOW_HOME_HERO_LEFT_MARKETING_SECTION,
   SHOW_HOME_HERO_V3_SECTION,
+  SHOW_HOME_INVESTMENT_AND_NEWS_SECTION,
+  SHOW_HOME_MEMBER_ORGS_SECTION,
 } from "@/lib/public-marketing-flags";
 
 export const dynamic = "force-dynamic";
@@ -336,6 +339,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Members Section */}
+      {SHOW_HOME_FEATURED_MEMBERS_SECTION ? (
       <section className="py-4">
         <div className="container">
           <div className="featured-members-box">
@@ -367,8 +371,10 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Partners Section — after Онцлох гишүүд */}
+      {SHOW_HOME_MEMBER_ORGS_SECTION ? (
       <section className="partners-section">
         <div className="container">
           <div className="partners-head">
@@ -409,6 +415,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Company News */}
       {data.latestNews && data.latestNews.length > 0 && (
@@ -435,6 +442,7 @@ export default async function HomePage() {
       )}
 
       {/* Bottom Sections Grid */}
+      {SHOW_HOME_INVESTMENT_AND_NEWS_SECTION ? (
       <section className="py-5">
         <div className="container">
           <div className="row">
@@ -508,6 +516,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       <HomeTripRegisterDrawer />
     </main>

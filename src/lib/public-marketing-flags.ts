@@ -10,6 +10,9 @@ export const SHOW_HOME_HERO_LEFT_MARKETING_SECTION = false;
 
 export const SHOW_HOME_HERO_CREATE_TRIP_AND_EVENT_BUTTONS = false;
 export const SHOW_PUBLIC_HEADER_LOGIN_REGISTER = false;
+export const SHOW_HOME_FEATURED_MEMBERS_SECTION = false;
+export const SHOW_HOME_MEMBER_ORGS_SECTION = false;
+export const SHOW_HOME_INVESTMENT_AND_NEWS_SECTION = false;
 
 /** Public navbar links — off hides the item; definitions stay in `Navbar` / `SiteHeaderNav` for later. */
 export const SHOW_PUBLIC_NAV_COMPANIES = false;

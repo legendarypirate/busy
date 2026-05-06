@@ -91,6 +91,17 @@ export default function EventDetailRegisterDrawer({ eventId, initialTitle }: Pro
     return () => document.removeEventListener("keydown", onKey);
   }, [open, closeDrawer]);
 
+  function collectRequiredFieldErrors(answers: { questionId: string; value: string | null }[]) {
+    const byField: Record<string, string> = {};
+    const byId = new Map(answers.map((a) => [a.questionId, (a.value ?? "").trim()]));
+    for (const q of schema) {
+      if (!q.required) continue;
+      const v = byId.get(q.name) ?? "";
+      if (!v) byField[q.name] = "Заавал бөглөнө.";
+    }
+    return byField;
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!formRef.current) {
@@ -98,6 +109,12 @@ export default function EventDetailRegisterDrawer({ eventId, initialTitle }: Pro
       return;
     }
     const answers = buildTripDrawerAnswersFromForm(schema, formRef.current);
+    const requiredErrors = collectRequiredFieldErrors(answers);
+    if (Object.keys(requiredErrors).length > 0) {
+      setFieldErrors(requiredErrors);
+      setFeedback({ text: "Заавал талбаруудыг бөглөж, зөв форматаар оруулна уу.", kind: "error" });
+      return;
+    }
     setFeedback({ text: "Илгээж байна...", kind: "loading" });
     setFieldErrors({});
     try {
