@@ -6,6 +6,7 @@ import TripFormUploadPendingOverlay from "@/components/platform/forms/TripFormUp
 import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEditorRegistrationQrAside";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
 import TripDescriptionEditor from "@/components/platform/forms/TripDescriptionEditor";
+import TripSimpleListEditor from "@/components/platform/forms/TripSimpleListEditor";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
 import TripBookingTiersEditor from "@/components/platform/trips/TripBookingTiersEditor";
@@ -410,30 +411,45 @@ export default function TripEditorForm({
               <span className="tps-section-title">Trip-details — Багтсан / Багтаагүй</span>
             </div>
             <p className="small text-muted mb-3">
-              Нийтийн <code>/trip-details/:id</code> дээрх «Юу багтсан» болон «Багтаагүй» жагсаалтыг мөр тус бүрээр оруулна.
+              Нийтийн <code>/trip-details/:id</code> дээрх хэсгүүдийг item-ээр нь нэмнэ. Хоосон байвал харуулахгүй.
             </p>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="pm-label">Юу багтсан (мөр тус бүр)</label>
-                <textarea
-                  className="pm-input"
-                  name="trip_included_items"
-                  rows={6}
-                  placeholder={"Жишээ:\n4-5 одтой зочид буудлын байр\nӨглөө, оройн зоог"}
-                  defaultValue={extras.trip_included_items.join("\n")}
+                <TripSimpleListEditor
+                  label="Юу багтсан"
+                  name="trip_included_items[]"
+                  initialItems={extras.trip_included_items}
+                  placeholder="Жишээ: 4-5 одтой зочид буудлын байр"
+                  addLabel="Юу багтсан мөр нэмэх"
                 />
               </div>
               <div className="col-md-6">
-                <label className="pm-label">Багтаагүй (мөр тус бүр)</label>
-                <textarea
-                  className="pm-input"
-                  name="trip_excluded_items"
-                  rows={6}
-                  placeholder={"Жишээ:\nОлон улсын нислэгийн тийз\nВизийн хураамж"}
-                  defaultValue={extras.trip_excluded_items.join("\n")}
+                <TripSimpleListEditor
+                  label="Багтаагүй"
+                  name="trip_excluded_items[]"
+                  initialItems={extras.trip_excluded_items}
+                  placeholder="Жишээ: Олон улсын нислэгийн тийз"
+                  addLabel="Багтаагүй мөр нэмэх"
                 />
               </div>
             </div>
+          </div>
+
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8d</div>
+              <span className="tps-section-title">Trip-details — Санамж</span>
+            </div>
+            <p className="small text-muted mb-3">
+              Аяллын дэлгэрэнгүй хуудасны «Санамж» хэсэг. Item нэмээгүй бол хэсэг харагдахгүй.
+            </p>
+            <TripSimpleListEditor
+              label="Санамж"
+              name="trip_notes[]"
+              initialItems={extras.trip_notes}
+              placeholder="Жишээ: Паспортын хугацаа 6+ сар хүчинтэй байх шаардлагатай."
+              addLabel="Санамж нэмэх"
+            />
           </div>
 
           <div className="tps-form-section mt-4">

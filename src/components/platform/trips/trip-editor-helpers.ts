@@ -98,6 +98,8 @@ export function readExtras(raw: unknown): {
   trip_included_items: string[];
   /** Excluded list for `/trip-details/:id` comparison section. */
   trip_excluded_items: string[];
+  /** Reminder lines shown in trip details page. */
+  trip_notes: string[];
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -114,6 +116,7 @@ export function readExtras(raw: unknown): {
     trip_registration_close_date: String(d.trip_registration_close_date ?? "").trim(),
     trip_included_items: readStringList(d.trip_included_items),
     trip_excluded_items: readStringList(d.trip_excluded_items),
+    trip_notes: readStringList(d.trip_notes),
   };
 }
 

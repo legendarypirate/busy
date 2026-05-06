@@ -126,19 +126,6 @@ function tripManagerTelParts(raw: string): { href: string; label: string } | nul
 }
 
 const TRIP_HELP_EMAIL_DEFAULT = "travel@busy.mn";
-const TRIP_INCLUDED_DEFAULTS = [
-  "4-5 одтой зочид буудлын байр",
-  "Өглөө, оройн зоог",
-  "Бүх хотын тээвэр, даатгал",
-  "Үйлдвэр, компанийн зочлох үйлчилгээ",
-  "Орчуулга, бизнес зөвлөх үйлчилгээ",
-];
-const TRIP_EXCLUDED_DEFAULTS = [
-  "Олон улсын нислэгийн тийз",
-  "Хувийн хэрэгцээ, дэлгүүр хэсэх",
-  "Визийн хураамж",
-  "Аяллын даатгал (заавал биш)",
-];
 
 /** Display + mailto from admin email; empty uses site default. */
 function tripHelpEmailParts(raw: string): { label: string; href: string } {
@@ -287,8 +274,10 @@ export default async function TripDetailsPage({ params }: Props) {
     trip.description?.replace(/<[^>]*>?/gm, "").trim() ||
     "BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.";
   const tripAbout = stripLegacyTripStaticHighlights(tripAboutRaw);
-  const includedItems = extras.trip_included_items.length > 0 ? extras.trip_included_items : TRIP_INCLUDED_DEFAULTS;
-  const excludedItems = extras.trip_excluded_items.length > 0 ? extras.trip_excluded_items : TRIP_EXCLUDED_DEFAULTS;
+  const includedItems = extras.trip_included_items;
+  const excludedItems = extras.trip_excluded_items;
+  const tripNotes = extras.trip_notes;
+  const hasComparison = includedItems.length > 0 || excludedItems.length > 0;
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
   const seatCapacity = parseSeatCapacity(trip.seatsLabel);
@@ -418,7 +407,8 @@ export default async function TripDetailsPage({ params }: Props) {
             <div className="trd-tabs mt-3 mt-lg-4" role="tablist">
               <a href="#trd-section-itinerary" className="trd-tab active">Өдрийн хөтөлбөр</a>
               <a href="#trd-section-about" className="trd-tab">Аяллын тухай</a>
-              <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
+              {hasComparison ? <a href="#trd-section-included" className="trd-tab">Юу багтсан</a> : null}
+              {tripNotes.length > 0 ? <a href="#trd-section-notes" className="trd-tab">Санамж</a> : null}
               <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
             </div>
 
@@ -438,28 +428,47 @@ export default async function TripDetailsPage({ params }: Props) {
             </div>
 
             {/* Comparison */}
-            <div id="trd-section-included" className="trd-comp-grid trd-scroll-anchor">
-              <div className="trd-comp-box">
-                <h3 className="trd-comp-title">Юу багтсан</h3>
+            {hasComparison ? (
+              <div id="trd-section-included" className="trd-comp-grid trd-scroll-anchor">
+                {includedItems.length > 0 ? (
+                  <div className="trd-comp-box">
+                    <h3 className="trd-comp-title">Юу багтсан</h3>
+                    <ul className="trd-comp-list">
+                      {includedItems.map((item, idx) => (
+                        <li key={`inc-${idx}-${item}`} className="trd-comp-item included">
+                          <i className="fa-solid fa-circle-check"></i> <div>{item}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {excludedItems.length > 0 ? (
+                  <div className="trd-comp-box">
+                    <h3 className="trd-comp-title">Багтаагүй</h3>
+                    <ul className="trd-comp-list">
+                      {excludedItems.map((item, idx) => (
+                        <li key={`exc-${idx}-${item}`} className="trd-comp-item excluded">
+                          <i className="fa-solid fa-circle-xmark"></i> <div>{item}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {tripNotes.length > 0 ? (
+              <div id="trd-section-notes" className="mb-5 trd-scroll-anchor">
+                <h2 className="fw-bold mb-3">Санамж</h2>
                 <ul className="trd-comp-list">
-                  {includedItems.map((item, idx) => (
-                    <li key={`inc-${idx}-${item}`} className="trd-comp-item included">
-                      <i className="fa-solid fa-circle-check"></i> <div>{item}</div>
+                  {tripNotes.map((item, idx) => (
+                    <li key={`note-${idx}-${item}`} className="trd-comp-item included">
+                      <i className="fa-solid fa-circle-info"></i> <div>{item}</div>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="trd-comp-box">
-                <h3 className="trd-comp-title">Багтаагүй</h3>
-                <ul className="trd-comp-list">
-                  {excludedItems.map((item, idx) => (
-                    <li key={`exc-${idx}-${item}`} className="trd-comp-item excluded">
-                      <i className="fa-solid fa-circle-xmark"></i> <div>{item}</div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            ) : null}
 
           </div>
 
@@ -575,34 +584,6 @@ export default async function TripDetailsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Footer Stats */}
-      <div className="trd-footer-stats">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-3 trd-stat-item">
-              <div className="trd-stat-val">12,500+</div>
-              <div className="trd-stat-lbl">Аяллын бизнес эрхлэгч</div>
-            </div>
-            <div className="col-md-3 trd-stat-item">
-              <div className="trd-stat-val">3,200+</div>
-              <div className="trd-stat-lbl">Итгэлтэй гишүүд</div>
-            </div>
-            <div className="col-md-2 trd-stat-item">
-              <div className="trd-stat-val">180+</div>
-              <div className="trd-stat-lbl">Бизнес уулзалт</div>
-            </div>
-            <div className="col-md-2 trd-stat-item">
-              <div className="trd-stat-val">98%</div>
-              <div className="trd-stat-lbl">Сэтгэл ханамж</div>
-            </div>
-            <div className="col-md-2 trd-stat-item">
-              <div className="trd-stat-val">24ц</div>
-              <div className="trd-stat-lbl">Түргэн дэмжлэг</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
     </div>
     </TripDetailsBookingRegisterProvider>
   );

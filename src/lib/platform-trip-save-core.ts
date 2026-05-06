@@ -118,6 +118,7 @@ function buildExtrasPayload(
   tripRegistrationCloseDate: string,
   tripIncludedItems: string[],
   tripExcludedItems: string[],
+  tripNotes: string[],
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
@@ -157,6 +158,11 @@ function buildExtrasPayload(
     payload.trip_excluded_items = tripExcludedItems;
   } else {
     delete payload.trip_excluded_items;
+  }
+  if (tripNotes.length > 0) {
+    payload.trip_notes = tripNotes;
+  } else {
+    delete payload.trip_notes;
   }
   payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
   payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
@@ -221,13 +227,17 @@ export async function executeSaveTrip(
   const tripHelpEmail = String(formData.get("trip_help_email") ?? "").trim();
   const tripHelpChatUrl = String(formData.get("trip_help_chat_url") ?? "").trim();
   const tripRegistrationCloseDate = String(formData.get("trip_registration_close_date") ?? "").trim();
-  const tripIncludedItems = String(formData.get("trip_included_items") ?? "")
-    .split(/\r?\n/g)
-    .map((line) => line.trim())
+  const tripIncludedItems = formData
+    .getAll("trip_included_items[]")
+    .map((v) => String(v).trim())
     .filter(Boolean);
-  const tripExcludedItems = String(formData.get("trip_excluded_items") ?? "")
-    .split(/\r?\n/g)
-    .map((line) => line.trim())
+  const tripExcludedItems = formData
+    .getAll("trip_excluded_items[]")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const tripNotes = formData
+    .getAll("trip_notes[]")
+    .map((v) => String(v).trim())
     .filter(Boolean);
   const totalSeats = Math.max(0, Number(String(formData.get("trip_total_seats") ?? "30")) || 30);
   const advancePct = Math.max(0, Number(String(formData.get("trip_advance_percent") ?? "20")) || 20);
@@ -344,6 +354,7 @@ export async function executeSaveTrip(
     tripRegistrationCloseDate,
     tripIncludedItems,
     tripExcludedItems,
+    tripNotes,
     totalSeats,
     advancePct,
     bookingTiersParsed,
