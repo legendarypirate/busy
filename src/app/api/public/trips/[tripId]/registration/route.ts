@@ -208,6 +208,30 @@ async function styledInvoicePdfBytes(params: {
     if (cur) lines.push(cur);
     return lines.length > 0 ? lines : ["-"];
   };
+  const wrapServiceLines = (text: string, maxWidth: number, fontSize: number): string[] => {
+    const base = wrapLines(text, maxWidth, fontSize);
+    if (base.length > 1) return base;
+    const src = (text || "").replace(/\s+/g, " ").trim();
+    if (!src) return ["-"];
+    // Force 2-line wrapping for long single-line service names.
+    if (src.length < 36) return base;
+    const words = src.split(" ");
+    if (words.length < 2) return base;
+    const half = Math.floor(words.length / 2);
+    let splitAt = half;
+    for (let i = half; i < words.length - 1; i++) {
+      const left = words.slice(0, i + 1).join(" ");
+      if (bodyFont.widthOfTextAtSize(left, fontSize) <= maxWidth) {
+        splitAt = i + 1;
+      } else {
+        break;
+      }
+    }
+    const l1 = words.slice(0, splitAt).join(" ").trim();
+    const l2 = words.slice(splitAt).join(" ").trim();
+    if (!l1 || !l2) return base;
+    return [l1, l2];
+  };
 
   const dark = rgb(0.13, 0.21, 0.3);
   const muted = rgb(0.43, 0.48, 0.54);
@@ -340,7 +364,7 @@ async function styledInvoicePdfBytes(params: {
   });
   y -= headH;
   for (const row of rowsData) {
-    const itemLines = wrapLines(row[1], cols[1] - 12, 9.2);
+    const itemLines = wrapServiceLines(row[1], cols[1] - 12, 9.2);
     const rowH = Math.max(28, 12 + itemLines.length * 12);
     page.drawRectangle({ x: tX, y: y - rowH, width: tW, height: rowH, borderWidth: 0.6, borderColor: lineColor });
 
