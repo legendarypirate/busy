@@ -54,7 +54,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     bits.join(" · ") || plainDesc || `${dest} — BUSY.mn олон улсын бизнес аялал.`;
 
   const base = marketingSiteOrigin();
-  const ogImage = `${base}/trip-details/${tripId}/opengraph-image`;
+  const ogImageGenerated = `${base}/trip-details/${tripId}/opengraph-image`;
+  let cover = mediaUrl(trip.coverImageUrl || "");
+  const heroUrl = mediaUrl(extras.trip_details_hero_url);
+  if (heroUrl) cover = heroUrl;
+  let ogImageCover: string | null = null;
+  if (cover) {
+    ogImageCover =
+      cover.startsWith("http://") || cover.startsWith("https://")
+        ? cover
+        : `${base}${cover.startsWith("/") ? cover : `/${cover}`}`;
+  }
+  const ogImages = [
+    ...(ogImageCover ? [{ url: ogImageCover, width: 1200, height: 630, alt: dest }] : []),
+    { url: ogImageGenerated, width: 1200, height: 630, alt: dest },
+  ];
   const canonical = `${base}/trip-details/${tripId}`;
   const title = `${dest} | BUSY.mn`;
   const descShort = ogDescription.length > 300 ? `${ogDescription.slice(0, 297)}…` : ogDescription;
@@ -69,13 +83,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "BUSY.mn",
       locale: "mn_MN",
       type: "website",
-      images: [{ url: ogImage, width: 1200, height: 630, alt: dest }],
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title: dest,
       description: descShort.length > 200 ? `${descShort.slice(0, 197)}…` : descShort,
-      images: [ogImage],
+      images: [ogImageCover || ogImageGenerated],
     },
     alternates: { canonical },
   };

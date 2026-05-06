@@ -20,6 +20,14 @@ const PLACEHOLDER_TRIP = "https://images.unsplash.com/photo-1528360983277-13d401
 const PLACEHOLDER_EVENT = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=600&q=80";
 const PLACEHOLDER_NEWS = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80";
 
+function stripHtmlToPlainText(raw: string): string {
+  return raw
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Top hero + dashboard mockup (hidden when `SHOW_HOME_HERO_V3_SECTION` is false). */
 function HomeHeroV3Section({ data }: { data: HomePayload }) {
   const hero = data.heroTrip;
@@ -297,7 +305,7 @@ export default async function HomePage() {
                 const tTitle = trip.destination || "Бизнес аялал";
                 const tImage = mediaUrl(trip.coverImageUrl) || PLACEHOLDER_TRIP;
                 const tDate = trip.startDate ? `${formatMnDate(trip.startDate)}${trip.endDate ? ` - ${formatMnDate(trip.endDate).slice(5)}` : ""}` : "Огноо удахгүй";
-                const tDesc = trip.description || "Бизнес аяллын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.";
+                const tDesc = stripHtmlToPlainText(trip.description || "") || "Бизнес аяллын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.";
                 const tStatus = trip.statusLabel || "Идэвхтэй";
 
                 return (
