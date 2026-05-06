@@ -69,6 +69,29 @@ export async function uploadBufferToCloudinary(input: {
   return { secure_url: result.secure_url };
 }
 
+export async function uploadRawBufferToCloudinary(input: {
+  folder: string;
+  mime: string;
+  buffer: Buffer;
+  publicId: string;
+}): Promise<{ secure_url: string }> {
+  configureCloudinary();
+  const dataUri = `data:${input.mime};base64,${input.buffer.toString("base64")}`;
+  const result = await cloudinary.uploader.upload(dataUri, {
+    folder: input.folder.replace(/^\/+|\/+$/g, ""),
+    resource_type: "raw",
+    use_filename: false,
+    unique_filename: false,
+    overwrite: true,
+    public_id: input.publicId.replace(/\.pdf$/i, ""),
+    format: "pdf",
+  });
+  if (!result.secure_url) {
+    throw new Error("Cloudinary raw upload returned no secure_url");
+  }
+  return { secure_url: result.secure_url };
+}
+
 export async function destroyCloudinaryBySecureUrl(url: string | null | undefined): Promise<void> {
   const publicId = extractPublicIdFromCloudinaryUrl(url ?? "");
   if (!publicId || !isCloudinaryConfigured()) return;

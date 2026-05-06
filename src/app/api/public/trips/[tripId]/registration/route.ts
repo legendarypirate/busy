@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
 import { prisma } from "@/lib/prisma";
 import { readExtras } from "@/components/platform/trips/trip-editor-helpers";
+import { isCloudinaryConfigured, uploadRawBufferToCloudinary } from "@/lib/cloudinary-platform";
 import {
   getPublishedTripRegistrationDrawerSchema,
   submitPublicFormResponseByTripId,
@@ -176,6 +177,7 @@ async function styledInvoicePdfBytes(params: {
     email: string;
     bankAccount: string;
   };
+  qrPayload?: string;
 }): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
@@ -330,21 +332,47 @@ async function styledInvoicePdfBytes(params: {
   ];
   const headH = 26;
   page.drawRectangle({ x: tX, y: y - headH, width: tW, height: headH, color: headerBg });
-  const heads = ["#", "Бараа/Үйлчилгээ", "Тоо ширхэг", "Нэгж үнэ", "Нийт дүн"];
+  const heads = ["#", "Үйлчилгээ", "Тоо ширхэг", "Нэгж үнэ", "Нийт дүн"];
   let cx = tX;
   heads.forEach((h, i) => {
     page.drawText(h, { x: cx + 6, y: y - 17, size: 9.5, font: titleFont, color: rgb(1, 1, 1) });
     cx += cols[i];
   });
   y -= headH;
-  const rowH = 28;
   for (const row of rowsData) {
+    const itemLines = wrapLines(row[1], cols[1] - 12, 9.2);
+    const rowH = Math.max(28, 12 + itemLines.length * 12);
     page.drawRectangle({ x: tX, y: y - rowH, width: tW, height: rowH, borderWidth: 0.6, borderColor: lineColor });
-    let x = tX;
-    row.forEach((cell, i) => {
-      page.drawText(cell, { x: x + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25), maxWidth: cols[i] - 10 });
-      x += cols[i];
+
+    // # column
+    page.drawText(row[0], {
+      x: tX + 6,
+      y: y - 18,
+      size: 9.2,
+      font: bodyFont,
+      color: rgb(0.16, 0.2, 0.25),
     });
+
+    // Service column (wrapped)
+    const serviceX = tX + cols[0] + 6;
+    itemLines.forEach((ln, i) => {
+      page.drawText(ln, {
+        x: serviceX,
+        y: y - 18 - i * 12,
+        size: 9.2,
+        font: bodyFont,
+        color: rgb(0.16, 0.2, 0.25),
+      });
+    });
+
+    // Other fixed columns
+    const qtyX = tX + cols[0] + cols[1] + 6;
+    const unitX = qtyX + cols[2];
+    const totalX = unitX + cols[3];
+    page.drawText(row[2], { x: qtyX, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[3], { x: unitX + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[4], { x: totalX + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+
     y -= rowH;
   }
   y -= 6;
@@ -402,7 +430,7 @@ async function styledInvoicePdfBytes(params: {
   y -= 36;
 
   // Footer sign lines
-  const footerQrDataUrl = await QRCode.toDataURL(params.orderRef || "TRIP", {
+  const footerQrDataUrl = await QRCode.toDataURL(params.qrPayload || params.orderRef || "TRIP", {
     margin: 1,
     width: 96,
     color: { dark: "#1f2937", light: "#ffffff" },
@@ -455,7 +483,30 @@ async function sendInvoiceEmail(input: {
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
   const from = process.env.MAIL_FROM_ADDRESS?.trim() || "noreply@busy.mn";
   if (!apiKey) throw new Error("MAIL_CONFIG_MISSING");
-  const pdfBytes = await styledInvoicePdfBytes(input);
+  const invoicePublicId = `invoice-${input.orderRef}`.replace(/[^a-zA-Z0-9-_]/g, "-");
+  let qrPayload = input.orderRef;
+  let pdfBytes = await styledInvoicePdfBytes({ ...input, qrPayload });
+
+  if (isCloudinaryConfigured()) {
+    try {
+      const firstUpload = await uploadRawBufferToCloudinary({
+        folder: "busy/invoices",
+        mime: "application/pdf",
+        buffer: Buffer.from(pdfBytes),
+        publicId: invoicePublicId,
+      });
+      qrPayload = firstUpload.secure_url;
+      pdfBytes = await styledInvoicePdfBytes({ ...input, qrPayload });
+      await uploadRawBufferToCloudinary({
+        folder: "busy/invoices",
+        mime: "application/pdf",
+        buffer: Buffer.from(pdfBytes),
+        publicId: invoicePublicId,
+      });
+    } catch (e) {
+      console.error("[sendInvoiceEmail] cloudinary upload failed", e);
+    }
+  }
   const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6">
