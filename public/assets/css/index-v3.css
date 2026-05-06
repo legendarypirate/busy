@@ -907,6 +907,18 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+.trip-register-field input.trip-invalid,
+.trip-register-field select.trip-invalid,
+.trip-register-field textarea.trip-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.15);
+}
+
+.trip-register-fieldset.trip-invalid-group {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.12);
+}
+
 .trip-register-fieldset {
     border: 1px solid #dbe5ef;
     border-radius: 10px;

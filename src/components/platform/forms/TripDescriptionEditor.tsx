@@ -11,6 +11,7 @@ type Props = {
 
 export default function TripDescriptionEditor({ name, defaultValue, rows = 8, placeholder = "" }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const [html, setHtml] = useState(defaultValue || "");
 
   useEffect(() => {
@@ -27,19 +28,46 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
     document.execCommand(cmd, false, value);
     setHtml(el.innerHTML);
   };
+  const saveCurrentRange = () => {
+    const el = ref.current;
+    if (!el) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+    savedRangeRef.current = range.cloneRange();
+  };
+  const restoreSavedRange = () => {
+    const range = savedRangeRef.current;
+    if (!range) return false;
+    const sel = window.getSelection();
+    if (!sel) return false;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return true;
+  };
   const applyFontSize = (px: number) => {
     const el = ref.current;
     if (!el) return;
     el.focus();
-    document.execCommand("styleWithCSS", false, "true");
-    document.execCommand("fontSize", false, "7");
-    const fonts = el.querySelectorAll('font[size="7"]');
-    fonts.forEach((node) => {
-      const span = document.createElement("span");
-      span.style.fontSize = `${px}px`;
-      span.innerHTML = node.innerHTML;
-      node.replaceWith(span);
-    });
+    restoreSavedRange();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+
+    const span = document.createElement("span");
+    span.style.fontSize = `${px}px`;
+    const content = range.extractContents();
+    span.appendChild(content);
+    range.insertNode(span);
+
+    const next = document.createRange();
+    next.selectNodeContents(span);
+    next.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(next);
+    savedRangeRef.current = next.cloneRange();
     setHtml(el.innerHTML);
   };
   const insertHtml = (value: string) => {
@@ -114,7 +142,10 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
           className="form-select form-select-sm"
           style={{ width: 90 }}
           defaultValue=""
-          onMouseDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            saveCurrentRange();
+          }}
           onChange={(e) => {
             const next = Number(e.target.value);
             if (!Number.isFinite(next) || next <= 0) return;
@@ -144,6 +175,9 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
         data-placeholder={placeholder}
         dangerouslySetInnerHTML={{ __html: html }}
         onInput={(e) => setHtml((e.currentTarget as HTMLDivElement).innerHTML)}
+        onKeyUp={saveCurrentRange}
+        onMouseUp={saveCurrentRange}
+        onBlur={saveCurrentRange}
       />
       <p className="small text-muted mt-2 mb-0">Plugin toolbar: heading, list, link, center, justify, quote, break, clear formatting.</p>
     </div>

@@ -242,6 +242,38 @@ export function TripDetailsBookingRegisterProvider({
       setFeedback({ text: "Форм олдсонгүй.", kind: "error" });
       return;
     }
+    const formEl = formRef.current;
+    formEl
+      .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        "input.trip-invalid, select.trip-invalid, textarea.trip-invalid",
+      )
+      .forEach((el) => el.classList.remove("trip-invalid"));
+    formEl
+      .querySelectorAll<HTMLElement>(".trip-register-fieldset.trip-invalid-group")
+      .forEach((el) => el.classList.remove("trip-invalid-group"));
+
+    const controls = Array.from(
+      formEl.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input, select, textarea"),
+    );
+    controls.forEach((el) => {
+      if (!el.checkValidity()) {
+        el.classList.add("trip-invalid");
+      }
+    });
+    const invalidRadios = new Set<HTMLElement>();
+    controls.forEach((el) => {
+      if (el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox") && !el.checkValidity()) {
+        const fs = el.closest(".trip-register-fieldset");
+        if (fs) invalidRadios.add(fs as HTMLElement);
+      }
+    });
+    invalidRadios.forEach((fs) => fs.classList.add("trip-invalid-group"));
+    if (!formEl.checkValidity()) {
+      formEl.reportValidity();
+      setFeedback({ text: "Заавал талбаруудыг бөглөнө үү.", kind: "error" });
+      return;
+    }
+
     if (totalPax < 1) {
       setFeedback({ text: "Хамгийн багадаа нэг хүний тоо сонгоно уу.", kind: "error" });
       return;
