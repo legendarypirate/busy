@@ -202,18 +202,47 @@ async function styledInvoicePdfBytes(params: {
     color: rgb(0.88, 0.92, 1),
   });
 
-  // Meta
+  const wrapLines = (text: string, maxWidth: number, fontSize: number): string[] => {
+    const src = (text || "").replace(/\s+/g, " ").trim();
+    if (!src) return ["-"];
+    const words = src.split(" ");
+    const lines: string[] = [];
+    let cur = "";
+    for (const w of words) {
+      const next = cur ? `${cur} ${w}` : w;
+      const widthNow = bodyFont.widthOfTextAtSize(next, fontSize);
+      if (widthNow <= maxWidth) {
+        cur = next;
+      } else {
+        if (cur) lines.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.length > 0 ? lines : ["-"];
+  };
+
+  // Meta (wrapped rows)
   let y = height - 150;
   const line = (label: string, value: string, emphasize = false) => {
-    page.drawText(label, { x: 42, y, size: 10, font: bodyFont, color: rgb(0.4, 0.46, 0.56) });
-    page.drawText(value, {
-      x: 190,
-      y,
-      size: emphasize ? 13 : 11,
-      font: emphasize ? titleFont : bodyFont,
-      color: rgb(0.12, 0.16, 0.22),
+    const labelX = 42;
+    const valueX = 190;
+    const valueW = width - valueX - 42;
+    const valueSize = emphasize ? 13 : 11;
+    const lineHeight = emphasize ? 19 : 16;
+    const lines = wrapLines(value, valueW, valueSize);
+
+    page.drawText(label, { x: labelX, y, size: 10, font: bodyFont, color: rgb(0.4, 0.46, 0.56) });
+    lines.forEach((txt, idx) => {
+      page.drawText(txt, {
+        x: valueX,
+        y: y - idx * lineHeight,
+        size: valueSize,
+        font: emphasize ? titleFont : bodyFont,
+        color: rgb(0.12, 0.16, 0.22),
+      });
     });
-    y -= emphasize ? 26 : 20;
+    y -= Math.max(20, lines.length * lineHeight + 6);
   };
   line("Захиалгын дугаар", params.orderRef);
   line("Огноо", new Date().toISOString().slice(0, 10));
@@ -242,23 +271,47 @@ async function styledInvoicePdfBytes(params: {
   const rows = params.answers.slice(0, 12);
   for (const row of rows) {
     if (y < 70) break;
-    page.drawText(`• ${row.label}`, {
+    const rowTop = y;
+    const labelX = 52;
+    const valueX = 280;
+    const labelW = 210;
+    const valueW = width - valueX - 44;
+    const fs = 10;
+    const lh = 14;
+    const labelLines = wrapLines(row.label, labelW, fs);
+    const valueLines = wrapLines(row.value || "-", valueW, fs);
+    const rowLines = Math.max(labelLines.length, valueLines.length);
+    const rowH = rowLines * lh + 10;
+
+    page.drawRectangle({
       x: 42,
-      y,
-      size: 10,
-      font: bodyFont,
-      color: rgb(0.36, 0.42, 0.52),
-      maxWidth: 210,
+      y: rowTop - rowH + 4,
+      width: width - 84,
+      height: rowH,
+      color: rgb(0.985, 0.99, 1),
+      borderWidth: 1,
+      borderColor: rgb(0.92, 0.94, 0.97),
     });
-    page.drawText(row.value || "-", {
-      x: 250,
-      y,
-      size: 10,
-      font: bodyFont,
-      color: rgb(0.12, 0.16, 0.22),
-      maxWidth: width - 292,
+
+    labelLines.forEach((txt, i) => {
+      page.drawText(`${i === 0 ? "• " : "  "}${txt}`, {
+        x: labelX,
+        y: rowTop - i * lh,
+        size: fs,
+        font: bodyFont,
+        color: rgb(0.36, 0.42, 0.52),
+      });
     });
-    y -= 18;
+    valueLines.forEach((txt, i) => {
+      page.drawText(txt, {
+        x: valueX,
+        y: rowTop - i * lh,
+        size: fs,
+        font: bodyFont,
+        color: rgb(0.12, 0.16, 0.22),
+      });
+    });
+    y -= rowH + 6;
   }
 
   page.drawText(params.orderRef, {
