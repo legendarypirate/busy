@@ -29,14 +29,22 @@ async function readResponseJson<T>(res: Response): Promise<T> {
   }
 }
 
-function emptyCounts(tiers: TripCheckoutTier[]): Record<string, number> {
-  return tiers.reduce(
+function defaultCounts(tiers: TripCheckoutTier[], maxPassengers: number): Record<string, number> {
+  const counts = tiers.reduce(
     (acc, t) => {
       acc[t.id] = 0;
       return acc;
     },
     {} as Record<string, number>,
   );
+  if (tiers.length === 0 || maxPassengers < 1) return counts;
+
+  let highest = tiers[0];
+  for (const t of tiers) {
+    if (t.priceMnt > highest.priceMnt) highest = t;
+  }
+  counts[highest.id] = 1;
+  return counts;
 }
 
 export type TripDetailsBookingContextValue = {
@@ -96,7 +104,7 @@ export function TripDetailsBookingRegisterProvider({
   children,
 }: ProviderProps) {
   const [departure, setDeparture] = useState(defaultDepartureIso);
-  const [counts, setCounts] = useState<Record<string, number>>(() => emptyCounts(tiers));
+  const [counts, setCounts] = useState<Record<string, number>>(() => defaultCounts(tiers, maxPassengers));
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [schema, setSchema] = useState<HomeTripDrawerSchemaItem[]>([]);
@@ -116,8 +124,8 @@ export function TripDetailsBookingRegisterProvider({
     [tiers],
   );
   useEffect(() => {
-    setCounts(emptyCounts(tiers));
-  }, [tripId, tiersSig, tiers]);
+    setCounts(defaultCounts(tiers, maxPassengers));
+  }, [tripId, tiersSig, tiers, maxPassengers]);
 
   const totalPax = useMemo(() => tiers.reduce((s, t) => s + (counts[t.id] ?? 0), 0), [counts, tiers]);
   const checkoutTotalMnt = useMemo(

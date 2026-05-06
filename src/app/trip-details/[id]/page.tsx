@@ -358,8 +358,8 @@ export default async function TripDetailsPage({ params }: Props) {
             <div className="col-lg-8">
               <div className="trd-status-badge"><i className="fa-solid fa-circle-check"></i> Бүртгэл нээлттэй</div>
               {registrationCloseDisplay ? (
-                <div className="small text-white opacity-90 mt-2 mb-1 d-flex align-items-center gap-2 flex-wrap">
-                  <span className="rounded-pill bg-white bg-opacity-15 px-3 py-1">
+                <div className="small text-dark mt-2 mb-1 d-flex align-items-center gap-2 flex-wrap">
+                  <span className="rounded-pill bg-white px-3 py-1 shadow-sm">
                     <i className="fa-regular fa-calendar-xmark me-2" aria-hidden="true" />
                     Бүртгэл хаагдах: <strong className="ms-1">{registrationCloseDisplay}</strong>
                   </span>
