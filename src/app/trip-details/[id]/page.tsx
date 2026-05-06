@@ -11,6 +11,7 @@ import {
 } from "@/components/trip-details/trip-details-booking-context";
 import { TripDetailsBookSidebarClient } from "@/components/trip-details/TripDetailsBookSidebarClient";
 import { TripDetailsSocialShare } from "@/components/trip-details/TripDetailsSocialShare";
+import { TripDetailsRegistrationQr } from "@/components/trip-details/TripDetailsRegistrationQr";
 import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { buildTripItineraryAccordionDays } from "@/lib/trip-itinerary-for-trip-details";
@@ -535,6 +536,7 @@ export default async function TripDetailsPage({ params }: Props) {
                 maxPassengers={seatCapacity}
                 capacityNote={bookingCapacityNote}
               >
+                <TripDetailsRegistrationQr />
                 <div className="trd-summary-grid" role="list">
                   <div className="trd-summary-cell" role="listitem">
                     <span className="trd-summary-cell__icon" aria-hidden="true"><i className="fa-regular fa-calendar-check"></i></span>

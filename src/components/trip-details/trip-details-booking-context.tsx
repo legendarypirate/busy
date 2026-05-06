@@ -13,7 +13,6 @@ import {
 import { TripRegistrationDrawerShell } from "@/components/trip-registration/TripRegistrationDrawerShell";
 import { buildTripDrawerAnswersFromForm } from "@/lib/trip-registration-form/drawer-build-answers";
 import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
-import { TripDetailsRegistrationQr } from "@/components/trip-details/TripDetailsRegistrationQr";
 import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
 
 async function readResponseJson<T>(res: Response): Promise<T> {
@@ -445,7 +444,9 @@ type SidebarCtasProps = {
 };
 
 export function TripDetailsSidebarRegisterCtas({ isLoggedIn, payTripUrl, qpayLogoUrl }: SidebarCtasProps) {
-  const { openRegister } = useTripDetailsBooking();
+  const { openRegister, totalPax, checkoutTotalMnt } = useTripDetailsBooking();
+  const formatMnt = (n: number) => n.toLocaleString("mn-MN", { maximumFractionDigits: 0 });
+  const priceSub = totalPax === 0 ? "Түвшин сонгоно уу · урьдчилгаа төлбөр" : `${totalPax} хүн · урьдчилгаа төлбөр`;
   return (
     <>
       <div className="trd-cta-grid trd-cta-grid--stacked">
@@ -465,12 +466,13 @@ export function TripDetailsSidebarRegisterCtas({ isLoggedIn, payTripUrl, qpayLog
             <span>Бүртгүүлэх</span>
           </button>
         )}
-        <button className="trd-btn-contact" type="button">
-          <i className="fa-solid fa-headset" />
-          <span>Зөвлөх</span>
-        </button>
+        <div className="trd-btn-contact" role="status" aria-live="polite">
+          <span className="fw-bold" style={{ fontSize: "1rem", color: "var(--trd-text)" }}>
+            {formatMnt(checkoutTotalMnt)} ₮
+          </span>
+          <span>{priceSub}</span>
+        </div>
       </div>
-      <TripDetailsRegistrationQr />
     </>
   );
 }

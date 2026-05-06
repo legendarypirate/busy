@@ -37,11 +37,8 @@ export function TripDetailsBookSidebarClient({
   capacityNote,
   children,
 }: Props) {
-  const { departure, counts, bump, clearTier, totalPax, checkoutTotalMnt } = useTripDetailsBooking();
+  const { departure, counts, bump, clearTier, totalPax } = useTripDetailsBooking();
   const departureDisplay = departureIsoToDisplay(departure);
-
-  const checkoutSub =
-    totalPax === 0 ? "Түвшин сонгоно уу · урьдчилгаа төлбөр" : `${totalPax} хүн · урьдчилгаа төлбөр`;
 
   if (tiers.length === 0) {
     return null;
@@ -50,12 +47,6 @@ export function TripDetailsBookSidebarClient({
   return (
     <>
       <div className="trd-book-panel">
-        <div className="trd-price-row">
-          <div className="trd-price-tag">
-            {formatMnt(checkoutTotalMnt)} <span className="trd-price-cur">₮</span>
-          </div>
-          <div className="trd-price-sub">{checkoutSub}</div>
-        </div>
         {children}
       </div>
 

@@ -39,6 +39,7 @@ export function TripRegistrationDrawerShell({
   beforeActions,
   paymentMode = "single",
 }: Props) {
+  const isSubmitting = feedback.kind === "loading";
   const feedbackClass =
     feedback.kind === ""
       ? "trip-register-feedback"
@@ -210,27 +211,48 @@ export function TripRegistrationDrawerShell({
                   name="payment_action"
                   value="qpay"
                   className="btn-qpay"
-                  disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+                  disabled={loading || schema.length === 0 || isSubmitting}
                 >
-                  QPay-ээр төлөх
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                      Илгээж байна...
+                    </>
+                  ) : (
+                    "QPay-ээр төлөх"
+                  )}
                 </button>
                 <button
                   type="submit"
                   name="payment_action"
                   value="invoice"
                   className="btn-exact-outline"
-                  disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+                  disabled={loading || schema.length === 0 || isSubmitting}
                 >
-                  Нэхэмжлэх авах
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                      Илгээж байна...
+                    </>
+                  ) : (
+                    "Нэхэмжлэх авах"
+                  )}
                 </button>
               </>
             ) : (
               <button
                 type="submit"
                 className="btn-qpay"
-                disabled={loading || schema.length === 0 || feedback.kind === "loading" || feedback.kind === "success"}
+                disabled={loading || schema.length === 0 || isSubmitting || feedback.kind === "success"}
               >
-                Бүртгүүлэх
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                    Илгээж байна...
+                  </>
+                ) : (
+                  "Бүртгүүлэх"
+                )}
               </button>
             )}
           </div>
