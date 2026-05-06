@@ -175,7 +175,7 @@
 @media (min-width: 992px) {
     .trd-aside-col {
         position: sticky;
-        top: 96px;
+        top: 12px;
         align-self: start;
         z-index: 20;
     }
@@ -184,6 +184,20 @@
         max-height: none;
         overflow: visible;
         padding-right: 0;
+        animation: trdAsideFloat 4.8s ease-in-out infinite;
+        transform-origin: center top;
+    }
+}
+
+@keyframes trdAsideFloat {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .trd-aside-inner {
+        animation: none !important;
     }
 }
 
@@ -288,6 +302,13 @@
 }
 .trd-cta-grid--stacked {
     grid-template-columns: 1fr;
+}
+.trd-cta-grid--stacked .btn.btn-qpay {
+    min-height: 58px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 a.trd-btn-qpay,
 a.trd-btn-trip-register {

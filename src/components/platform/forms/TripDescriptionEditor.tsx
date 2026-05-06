@@ -27,6 +27,21 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
     document.execCommand(cmd, false, value);
     setHtml(el.innerHTML);
   };
+  const applyFontSize = (px: number) => {
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand("fontSize", false, "7");
+    const fonts = el.querySelectorAll('font[size="7"]');
+    fonts.forEach((node) => {
+      const span = document.createElement("span");
+      span.style.fontSize = `${px}px`;
+      span.innerHTML = node.innerHTML;
+      node.replaceWith(span);
+    });
+    setHtml(el.innerHTML);
+  };
   const insertHtml = (value: string) => {
     const el = ref.current;
     if (!el) return;
@@ -95,6 +110,29 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
         >
           <i className="fa-solid fa-eraser" />
         </button>
+        <select
+          className="form-select form-select-sm"
+          style={{ width: 90 }}
+          defaultValue=""
+          onMouseDown={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            const next = Number(e.target.value);
+            if (!Number.isFinite(next) || next <= 0) return;
+            applyFontSize(next);
+            e.currentTarget.value = "";
+          }}
+          aria-label="Font size"
+          title="Font size"
+        >
+          <option value="">Size</option>
+          <option value="12">12px</option>
+          <option value="14">14px</option>
+          <option value="16">16px</option>
+          <option value="18">18px</option>
+          <option value="20">20px</option>
+          <option value="24">24px</option>
+          <option value="28">28px</option>
+        </select>
       </div>
       <input type="hidden" name={name} value={html} />
       <div
