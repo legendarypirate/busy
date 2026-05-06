@@ -9,6 +9,7 @@ export const size = {
 
 export const contentType = "image/png";
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -20,15 +21,19 @@ export default async function Image({ params }: Props) {
   let sub = "Олон улсын бизнес аялал";
 
   if (!Number.isNaN(tripId)) {
-    const trip = await dbBusinessTrip().findUnique({
-      where: { id: tripId },
-      select: { destination: true, startDate: true, endDate: true },
-    });
-    if (trip) {
-      title = (trip.destination || "").trim() || title;
-      const start = trip.startDate ? formatMnDate(new Date(trip.startDate)).replace(/-/g, ".") : "";
-      const end = trip.endDate ? formatMnDate(new Date(trip.endDate)).replace(/-/g, ".") : "";
-      sub = start && end ? `${start} — ${end}` : sub;
+    try {
+      const trip = await dbBusinessTrip().findUnique({
+        where: { id: tripId },
+        select: { destination: true, startDate: true, endDate: true },
+      });
+      if (trip) {
+        title = (trip.destination || "").trim() || title;
+        const start = trip.startDate ? formatMnDate(new Date(trip.startDate)).replace(/-/g, ".") : "";
+        const end = trip.endDate ? formatMnDate(new Date(trip.endDate)).replace(/-/g, ".") : "";
+        sub = start && end ? `${start} — ${end}` : sub;
+      }
+    } catch {
+      // Keep safe fallback title/sub so OG image always renders for crawlers.
     }
   }
 

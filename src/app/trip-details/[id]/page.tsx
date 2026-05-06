@@ -67,8 +67,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : `${base}${cover.startsWith("/") ? cover : `/${cover}`}`;
   }
   const ogImages = [
-    ...(ogImageCover ? [{ url: ogImageCover, width: 1200, height: 630, alt: dest }] : []),
     { url: ogImageGenerated, width: 1200, height: 630, alt: dest },
+    ...(ogImageCover ? [{ url: ogImageCover, width: 1200, height: 630, alt: dest }] : []),
   ];
   const canonical = `${base}/trip-details/${tripId}`;
   const title = `${dest} | BUSY.mn`;
@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: dest,
       description: descShort.length > 200 ? `${descShort.slice(0, 197)}…` : descShort,
-      images: [ogImageCover || ogImageGenerated],
+      images: [ogImageGenerated, ...(ogImageCover ? [ogImageCover] : [])],
     },
     alternates: { canonical },
   };
