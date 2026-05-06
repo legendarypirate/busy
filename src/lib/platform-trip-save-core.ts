@@ -116,6 +116,8 @@ function buildExtrasPayload(
   tripHelpEmail: string,
   tripHelpChatUrl: string,
   tripRegistrationCloseDate: string,
+  tripIncludedItems: string[],
+  tripExcludedItems: string[],
   totalSeats: number,
   advancePercent: number,
   bookingTiers: TripExtrasBookingTier[],
@@ -145,6 +147,16 @@ function buildExtrasPayload(
     payload.trip_registration_close_date = closeD;
   } else {
     delete payload.trip_registration_close_date;
+  }
+  if (tripIncludedItems.length > 0) {
+    payload.trip_included_items = tripIncludedItems;
+  } else {
+    delete payload.trip_included_items;
+  }
+  if (tripExcludedItems.length > 0) {
+    payload.trip_excluded_items = tripExcludedItems;
+  } else {
+    delete payload.trip_excluded_items;
   }
   payload.total_seats = Number.isFinite(totalSeats) ? totalSeats : 30;
   payload.advance_percent = Number.isFinite(advancePercent) ? advancePercent : 20;
@@ -209,6 +221,14 @@ export async function executeSaveTrip(
   const tripHelpEmail = String(formData.get("trip_help_email") ?? "").trim();
   const tripHelpChatUrl = String(formData.get("trip_help_chat_url") ?? "").trim();
   const tripRegistrationCloseDate = String(formData.get("trip_registration_close_date") ?? "").trim();
+  const tripIncludedItems = String(formData.get("trip_included_items") ?? "")
+    .split(/\r?\n/g)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const tripExcludedItems = String(formData.get("trip_excluded_items") ?? "")
+    .split(/\r?\n/g)
+    .map((line) => line.trim())
+    .filter(Boolean);
   const totalSeats = Math.max(0, Number(String(formData.get("trip_total_seats") ?? "30")) || 30);
   const advancePct = Math.max(0, Number(String(formData.get("trip_advance_percent") ?? "20")) || 20);
 
@@ -322,6 +342,8 @@ export async function executeSaveTrip(
     tripHelpEmail,
     tripHelpChatUrl,
     tripRegistrationCloseDate,
+    tripIncludedItems,
+    tripExcludedItems,
     totalSeats,
     advancePct,
     bookingTiersParsed,

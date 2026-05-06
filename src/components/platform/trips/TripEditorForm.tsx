@@ -423,6 +423,38 @@ export default function TripEditorForm({
             </div>
           </div>
 
+          <div className="tps-form-section mt-3">
+            <div className="tps-section-head">
+              <div className="tps-section-num">8c</div>
+              <span className="tps-section-title">Trip-details — Багтсан / Багтаагүй</span>
+            </div>
+            <p className="small text-muted mb-3">
+              Нийтийн <code>/trip-details/:id</code> дээрх «Юу багтсан» болон «Багтаагүй» жагсаалтыг мөр тус бүрээр оруулна.
+            </p>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="pm-label">Юу багтсан (мөр тус бүр)</label>
+                <textarea
+                  className="pm-input"
+                  name="trip_included_items"
+                  rows={6}
+                  placeholder={"Жишээ:\n4-5 одтой зочид буудлын байр\nӨглөө, оройн зоог"}
+                  defaultValue={extras.trip_included_items.join("\n")}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="pm-label">Багтаагүй (мөр тус бүр)</label>
+                <textarea
+                  className="pm-input"
+                  name="trip_excluded_items"
+                  rows={6}
+                  placeholder={"Жишээ:\nОлон улсын нислэгийн тийз\nВизийн хураамж"}
+                  defaultValue={extras.trip_excluded_items.join("\n")}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="tps-form-section mt-4">
             <div className="tps-section-head justify-content-between">
               <div className="d-flex align-items-center gap-2">

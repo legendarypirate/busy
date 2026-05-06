@@ -67,6 +67,16 @@ function readBookingTiers(raw: unknown): TripExtrasBookingTier[] {
   return out;
 }
 
+function readStringList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const row of raw) {
+    const line = String(row ?? "").trim();
+    if (line) out.push(line);
+  }
+  return out;
+}
+
 export function readExtras(raw: unknown): {
   short_description: string;
   location: string;
@@ -84,6 +94,10 @@ export function readExtras(raw: unknown): {
   trip_help_chat_url: string;
   /** YYYY-MM-DD; shown on public trip-details; empty → hidden. */
   trip_registration_close_date: string;
+  /** Included list for `/trip-details/:id` comparison section. */
+  trip_included_items: string[];
+  /** Excluded list for `/trip-details/:id` comparison section. */
+  trip_excluded_items: string[];
 } {
   const d = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -98,6 +112,8 @@ export function readExtras(raw: unknown): {
     trip_help_email: String(d.trip_help_email ?? "").trim(),
     trip_help_chat_url: String(d.trip_help_chat_url ?? "").trim(),
     trip_registration_close_date: String(d.trip_registration_close_date ?? "").trim(),
+    trip_included_items: readStringList(d.trip_included_items),
+    trip_excluded_items: readStringList(d.trip_excluded_items),
   };
 }
 

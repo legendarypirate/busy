@@ -126,6 +126,19 @@ function tripManagerTelParts(raw: string): { href: string; label: string } | nul
 }
 
 const TRIP_HELP_EMAIL_DEFAULT = "travel@busy.mn";
+const TRIP_INCLUDED_DEFAULTS = [
+  "4-5 одтой зочид буудлын байр",
+  "Өглөө, оройн зоог",
+  "Бүх хотын тээвэр, даатгал",
+  "Үйлдвэр, компанийн зочлох үйлчилгээ",
+  "Орчуулга, бизнес зөвлөх үйлчилгээ",
+];
+const TRIP_EXCLUDED_DEFAULTS = [
+  "Олон улсын нислэгийн тийз",
+  "Хувийн хэрэгцээ, дэлгүүр хэсэх",
+  "Визийн хураамж",
+  "Аяллын даатгал (заавал биш)",
+];
 
 /** Display + mailto from admin email; empty uses site default. */
 function tripHelpEmailParts(raw: string): { label: string; href: string } {
@@ -274,6 +287,8 @@ export default async function TripDetailsPage({ params }: Props) {
     trip.description?.replace(/<[^>]*>?/gm, "").trim() ||
     "BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.";
   const tripAbout = stripLegacyTripStaticHighlights(tripAboutRaw);
+  const includedItems = extras.trip_included_items.length > 0 ? extras.trip_included_items : TRIP_INCLUDED_DEFAULTS;
+  const excludedItems = extras.trip_excluded_items.length > 0 ? extras.trip_excluded_items : TRIP_EXCLUDED_DEFAULTS;
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
   const seatCapacity = parseSeatCapacity(trip.seatsLabel);
@@ -401,15 +416,10 @@ export default async function TripDetailsPage({ params }: Props) {
             
             {/* Tabs (scroll to sections) */}
             <div className="trd-tabs mt-3 mt-lg-4" role="tablist">
-              <a href="#trd-section-about" className="trd-tab active">Аяллын тухай</a>
-              <a href="#trd-section-itinerary" className="trd-tab">Хөтөлбөр</a>
+              <a href="#trd-section-itinerary" className="trd-tab active">Өдрийн хөтөлбөр</a>
+              <a href="#trd-section-about" className="trd-tab">Аяллын тухай</a>
               <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
               <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
-            </div>
-
-            {/* Itinerary — vertical accordion */}
-            <div id="trd-section-itinerary" className="mb-5 trd-scroll-anchor">
-              <TripItineraryAccordion days={scheduleDays} fallbackCover={tripCover} />
             </div>
 
             {/* About Section — admin text only (no placeholder image; avoids cramped two-column layout). */}
@@ -422,25 +432,31 @@ export default async function TripDetailsPage({ params }: Props) {
               />
             </div>
 
+            {/* Itinerary — vertical accordion */}
+            <div id="trd-section-itinerary" className="mb-5 trd-scroll-anchor">
+              <TripItineraryAccordion days={scheduleDays} fallbackCover={tripCover} />
+            </div>
+
             {/* Comparison */}
             <div id="trd-section-included" className="trd-comp-grid trd-scroll-anchor">
               <div className="trd-comp-box">
                 <h3 className="trd-comp-title">Юу багтсан</h3>
                 <ul className="trd-comp-list">
-                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>4-5 одтой зочид буудлын байр</div></li>
-                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Өглөө, оройн зоог</div></li>
-                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Бүх хотын тээвэр, даатгал</div></li>
-                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Үйлдвэр, компанийн зочлох үйлчилгээ</div></li>
-                  <li className="trd-comp-item included"><i className="fa-solid fa-circle-check"></i> <div>Орчуулга, бизнес зөвлөх үйлчилгээ</div></li>
+                  {includedItems.map((item, idx) => (
+                    <li key={`inc-${idx}-${item}`} className="trd-comp-item included">
+                      <i className="fa-solid fa-circle-check"></i> <div>{item}</div>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div className="trd-comp-box">
                 <h3 className="trd-comp-title">Багтаагүй</h3>
                 <ul className="trd-comp-list">
-                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Олон улсын нислэгийн тийз</div></li>
-                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Хувийн хэрэгцээ, дэлгүүр хэсэх</div></li>
-                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Визийн хураамж</div></li>
-                  <li className="trd-comp-item excluded"><i className="fa-solid fa-circle-xmark"></i> <div>Аяллын даатгал (заавал биш)</div></li>
+                  {excludedItems.map((item, idx) => (
+                    <li key={`exc-${idx}-${item}`} className="trd-comp-item excluded">
+                      <i className="fa-solid fa-circle-xmark"></i> <div>{item}</div>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
