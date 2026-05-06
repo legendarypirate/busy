@@ -297,6 +297,8 @@ async function styledInvoicePdfBytes(params: {
     ["Нэхэмжлэл:", new Date().toISOString().slice(0, 10)],
     ["Дуусах:", new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)],
   ];
+  const payerPhone = pick("утас", "phone");
+  const payerEmail = pick("имэйл", "email", "e-mail");
 
   const drawRows = (rows: [string, string][], startX: number, startY: number, maxW: number) => {
     let rowY = startY;
@@ -390,15 +392,34 @@ async function styledInvoicePdfBytes(params: {
   y -= 12;
   page.drawLine({ start: { x: tX, y }, end: { x: tX + tW, y }, thickness: 0.6, color: lineColor });
   y -= 16;
-  const noteText =
-    params.answers.find((a) => /тэмдэглэл|note|нэмэлт/i.test(a.label.toLowerCase()))?.value ||
-    params.answers.map((a) => a.value).join(" • ").slice(0, 140);
-  page.drawText(noteText || "-", { x: tX, y, size: 10, font: bodyFont, color: rgb(0.2, 0.24, 0.3), maxWidth: tW });
-  y -= 38;
+  const noteLines = [`Утас: ${payerPhone || "-"}`, `Имэйл: ${payerEmail || "-"}`];
+  for (const lineText of noteLines) {
+    page.drawText(lineText, { x: tX, y, size: 10, font: bodyFont, color: rgb(0.2, 0.24, 0.3), maxWidth: tW });
+    y -= 16;
+  }
+  y -= 22;
   page.drawLine({ start: { x: tX, y }, end: { x: tX + tW, y }, thickness: 0.6, color: lineColor });
   y -= 36;
 
   // Footer sign lines
+  const footerQrDataUrl = await QRCode.toDataURL(params.orderRef || "TRIP", {
+    margin: 1,
+    width: 96,
+    color: { dark: "#1f2937", light: "#ffffff" },
+  });
+  const footerQrBytes = Buffer.from(footerQrDataUrl.split(",")[1] || "", "base64");
+  const footerQrImage = await pdf.embedPng(footerQrBytes);
+  const qrSize = 84;
+  const qrY = Math.max(18, y - 24);
+  page.drawImage(footerQrImage, { x: tX, y: qrY, width: qrSize, height: qrSize });
+  page.drawText(params.orderRef, {
+    x: tX,
+    y: qrY - 12,
+    size: 8.5,
+    font: bodyFont,
+    color: muted,
+  });
+
   page.drawText("Дарга......................... /................../", { x: tX + 200, y, size: 10, font: bodyFont, color: muted });
   y -= 18;
   page.drawText("Хүлээн авсан ..................... /................../", { x: tX + 200, y, size: 10, font: bodyFont, color: muted });
