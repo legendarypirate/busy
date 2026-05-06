@@ -21,6 +21,7 @@ type Props = {
   formRef: RefObject<HTMLFormElement | null>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   beforeActions?: ReactNode;
+  paymentMode?: "single" | "trip_dual";
 };
 
 export function TripRegistrationDrawerShell({
@@ -36,6 +37,7 @@ export function TripRegistrationDrawerShell({
   formRef,
   onSubmit,
   beforeActions,
+  paymentMode = "single",
 }: Props) {
   const feedbackClass =
     feedback.kind === ""
@@ -201,13 +203,36 @@ export function TripRegistrationDrawerShell({
             <button type="button" className="btn-exact-outline" onClick={onClose}>
               Хаах
             </button>
-            <button
-              type="submit"
-              className="btn-qpay"
-              disabled={loading || schema.length === 0 || feedback.kind === "loading" || feedback.kind === "success"}
-            >
-              Бүртгүүлэх
-            </button>
+            {paymentMode === "trip_dual" ? (
+              <>
+                <button
+                  type="submit"
+                  name="payment_action"
+                  value="qpay"
+                  className="btn-qpay"
+                  disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+                >
+                  QPay-ээр төлөх
+                </button>
+                <button
+                  type="submit"
+                  name="payment_action"
+                  value="invoice"
+                  className="btn-exact-outline"
+                  disabled={loading || schema.length === 0 || feedback.kind === "loading"}
+                >
+                  Нэхэмжлэх авах
+                </button>
+              </>
+            ) : (
+              <button
+                type="submit"
+                className="btn-qpay"
+                disabled={loading || schema.length === 0 || feedback.kind === "loading" || feedback.kind === "success"}
+              >
+                Бүртгүүлэх
+              </button>
+            )}
           </div>
           {feedback.text && feedback.kind !== "success" && (schema.length > 0 || feedback.kind !== "error") ? (
             <div className={feedbackClass} role="status" aria-live="polite">

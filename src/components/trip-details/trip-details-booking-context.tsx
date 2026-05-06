@@ -109,6 +109,7 @@ export function TripDetailsBookingRegisterProvider({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [schema, setSchema] = useState<HomeTripDrawerSchemaItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [paymentQrDataUrl, setPaymentQrDataUrl] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ text: string; kind: "" | "loading" | "success" | "error" }>({
     text: "",
     kind: "",
@@ -185,6 +186,7 @@ export function TripDetailsBookingRegisterProvider({
     setDrawerOpen(false);
     document.body.classList.remove("trip-register-open");
     setFeedback({ text: "", kind: "" });
+    setPaymentQrDataUrl(null);
   }, []);
 
   const openRegister = useCallback(() => {
@@ -244,22 +246,35 @@ export function TripDetailsBookingRegisterProvider({
       setFeedback({ text: "Хамгийн багадаа нэг хүний тоо сонгоно уу.", kind: "error" });
       return;
     }
+    const nativeEvt = e.nativeEvent as SubmitEvent;
+    const submitter = nativeEvt.submitter as HTMLButtonElement | null;
+    const paymentAction = submitter?.value === "invoice" ? "invoice" : "qpay";
     const answers = buildTripDrawerAnswersFromForm(schema, formRef.current);
     const orderSummary = buildOrderSummaryPayload();
+    setPaymentQrDataUrl(null);
     setFeedback({ text: "Илгээж байна...", kind: "loading" });
     try {
       const res = await fetch(`/api/public/trips/${tripId}/registration`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, orderSummary }),
+        body: JSON.stringify({ answers, orderSummary, paymentAction }),
       });
-      const data = await readResponseJson<{ success?: boolean; message?: string; code?: string }>(res);
+      const data = await readResponseJson<{
+        success?: boolean;
+        message?: string;
+        code?: string;
+        payment?: { qrDataUrl?: string | null; invoiceEmail?: string | null };
+      }>(res);
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Бүртгэл хадгалах үед алдаа гарлаа.");
       }
+      if (paymentAction === "qpay" && data.payment?.qrDataUrl) {
+        setPaymentQrDataUrl(data.payment.qrDataUrl);
+      }
       setFeedback({ text: data.message || "Таны бүртгэлийг амжилттай хүлээн авлаа.", kind: "success" });
-      formRef.current.reset();
-      window.setTimeout(() => closeDrawer(), 5000);
+      if (paymentAction === "invoice") {
+        formRef.current.reset();
+      }
     } catch (err) {
       setFeedback({
         text: err instanceof Error ? err.message : "Серверийн алдаа гарлаа. Дахин оролдоно уу.",
@@ -321,14 +336,28 @@ export function TripDetailsBookingRegisterProvider({
         formRef={formRef}
         onSubmit={onSubmit}
         beforeActions={
-          <div className="trip-register-field mb-3 rounded border bg-light px-3 py-2 small">
-            <div className="fw-semibold text-muted text-uppercase" style={{ fontSize: "0.7rem" }}>
-              Захиалгын дүн
+          <div className="mb-3">
+            <div className="trip-register-field mb-3 rounded border bg-light px-3 py-2 small">
+              <div className="fw-semibold text-muted text-uppercase" style={{ fontSize: "0.7rem" }}>
+                Захиалгын дүн
+              </div>
+              <div className="mt-1">{checkoutSub}</div>
+              <div className="text-muted mt-1">Эхлэх: {departure}</div>
             </div>
-            <div className="mt-1">{checkoutSub}</div>
-            <div className="text-muted mt-1">Эхлэх: {departure}</div>
+            {paymentQrDataUrl ? (
+              <div className="trip-register-field rounded border bg-white p-3 text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={paymentQrDataUrl}
+                  alt="QPay QR"
+                  style={{ width: 220, height: 220, objectFit: "contain", margin: "0 auto" }}
+                />
+                <div className="small text-muted mt-2">QPay апп-аар QR уншуулж төлбөрөө гүйцээнэ үү.</div>
+              </div>
+            ) : null}
           </div>
         }
+        paymentMode="trip_dual"
       />
     </TripDetailsBookingContext.Provider>
   );
