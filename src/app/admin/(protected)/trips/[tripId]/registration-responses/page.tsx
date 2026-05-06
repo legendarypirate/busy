@@ -1,6 +1,7 @@
 import AdminRegistrationResponseGrid from "@/components/admin/AdminRegistrationResponseGrid";
 import { loadTripRegistrationGridRows } from "@/lib/admin-form-response-grid-data";
 import { buildRegistrationGridSections } from "@/lib/admin-registration-response-grid";
+import { requireAdminUser } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
@@ -16,6 +17,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function AdminTripRegistrationResponsesPage({ params }: Props) {
+  const user = await requireAdminUser("/admin/trips");
   const { tripId: raw } = await params;
   const tripId = Math.max(0, Number.parseInt(raw, 10));
   if (!Number.isFinite(tripId) || tripId < 1) notFound();
@@ -37,6 +39,8 @@ export default async function AdminTripRegistrationResponsesPage({ params }: Pro
       backLabel="Аяллын жагсаалт"
       sections={sections}
       exportDownloadHref={`/api/admin/trips/${tripId}/registration-responses/export`}
+      allowDelete={user.email.trim().toLowerCase() === "idersaikhan.ja@gmail.com"}
+      deleteApiBase={`/api/admin/trips/${tripId}/registration-responses`}
     />
   );
 }

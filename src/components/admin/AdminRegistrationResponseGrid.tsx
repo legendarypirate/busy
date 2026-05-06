@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { AdminGridSection } from "@/lib/admin-registration-response-grid";
+import AdminResponseDeleteButton from "@/components/admin/AdminResponseDeleteButton";
 
 function fmtLocal(iso: string): string {
   try {
@@ -19,6 +20,8 @@ type Props = {
   emptyMessage?: string;
   /** GET URL that returns UTF-8 CSV (Excel). */
   exportDownloadHref?: string;
+  allowDelete?: boolean;
+  deleteApiBase?: string;
 };
 
 export default function AdminRegistrationResponseGrid({
@@ -29,6 +32,8 @@ export default function AdminRegistrationResponseGrid({
   sections,
   emptyMessage = "Энэ аялалд / эвентэд илгээсэн хариулт байхгүй байна.",
   exportDownloadHref,
+  allowDelete = false,
+  deleteApiBase = "",
 }: Props) {
   const hasAny = sections.some((s) => s.responses.length > 0);
 
@@ -96,6 +101,11 @@ export default function AdminRegistrationResponseGrid({
                         {c.label.trim() || c.id}
                       </th>
                     ))}
+                    {allowDelete ? (
+                      <th className="text-nowrap text-center" style={{ width: "3.5rem" }}>
+                        Устгах
+                      </th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +127,11 @@ export default function AdminRegistrationResponseGrid({
                           {linkifyCell(r.cellByQuestionId[c.id] ?? "—")}
                         </td>
                       ))}
+                      {allowDelete && deleteApiBase ? (
+                        <td className="text-center">
+                          <AdminResponseDeleteButton responseId={r.id} deleteApiBase={deleteApiBase} />
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>
