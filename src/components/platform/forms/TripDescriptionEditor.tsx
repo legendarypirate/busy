@@ -15,7 +15,11 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
   const [html, setHtml] = useState(defaultValue || "");
 
   useEffect(() => {
-    setHtml(defaultValue || "");
+    const next = defaultValue || "";
+    setHtml(next);
+    if (ref.current && ref.current.innerHTML !== next) {
+      ref.current.innerHTML = next;
+    }
   }, [defaultValue]);
 
   const keepSelection = (e: MouseEvent<HTMLButtonElement>) => {
@@ -56,18 +60,24 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
     const range = sel.getRangeAt(0);
     if (!el.contains(range.commonAncestorContainer)) return;
 
-    const span = document.createElement("span");
-    span.style.fontSize = `${px}px`;
-    const content = range.extractContents();
-    span.appendChild(content);
-    range.insertNode(span);
-
-    const next = document.createRange();
-    next.selectNodeContents(span);
-    next.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(next);
-    savedRangeRef.current = next.cloneRange();
+    if (range.collapsed) {
+      const node = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+      if (node && node instanceof HTMLElement && el.contains(node)) {
+        node.style.fontSize = `${px}px`;
+      }
+    } else {
+      const span = document.createElement("span");
+      span.style.fontSize = `${px}px`;
+      const content = range.extractContents();
+      span.appendChild(content);
+      range.insertNode(span);
+      const next = document.createRange();
+      next.selectNodeContents(span);
+      next.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(next);
+      savedRangeRef.current = next.cloneRange();
+    }
     setHtml(el.innerHTML);
   };
   const insertHtml = (value: string) => {
@@ -173,11 +183,10 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
         suppressContentEditableWarning
         style={{ minHeight: `${rows * 1.5}rem`, whiteSpace: "pre-wrap" }}
         data-placeholder={placeholder}
-        dangerouslySetInnerHTML={{ __html: html }}
         onInput={(e) => setHtml((e.currentTarget as HTMLDivElement).innerHTML)}
         onKeyUp={saveCurrentRange}
         onMouseUp={saveCurrentRange}
-        onBlur={saveCurrentRange}
+        onFocus={saveCurrentRange}
       />
       <p className="small text-muted mt-2 mb-0">Plugin toolbar: heading, list, link, center, justify, quote, break, clear formatting.</p>
     </div>

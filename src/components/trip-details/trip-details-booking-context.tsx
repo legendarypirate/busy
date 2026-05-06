@@ -110,6 +110,7 @@ export function TripDetailsBookingRegisterProvider({
   const [schema, setSchema] = useState<HomeTripDrawerSchemaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [paymentQrDataUrl, setPaymentQrDataUrl] = useState<string | null>(null);
+  const [topSuccessAlert, setTopSuccessAlert] = useState<string>("");
   const [feedback, setFeedback] = useState<{ text: string; kind: "" | "loading" | "success" | "error" }>({
     text: "",
     kind: "",
@@ -204,6 +205,12 @@ export function TripDetailsBookingRegisterProvider({
       document.body.classList.remove("trip-register-open");
     };
   }, []);
+
+  useEffect(() => {
+    if (!topSuccessAlert) return;
+    const timer = window.setTimeout(() => setTopSuccessAlert(""), 3500);
+    return () => window.clearTimeout(timer);
+  }, [topSuccessAlert]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -306,6 +313,7 @@ export function TripDetailsBookingRegisterProvider({
       setFeedback({ text: data.message || "Таны бүртгэлийг амжилттай хүлээн авлаа.", kind: "success" });
       if (paymentAction === "invoice") {
         formRef.current.reset();
+        setTopSuccessAlert(data.message || "Нэхэмжлэх амжилттай илгээгдлээ.");
       }
     } catch (err) {
       setFeedback({
@@ -356,6 +364,19 @@ export function TripDetailsBookingRegisterProvider({
 
   return (
     <TripDetailsBookingContext.Provider value={ctx}>
+      {topSuccessAlert ? (
+        <div
+          className="position-fixed top-0 start-50 translate-middle-x mt-3 alert alert-success shadow-lg border-0"
+          style={{ zIndex: 3000, minWidth: 320, maxWidth: "92vw" }}
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="d-flex align-items-start gap-2">
+            <i className="fa-solid fa-circle-check mt-1" aria-hidden />
+            <span className="fw-semibold">{topSuccessAlert}</span>
+          </div>
+        </div>
+      ) : null}
       {children}
       <TripRegistrationDrawerShell
         open={drawerOpen}
