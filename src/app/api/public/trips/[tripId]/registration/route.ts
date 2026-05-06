@@ -179,29 +179,6 @@ async function styledInvoicePdfBytes(params: {
   const bodyFont = fontBytes ? titleFont : await pdf.embedFont(StandardFonts.Helvetica);
   const monoFont = await pdf.embedFont(StandardFonts.CourierBold);
 
-  // Header strip
-  page.drawRectangle({
-    x: 0,
-    y: height - 115,
-    width,
-    height: 115,
-    color: rgb(0.05, 0.13, 0.29),
-  });
-  page.drawText("BUSY.mn", {
-    x: 42,
-    y: height - 58,
-    size: 24,
-    font: titleFont,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText("Нэхэмжлэх / Invoice", {
-    x: 42,
-    y: height - 84,
-    size: 13,
-    font: bodyFont,
-    color: rgb(0.88, 0.92, 1),
-  });
-
   const wrapLines = (text: string, maxWidth: number, fontSize: number): string[] => {
     const src = (text || "").replace(/\s+/g, " ").trim();
     if (!src) return ["-"];
@@ -222,104 +199,210 @@ async function styledInvoicePdfBytes(params: {
     return lines.length > 0 ? lines : ["-"];
   };
 
-  // Meta (wrapped rows)
-  let y = height - 150;
-  const line = (label: string, value: string, emphasize = false) => {
-    const labelX = 42;
-    const valueX = 190;
-    const valueW = width - valueX - 42;
-    const valueSize = emphasize ? 13 : 11;
-    const lineHeight = emphasize ? 19 : 16;
-    const lines = wrapLines(value, valueW, valueSize);
+  const dark = rgb(0.13, 0.21, 0.3);
+  const muted = rgb(0.43, 0.48, 0.54);
+  const red = rgb(0.85, 0.18, 0.2);
+  const lineColor = rgb(0.78, 0.8, 0.83);
+  const headerBg = rgb(0.13, 0.24, 0.35);
+  const boxBg = rgb(0.97, 0.97, 0.98);
 
-    page.drawText(label, { x: labelX, y, size: 10, font: bodyFont, color: rgb(0.4, 0.46, 0.56) });
-    lines.forEach((txt, idx) => {
-      page.drawText(txt, {
-        x: valueX,
-        y: y - idx * lineHeight,
-        size: valueSize,
-        font: emphasize ? titleFont : bodyFont,
-        color: rgb(0.12, 0.16, 0.22),
-      });
-    });
-    y -= Math.max(20, lines.length * lineHeight + 6);
-  };
-  line("Захиалгын дугаар", params.orderRef);
-  line("Огноо", new Date().toISOString().slice(0, 10));
-  line("Үйлчилгээ", params.tripTitle);
-  line("Захиалагч", params.fullName || "-");
-  line("Нийт дүн (MNT)", `₮ ${params.amountMnt.toLocaleString("mn-MN")}`, true);
+  const margin = 28;
+  const contentW = width - margin * 2;
+  let y = height - 42;
 
-  y -= 6;
-  page.drawLine({
-    start: { x: 42, y },
-    end: { x: width - 42, y },
-    thickness: 1,
-    color: rgb(0.9, 0.92, 0.95),
-  });
-  y -= 18;
-
-  page.drawText("Формын мэдээлэл", {
-    x: 42,
+  // Title
+  page.drawText("НЭХЭМЖЛЭЛ", {
+    x: width / 2 - titleFont.widthOfTextAtSize("НЭХЭМЖЛЭЛ", 18) / 2,
     y,
-    size: 12,
+    size: 18,
     font: titleFont,
-    color: rgb(0.1, 0.15, 0.25),
+    color: dark,
   });
+  y -= 20;
+  const meta = `Дугаар: ${params.orderRef} | Огноо: ${new Date().toISOString().slice(0, 10)}`;
+  page.drawText(meta, {
+    x: width / 2 - bodyFont.widthOfTextAtSize(meta, 10) / 2,
+    y,
+    size: 10,
+    font: bodyFont,
+    color: muted,
+  });
+  y -= 10;
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1.3, color: dark });
+  y -= 22;
+
+  // Two column parties box
+  const boxH = 238;
+  const colGap = 14;
+  const colW = (contentW - colGap) / 2;
+  page.drawRectangle({
+    x: margin,
+    y: y - boxH,
+    width: contentW,
+    height: boxH,
+    color: boxBg,
+    borderWidth: 0.8,
+    borderColor: lineColor,
+  });
+  page.drawLine({
+    start: { x: margin + colW + colGap / 2, y: y - 8 },
+    end: { x: margin + colW + colGap / 2, y: y - boxH + 8 },
+    thickness: 0.8,
+    color: lineColor,
+  });
+
+  const leftX = margin + 10;
+  const rightX = margin + colW + colGap + 10;
+  let ly = y - 26;
+  let ry = y - 26;
+  page.drawText("Нэхэмжлэгч", { x: leftX, y: ly, size: 12, font: titleFont, color: dark });
+  page.drawText("Төлөгч", { x: rightX, y: ry, size: 12, font: titleFont, color: dark });
+  ly -= 10;
+  ry -= 10;
+  page.drawLine({ start: { x: leftX, y: ly }, end: { x: leftX + colW - 18, y: ly }, thickness: 0.7, color: lineColor });
+  page.drawLine({ start: { x: rightX, y: ry }, end: { x: rightX + colW - 18, y: ry }, thickness: 0.7, color: lineColor });
+  ly -= 22;
+  ry -= 22;
+
+  const answerMap = new Map(params.answers.map((r) => [r.label.toLowerCase(), r.value]));
+  const pick = (...keys: string[]) => {
+    for (const [k, v] of answerMap) {
+      if (keys.some((x) => k.includes(x))) return v;
+    }
+    return "-";
+  };
+
+  const sellerRows: [string, string][] = [
+    ["Байгууллагын нэр:", "ТЭРГҮҮН ГЭРЭГЭ ЭХК"],
+    ["Хаяг:", "Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1"],
+    ["Утас:", "+976 9300-0022"],
+    ["Имэйл:", "busy.mn@busy.mn"],
+    ["Банкны данс:", "26000 500 500396 6474 (ХААН БАНК)"],
+    ["Гүйлгээний утга:", params.orderRef],
+  ];
+  const payerRows: [string, string][] = [
+    ["Байгууллагын нэр:", pick("компани", "байгууллага")],
+    ["Регистрийн дугаар:", pick("регистр")],
+    ["Хаяг:", pick("хаяг")],
+    ["Имэйл:", pick("имэйл", "email")],
+    ["Утас:", pick("утас", "phone")],
+    ["Нэхэмжлэл:", new Date().toISOString().slice(0, 10)],
+    ["Дуусах:", new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)],
+  ];
+
+  const drawRows = (rows: [string, string][], startX: number, startY: number, maxW: number) => {
+    let rowY = startY;
+    for (const [label, value] of rows) {
+      const labelW = 90;
+      page.drawText(label, { x: startX, y: rowY, size: 9, font: titleFont, color: dark });
+      const lines = wrapLines(value || "-", maxW - labelW - 10, 8.8);
+      lines.forEach((ln, i) => {
+        page.drawText(ln, { x: startX + labelW, y: rowY - i * 12, size: 8.8, font: bodyFont, color: rgb(0.16, 0.18, 0.2) });
+      });
+      rowY -= Math.max(18, lines.length * 12 + 3);
+      if (rowY < y - boxH + 18) break;
+    }
+  };
+  drawRows(sellerRows, leftX, ly, colW - 20);
+  drawRows(payerRows, rightX, ry, colW - 20);
+  y -= boxH + 16;
+
+  // Items table
+  const tX = margin;
+  const tW = contentW;
+  const cols = [32, 286, 95, 90, 92]; // #, item, qty, unit, total
+  const itemName = params.tripTitle || "Аяллын бүртгэлийн урьдчилгаа төлбөр";
+  const qty = 1;
+  const unit = params.amountMnt;
+  const total = qty * unit;
+  const rowsData: [string, string, string, string, string][] = [
+    ["1", itemName, String(qty), `${unit.toLocaleString("mn-MN")} ₮`, `${total.toLocaleString("mn-MN")} ₮`],
+  ];
+  const headH = 26;
+  page.drawRectangle({ x: tX, y: y - headH, width: tW, height: headH, color: headerBg });
+  const heads = ["#", "Бараа/Үйлчилгээ", "Тоо ширхэг", "Нэгж үнэ", "Нийт дүн"];
+  let cx = tX;
+  heads.forEach((h, i) => {
+    page.drawText(h, { x: cx + 6, y: y - 17, size: 9.5, font: titleFont, color: rgb(1, 1, 1) });
+    cx += cols[i];
+  });
+  y -= headH;
+  const rowH = 28;
+  for (const row of rowsData) {
+    page.drawRectangle({ x: tX, y: y - rowH, width: tW, height: rowH, borderWidth: 0.6, borderColor: lineColor });
+    let x = tX;
+    row.forEach((cell, i) => {
+      page.drawText(cell, { x: x + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25), maxWidth: cols[i] - 10 });
+      x += cols[i];
+    });
+    y -= rowH;
+  }
+  y -= 6;
+  page.drawLine({ start: { x: tX, y }, end: { x: tX + tW, y }, thickness: 1.2, color: dark });
   y -= 18;
 
-  const rows = params.answers.slice(0, 12);
-  for (const row of rows) {
-    if (y < 70) break;
-    const rowTop = y;
-    const labelX = 52;
-    const valueX = 280;
-    const labelW = 210;
-    const valueW = width - valueX - 44;
-    const fs = 10;
-    const lh = 14;
-    const labelLines = wrapLines(row.label, labelW, fs);
-    const valueLines = wrapLines(row.value || "-", valueW, fs);
-    const rowLines = Math.max(labelLines.length, valueLines.length);
-    const rowH = rowLines * lh + 10;
+  // Totals
+  const subTotal = Math.round(total / 1.1);
+  const vat = total - subTotal;
+  const shipping = 0;
+  const grand = total + shipping;
+  const rLabelX = tX;
+  const rValX = tX + tW - 6;
+  const totalLine = (label: string, value: string, isGrand = false) => {
+    page.drawText(label, {
+      x: rLabelX,
+      y,
+      size: isGrand ? 12 : 10.5,
+      font: isGrand ? titleFont : bodyFont,
+      color: isGrand ? red : dark,
+    });
+    const fw = bodyFont.widthOfTextAtSize(value, isGrand ? 12 : 10.5);
+    page.drawText(value, {
+      x: rValX - fw,
+      y,
+      size: isGrand ? 12 : 10.5,
+      font: isGrand ? titleFont : bodyFont,
+      color: isGrand ? red : dark,
+    });
+    y -= isGrand ? 26 : 22;
+  };
+  totalLine("Дэд дүн (НӨАТ-гүй):", `${subTotal.toLocaleString("mn-MN")} ₮`);
+  totalLine("НӨАТ (10%):", `${vat.toLocaleString("mn-MN")} ₮`);
+  totalLine("Хүргэлтийн төлбөр:", `${shipping.toLocaleString("mn-MN")} ₮`);
+  page.drawLine({ start: { x: tX, y: y + 8 }, end: { x: tX + tW, y: y + 8 }, thickness: 0.7, color: lineColor });
+  totalLine("Татвартай нийт дүн:", `${grand.toLocaleString("mn-MN")} ₮`, true);
 
-    page.drawRectangle({
-      x: 42,
-      y: rowTop - rowH + 4,
-      width: width - 84,
-      height: rowH,
-      color: rgb(0.985, 0.99, 1),
-      borderWidth: 1,
-      borderColor: rgb(0.92, 0.94, 0.97),
-    });
+  const amountWords = `${params.amountMnt.toLocaleString("mn-MN")} төгрөг`;
+  page.drawText("Нийт дүн үсгээр:", { x: tX, y, size: 10.5, font: titleFont, color: dark });
+  page.drawText(amountWords, { x: tX + 160, y, size: 10.5, font: bodyFont, color: dark });
+  y -= 26;
 
-    labelLines.forEach((txt, i) => {
-      page.drawText(`${i === 0 ? "• " : "  "}${txt}`, {
-        x: labelX,
-        y: rowTop - i * lh,
-        size: fs,
-        font: bodyFont,
-        color: rgb(0.36, 0.42, 0.52),
-      });
-    });
-    valueLines.forEach((txt, i) => {
-      page.drawText(txt, {
-        x: valueX,
-        y: rowTop - i * lh,
-        size: fs,
-        font: bodyFont,
-        color: rgb(0.12, 0.16, 0.22),
-      });
-    });
-    y -= rowH + 6;
-  }
+  // Note
+  page.drawText("ТЭМДЭГЛЭЛ", { x: tX, y, size: 12.5, font: titleFont, color: dark });
+  y -= 12;
+  page.drawLine({ start: { x: tX, y }, end: { x: tX + tW, y }, thickness: 0.6, color: lineColor });
+  y -= 16;
+  const noteText =
+    params.answers.find((a) => /тэмдэглэл|note|нэмэлт/i.test(a.label.toLowerCase()))?.value ||
+    params.answers.map((a) => a.value).join(" • ").slice(0, 140);
+  page.drawText(noteText || "-", { x: tX, y, size: 10, font: bodyFont, color: rgb(0.2, 0.24, 0.3), maxWidth: tW });
+  y -= 38;
+  page.drawLine({ start: { x: tX, y }, end: { x: tX + tW, y }, thickness: 0.6, color: lineColor });
+  y -= 36;
+
+  // Footer sign lines
+  page.drawText("Дарга......................... /................../", { x: tX + 200, y, size: 10, font: bodyFont, color: muted });
+  y -= 18;
+  page.drawText("Хүлээн авсан ..................... /................../", { x: tX + 200, y, size: 10, font: bodyFont, color: muted });
+  y -= 18;
+  page.drawText("Нягтлан бодогч................... /................../", { x: tX + 200, y, size: 10, font: bodyFont, color: muted });
 
   page.drawText(params.orderRef, {
     x: width - 220,
-    y: 36,
-    size: 11,
+    y: 24,
+    size: 10,
     font: monoFont,
-    color: rgb(0.35, 0.4, 0.5),
+    color: rgb(0.45, 0.48, 0.53),
   });
 
   return await pdf.save();
