@@ -5,6 +5,7 @@ import { dbBusinessTrip, prisma } from "@/lib/prisma";
 import { formatMnDate } from "@/lib/format-date";
 import { getMarketingListingHeroSlides } from "@/lib/marketing-listing-hero";
 import { mediaUrl } from "@/lib/media-url";
+import { getFooterPublicConfig } from "@/lib/footer-public-config";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,8 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
   const heroSlidesRaw = await getMarketingListingHeroSlides("trips");
   const heroSlides = heroSlidesRaw.map((u) => mediaUrl(u) || u).filter(Boolean);
   const heroFallback = "/assets/img/busy-background.png";
+  const footerCfg = await getFooterPublicConfig();
+  const footerContact = footerCfg.contact;
 
   return (
     <main className="page-content" style={{ backgroundColor: "var(--bg-page)" }}>
@@ -351,13 +354,13 @@ export default async function TripsPage({ searchParams }: { searchParams: Search
             <h3 className="widget-title">Тусламж хэрэгтэй юу?</h3>
             <p className="help-text">Аяллын талаар асуух зүйл байвал бидэнтэй холбогдоорой.</p>
             <div className="help-contact">
-              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> +976 9300-0022
+              <i className="fa-solid fa-phone" style={{ color: "var(--brand-primary)", width: 20 }}></i> {footerContact.phoneDisplay}
             </div>
             <div className="help-contact">
-              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> busy.mn@busy.mn
+              <i className="fa-regular fa-envelope" style={{ color: "var(--brand-primary)", width: 20 }}></i> {footerContact.email}
             </div>
             <div className="help-contact mb-3">
-              <i className="fa-solid fa-location-dot" style={{ color: "var(--brand-primary)", width: 20 }}></i> Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Olympic Street 19/1
+              <i className="fa-solid fa-location-dot" style={{ color: "var(--brand-primary)", width: 20 }}></i> {footerContact.addressLine}
             </div>
             <button className="btn-brand-outline w-100">Холбогдох</button>
           </div>
