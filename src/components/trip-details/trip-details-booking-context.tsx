@@ -15,6 +15,8 @@ import { buildTripDrawerAnswersFromForm } from "@/lib/trip-registration-form/dra
 import type { TripCheckoutTier } from "@/components/trip-details/trip-checkout-tier";
 import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
 
+type PaymentAction = "qpay" | "invoice";
+
 async function readResponseJson<T>(res: Response): Promise<T> {
   const text = await res.text();
   const trimmed = text.trim();
@@ -110,6 +112,7 @@ export function TripDetailsBookingRegisterProvider({
   const [loading, setLoading] = useState(false);
   const [paymentQrDataUrl, setPaymentQrDataUrl] = useState<string | null>(null);
   const [topSuccessAlert, setTopSuccessAlert] = useState<string>("");
+  const [submittingPaymentAction, setSubmittingPaymentAction] = useState<PaymentAction | null>(null);
   const [feedback, setFeedback] = useState<{ text: string; kind: "" | "loading" | "success" | "error" }>({
     text: "",
     kind: "",
@@ -287,6 +290,7 @@ export function TripDetailsBookingRegisterProvider({
     const nativeEvt = e.nativeEvent as SubmitEvent;
     const submitter = nativeEvt.submitter as HTMLButtonElement | null;
     const paymentAction = submitter?.value === "invoice" ? "invoice" : "qpay";
+    setSubmittingPaymentAction(paymentAction);
     const answers = buildTripDrawerAnswersFromForm(schema, formRef.current);
     const orderSummary = buildOrderSummaryPayload();
     setPaymentQrDataUrl(null);
@@ -319,6 +323,8 @@ export function TripDetailsBookingRegisterProvider({
         text: err instanceof Error ? err.message : "Серверийн алдаа гарлаа. Дахин оролдоно уу.",
         kind: "error",
       });
+    } finally {
+      setSubmittingPaymentAction(null);
     }
   }
 
@@ -410,6 +416,7 @@ export function TripDetailsBookingRegisterProvider({
           </div>
         }
         paymentMode="trip_dual"
+        activePaymentAction={submittingPaymentAction}
       />
     </TripDetailsBookingContext.Provider>
   );

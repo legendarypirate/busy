@@ -346,7 +346,7 @@ async function styledInvoicePdfBytes(params: {
   // Items table
   const tX = margin;
   const tW = contentW;
-  const cols = [32, 286, 95, 90, 92]; // #, item, qty, unit, total
+  const cols = [32, 250, 115, 95, 113]; // #, service, qty, unit, total
   const itemName = params.tripTitle || "Аяллын бүртгэлийн урьдчилгаа төлбөр";
   const qty = 1;
   const unit = params.amountMnt;
@@ -364,14 +364,15 @@ async function styledInvoicePdfBytes(params: {
   });
   y -= headH;
   for (const row of rowsData) {
-    const itemLines = wrapServiceLines(row[1], cols[1] - 12, 9.2);
+    const itemLines = wrapServiceLines(row[1], cols[1] - 28, 9.2);
     const rowH = Math.max(28, 12 + itemLines.length * 12);
     page.drawRectangle({ x: tX, y: y - rowH, width: tW, height: rowH, borderWidth: 0.6, borderColor: lineColor });
+    const midY = y - rowH / 2 + 3.6;
 
     // # column
     page.drawText(row[0], {
       x: tX + 6,
-      y: y - 18,
+      y: midY,
       size: 9.2,
       font: bodyFont,
       color: rgb(0.16, 0.2, 0.25),
@@ -393,9 +394,9 @@ async function styledInvoicePdfBytes(params: {
     const qtyX = tX + cols[0] + cols[1] + 6;
     const unitX = qtyX + cols[2];
     const totalX = unitX + cols[3];
-    page.drawText(row[2], { x: qtyX, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
-    page.drawText(row[3], { x: unitX + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
-    page.drawText(row[4], { x: totalX + 6, y: y - 18, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[2], { x: qtyX, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[3], { x: unitX + 6, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
+    page.drawText(row[4], { x: totalX + 6, y: midY, size: 9.2, font: bodyFont, color: rgb(0.16, 0.2, 0.25) });
 
     y -= rowH;
   }

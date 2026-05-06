@@ -5,6 +5,7 @@ import type { RefObject } from "react";
 import type { HomeTripDrawerSchemaItem } from "@/lib/trip-registration-form/service";
 
 type Feedback = { text: string; kind: "" | "loading" | "success" | "error" };
+type PaymentAction = "qpay" | "invoice";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ type Props = {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   beforeActions?: ReactNode;
   paymentMode?: "single" | "trip_dual";
+  activePaymentAction?: PaymentAction | null;
 };
 
 export function TripRegistrationDrawerShell({
@@ -38,6 +40,7 @@ export function TripRegistrationDrawerShell({
   onSubmit,
   beforeActions,
   paymentMode = "single",
+  activePaymentAction = null,
 }: Props) {
   const isSubmitting = feedback.kind === "loading";
   const feedbackClass =
@@ -213,7 +216,7 @@ export function TripRegistrationDrawerShell({
                   className="btn-qpay"
                   disabled={loading || schema.length === 0 || isSubmitting}
                 >
-                  {isSubmitting ? (
+                  {isSubmitting && activePaymentAction === "qpay" ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
                       Илгээж байна...
@@ -229,7 +232,7 @@ export function TripRegistrationDrawerShell({
                   className="btn-exact-outline"
                   disabled={loading || schema.length === 0 || isSubmitting}
                 >
-                  {isSubmitting ? (
+                  {isSubmitting && activePaymentAction === "invoice" ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
                       Илгээж байна...
