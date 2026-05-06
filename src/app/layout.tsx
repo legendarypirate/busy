@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { marketingSiteOrigin } from "@/lib/marketing-site-origin";
 
+const GA_MEASUREMENT_ID = "G-ZW78GJ97YB";
+
 function rootMetadataBase(): URL {
   try {
     return new URL(`${marketingSiteOrigin()}/`);
@@ -52,6 +54,18 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/css/busy-ui-unified.css" />
       </head>
       <body className="page-home">
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga-gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
         <header className="site-header sticky-top border-bottom bg-white" style={{ zIndex: 1030 }}>
           <Navbar />
         </header>
