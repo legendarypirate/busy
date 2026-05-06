@@ -5,6 +5,7 @@ import PlatformTripRegistrationJsonBuilder from "@/components/platform/forms/Pla
 import TripFormUploadPendingOverlay from "@/components/platform/forms/TripFormUploadPendingOverlay";
 import TripEditorRegistrationQrAside from "@/components/platform/trips/TripEditorRegistrationQrAside";
 import TripCoverHero from "@/components/platform/forms/TripCoverHero";
+import TripDescriptionEditor from "@/components/platform/forms/TripDescriptionEditor";
 import TripDateDuration from "@/components/platform/forms/TripDateDuration";
 import TripItineraryBuilder from "@/components/platform/forms/TripItineraryBuilder";
 import TripBookingTiersEditor from "@/components/platform/trips/TripBookingTiersEditor";
@@ -13,7 +14,6 @@ import {
   defaultEditorBookingTiers,
   extrasFromTrip,
   fmtMoney,
-  parseHeroSlides,
   toInputDate,
   tripDaySpan,
 } from "@/components/platform/trips/trip-editor-helpers";
@@ -35,7 +35,6 @@ export default function TripEditorForm({
   tripsIndexLabel,
 }: TripEditorFormProps) {
   const extras = extrasFromTrip(editTrip);
-  const heroSlides = parseHeroSlides(editTrip?.heroSliderJson);
   const coverPreview = editTrip?.coverImageUrl?.trim() || "";
   const daysLen = editTrip ? tripDaySpan(editTrip.startDate, editTrip.endDate) : 0;
   const durationLabel = daysLen > 0 ? `${daysLen} өдөр` : "—";
@@ -296,35 +295,17 @@ export default function TripEditorForm({
           </div>
 
           <div className="row g-4">
-            <TripCoverHero existingSlides={heroSlides} coverPreviewUrl={coverPreview || null} />
+            <TripCoverHero coverPreviewUrl={coverPreview || null} />
 
-            <div className="col-md-4">
+            <div className="col-md-8">
               <div className="tps-form-section h-100">
                 <div className="tps-section-head">
                   <div className="tps-section-num">9</div>
                   <span className="tps-section-title">Аяллын дэлгэрэнгүй тайлбар</span>
                 </div>
-                <div className="mb-2 d-flex gap-2 flex-wrap">
-                  <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 28, height: 28 }}>
-                    <i className="fa-solid fa-bold" />
-                  </button>
-                  <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 28, height: 28 }}>
-                    <i className="fa-solid fa-italic" />
-                  </button>
-                  <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 28, height: 28 }}>
-                    <i className="fa-solid fa-underline" />
-                  </button>
-                  <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 28, height: 28 }}>
-                    <i className="fa-solid fa-list-ul" />
-                  </button>
-                  <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 28, height: 28 }}>
-                    <i className="fa-solid fa-link" />
-                  </button>
-                </div>
-                <textarea
-                  className="pm-input"
+                <TripDescriptionEditor
                   name="trip_description"
-                  rows={5}
+                  rows={10}
                   placeholder="Аяллын дэлгэрэнгүй мэдээллийг энд оруулна уу..."
                   defaultValue={editTrip?.description ?? ""}
                 />
