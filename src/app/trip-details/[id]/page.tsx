@@ -506,6 +506,23 @@ export default async function TripDetailsPage({ params }: Props) {
               </div>
             ) : null}
 
+            {/* FAQ Section */}
+            {faqs.length > 0 ? (
+              <div id="trd-section-faq" className="mt-5 pt-2 pb-3 trd-scroll-anchor">
+                <h2 className="fw-bold mb-4">Түгээмэл асуултууд</h2>
+                <div className="row g-4">
+                  {faqs.map((faq, idx) => (
+                    <div key={`faq-${idx}`} className="col-md-6">
+                      <div className="trd-faq-item">
+                        <button className="trd-faq-trigger">{faq.question} <i className="fa-solid fa-chevron-down"></i></button>
+                        <div className="trd-faq-content">{faq.answer}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
           </div>
 
           {/* Right Column: sticky viewport stack */}
@@ -592,23 +609,6 @@ export default async function TripDetailsPage({ params }: Props) {
           </div>
         </div>
       </div>
-
-      {/* FAQ Section */}
-      {faqs.length > 0 ? (
-        <div id="trd-section-faq" className="container mt-5 pt-5 pb-5 trd-scroll-anchor">
-          <h2 className="fw-bold mb-4">Түгээмэл асуултууд</h2>
-          <div className="row g-4">
-            {faqs.map((faq, idx) => (
-              <div key={`faq-${idx}`} className="col-md-6">
-                <div className="trd-faq-item">
-                  <button className="trd-faq-trigger">{faq.question} <i className="fa-solid fa-chevron-down"></i></button>
-                  <div className="trd-faq-content">{faq.answer}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
     </div>
     </TripDetailsBookingRegisterProvider>
