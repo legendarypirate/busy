@@ -7,6 +7,7 @@ export default function TripDetailsEffects() {
   useEffect(() => {
     const root = document.querySelector(".trd-body") as HTMLElement | null;
     if (!root) return;
+    let scrollStopTimer: number | null = null;
 
     const onClick = (e: Event) => {
       const target = (e as MouseEvent).target as HTMLElement | null;
@@ -60,7 +61,25 @@ export default function TripDetailsEffects() {
     };
 
     root.addEventListener("click", onClick);
-    return () => root.removeEventListener("click", onClick);
+    const onScroll = () => {
+      root.classList.add("trd-is-scrolling");
+      if (scrollStopTimer != null) {
+        window.clearTimeout(scrollStopTimer);
+      }
+      scrollStopTimer = window.setTimeout(() => {
+        root.classList.remove("trd-is-scrolling");
+        scrollStopTimer = null;
+      }, 140);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      root.removeEventListener("click", onClick);
+      window.removeEventListener("scroll", onScroll);
+      if (scrollStopTimer != null) {
+        window.clearTimeout(scrollStopTimer);
+      }
+      root.classList.remove("trd-is-scrolling");
+    };
   }, []);
 
   return null;

@@ -184,8 +184,11 @@
         max-height: none;
         overflow: visible;
         padding-right: 0;
-        animation: trdAsideFloat 4.8s ease-in-out infinite;
         transform-origin: center top;
+        animation: none;
+    }
+    .trd-body.trd-is-scrolling .trd-aside-inner {
+        animation: trdAsideFloat 1.2s ease-in-out infinite;
     }
 }
 
