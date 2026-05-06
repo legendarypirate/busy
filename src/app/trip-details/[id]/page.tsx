@@ -282,6 +282,7 @@ export default async function TripDetailsPage({ params }: Props) {
   const includedItems = extras.trip_included_items;
   const excludedItems = extras.trip_excluded_items;
   const tripNotes = extras.trip_notes;
+  const tripNotesHtml = extras.trip_notes_html;
   const faqs = extras.trip_faqs;
   const paymentSteps = extras.trip_payment_steps;
   const hasComparison = includedItems.length > 0 || excludedItems.length > 0;
@@ -416,7 +417,7 @@ export default async function TripDetailsPage({ params }: Props) {
               <a href="#trd-section-about" className="trd-tab">Аяллын тухай</a>
               {hasComparison ? <a href="#trd-section-included" className="trd-tab">Юу багтсан</a> : null}
               {paymentSteps.length > 0 ? <a href="#trd-section-payment-steps" className="trd-tab">Төлбөрийн үе шат</a> : null}
-              {tripNotes.length > 0 ? <a href="#trd-section-notes" className="trd-tab">Санамж</a> : null}
+              {tripNotesHtml || tripNotes.length > 0 ? <a href="#trd-section-notes" className="trd-tab">Санамж</a> : null}
               {faqs.length > 0 ? <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a> : null}
             </div>
 
@@ -485,16 +486,23 @@ export default async function TripDetailsPage({ params }: Props) {
               </div>
             ) : null}
 
-            {tripNotes.length > 0 ? (
+            {tripNotesHtml || tripNotes.length > 0 ? (
               <div id="trd-section-notes" className="mb-5 trd-scroll-anchor trd-notes-box">
                 <h2 className="fw-bold mb-3">Санамж</h2>
-                <ul className="trd-comp-list">
-                  {tripNotes.map((item, idx) => (
-                    <li key={`note-${idx}-${item}`} className="trd-comp-item trd-comp-item--warning">
-                      <i className="fa-solid fa-circle-info"></i> <div>{item}</div>
-                    </li>
-                  ))}
-                </ul>
+                {tripNotesHtml ? (
+                  <div
+                    className="trd-about-content text-break"
+                    dangerouslySetInnerHTML={{ __html: tripNotesHtml.replace(/\n/g, "<br/>") }}
+                  />
+                ) : (
+                  <ul className="trd-comp-list">
+                    {tripNotes.map((item, idx) => (
+                      <li key={`note-${idx}-${item}`} className="trd-comp-item trd-comp-item--warning">
+                        <i className="fa-solid fa-circle-info"></i> <div>{item}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ) : null}
 

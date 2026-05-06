@@ -443,14 +443,13 @@ export default function TripEditorForm({
               <span className="tps-section-title">Trip-details — Санамж</span>
             </div>
             <p className="small text-muted mb-3">
-              Аяллын дэлгэрэнгүй хуудасны «Санамж» хэсэг. Item нэмээгүй бол хэсэг харагдахгүй.
+              Аяллын дэлгэрэнгүй тайлбар шиг rich textarea. Хоосон байвал нийтийн хуудсан дээр харагдахгүй.
             </p>
-            <TripSimpleListEditor
-              label="Санамж"
-              name="trip_notes[]"
-              initialItems={extras.trip_notes}
+            <TripDescriptionEditor
+              name="trip_notes_html"
+              rows={8}
               placeholder="Жишээ: Паспортын хугацаа 6+ сар хүчинтэй байх шаардлагатай."
-              addLabel="Санамж нэмэх"
+              defaultValue={extras.trip_notes_html || extras.trip_notes.join("<br/>")}
             />
           </div>
 

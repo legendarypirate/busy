@@ -60,6 +60,12 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
         <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 30, height: 30 }} title="Link" onClick={() => ref.current && wrapSelection(ref.current, '<a href="https://">', "</a>", "Холбоос")}>
           <i className="fa-solid fa-link" />
         </button>
+        <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 30, height: 30 }} title="Align center" onClick={() => ref.current && wrapSelection(ref.current, '<div style="text-align:center;">', "</div>", "Төвлөсөн текст")}>
+          <i className="fa-solid fa-align-center" />
+        </button>
+        <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 30, height: 30 }} title="Justify" onClick={() => ref.current && wrapSelection(ref.current, '<div style="text-align:justify;">', "</div>", "Жигд текст")}>
+          <i className="fa-solid fa-align-justify" />
+        </button>
         <button type="button" className="btn btn-sm btn-light p-1" style={{ width: 30, height: 30 }} title="Line break" onClick={() => ref.current && insertAtCursor(ref.current, "<br/>\n")}>
           <i className="fa-solid fa-arrow-turn-down" />
         </button>
@@ -80,7 +86,7 @@ export default function TripDescriptionEditor({ name, defaultValue, rows = 8, pl
         placeholder={placeholder}
         defaultValue={defaultValue}
       />
-      <p className="small text-muted mt-2 mb-0">Plugin toolbar: heading, list, link, quote, break, clear formatting.</p>
+      <p className="small text-muted mt-2 mb-0">Plugin toolbar: heading, list, link, center, justify, quote, break, clear formatting.</p>
     </div>
   );
 }

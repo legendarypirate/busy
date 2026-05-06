@@ -123,6 +123,7 @@ function buildExtrasPayload(
   tripIncludedItems: string[],
   tripExcludedItems: string[],
   tripNotes: string[],
+  tripNotesHtml: string,
   tripFaqs: TripExtrasFaq[],
   tripPaymentSteps: TripExtrasPaymentStep[],
   totalSeats: number,
@@ -169,6 +170,11 @@ function buildExtrasPayload(
     payload.trip_notes = tripNotes;
   } else {
     delete payload.trip_notes;
+  }
+  if (tripNotesHtml.trim()) {
+    payload.trip_notes_html = tripNotesHtml.trim();
+  } else {
+    delete payload.trip_notes_html;
   }
   if (tripFaqs.length > 0) {
     payload.trip_faqs = tripFaqs.map((row) => ({
@@ -261,6 +267,7 @@ export async function executeSaveTrip(
     .getAll("trip_notes[]")
     .map((v) => String(v).trim())
     .filter(Boolean);
+  const tripNotesHtml = String(formData.get("trip_notes_html") ?? "").trim();
   const faqQuestions = formData.getAll("trip_faq_question[]").map((v) => String(v).trim());
   const faqAnswers = formData.getAll("trip_faq_answer[]").map((v) => String(v).trim());
   const tripFaqs: TripExtrasFaq[] = [];
@@ -397,6 +404,7 @@ export async function executeSaveTrip(
     tripIncludedItems,
     tripExcludedItems,
     tripNotes,
+    tripNotesHtml,
     tripFaqs,
     tripPaymentSteps,
     totalSeats,

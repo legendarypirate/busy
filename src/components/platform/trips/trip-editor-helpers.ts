@@ -138,6 +138,8 @@ export function readExtras(raw: unknown): {
   trip_excluded_items: string[];
   /** Reminder lines shown in trip details page. */
   trip_notes: string[];
+  /** Rich reminder content shown in trip details page. */
+  trip_notes_html: string;
   /** FAQ rows shown in trip details page. */
   trip_faqs: TripExtrasFaq[];
   /** Payment steps shown in trip details page. */
@@ -159,6 +161,7 @@ export function readExtras(raw: unknown): {
     trip_included_items: readStringList(d.trip_included_items),
     trip_excluded_items: readStringList(d.trip_excluded_items),
     trip_notes: readStringList(d.trip_notes),
+    trip_notes_html: String(d.trip_notes_html ?? "").trim(),
     trip_faqs: readFaqList(d.trip_faqs),
     trip_payment_steps: readPaymentStepList(d.trip_payment_steps),
   };
