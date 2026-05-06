@@ -1,4 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { readFile } from "node:fs/promises";
+import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
 import { prisma } from "@/lib/prisma";
@@ -16,6 +19,7 @@ export const runtime = "nodejs";
 
 type Ctx = { params: Promise<{ tripId: string }> };
 type PaymentAction = "qpay" | "invoice";
+type TripSchemaField = { name: string; type: string; label: string };
 
 function parsePaymentAction(raw: unknown): PaymentAction {
   return raw === "invoice" ? "invoice" : "qpay";
@@ -107,7 +111,7 @@ async function createQpayInvoiceForTrip(params: { tripId: number; amountMnt: num
 
 function extractEmailFromAnswers(
   answers: TripFormSubmitAnswer[],
-  schema: { name: string; type: string; label: string }[],
+  schema: TripSchemaField[],
 ): string | null {
   const byId = new Map(answers.map((a) => [a.questionId, String(a.value ?? "").trim()]));
   const emailField = schema.find((q) => q.type === "email") ?? schema.find((q) => /email|имэйл/i.test(q.label));
@@ -116,45 +120,156 @@ function extractEmailFromAnswers(
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? v : null;
 }
 
-function simpleInvoicePdfBytes(params: {
+function extractFullNameFromAnswers(answers: TripFormSubmitAnswer[], schema: TripSchemaField[]): string {
+  const byId = new Map(answers.map((a) => [a.questionId, String(a.value ?? "").trim()]));
+  const nameField =
+    schema.find((q) => /бүтэн\s*нэр|овог|нэр/i.test(q.label)) ??
+    schema.find((q) => q.type === "text" && /name/i.test(q.label));
+  if (!nameField) return "";
+  return byId.get(nameField.name) ?? "";
+}
+
+function buildAnswerRows(
+  answers: TripFormSubmitAnswer[],
+  schema: TripSchemaField[],
+): { label: string; value: string }[] {
+  const byId = new Map(answers.map((a) => [a.questionId, String(a.value ?? "").trim()]));
+  const rows: { label: string; value: string }[] = [];
+  for (const q of schema) {
+    const v = byId.get(q.name) ?? "";
+    if (!v) continue;
+    rows.push({ label: q.label, value: v });
+  }
+  return rows;
+}
+
+async function resolveInvoiceFontBytes(): Promise<Uint8Array | null> {
+  const candidates = [
+    process.env.INVOICE_PDF_FONT_PATH?.trim() || "",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/Library/Fonts/Arial Unicode.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",
+  ].filter(Boolean);
+  for (const p of candidates) {
+    try {
+      const b = await readFile(p);
+      if (b.length > 0) return new Uint8Array(b);
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+async function styledInvoicePdfBytes(params: {
   orderRef: string;
   tripTitle: string;
   amountMnt: number;
   fullName: string;
-}): Uint8Array {
-  const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-  const lines = [
-    "BUSY.mn - Нэхэмжлэх",
-    `Order: ${params.orderRef}`,
-    `Trip: ${params.tripTitle}`,
-    `Customer: ${params.fullName || "-"}`,
-    `Amount: MNT ${params.amountMnt.toLocaleString("en-US")}`,
-    `Issued: ${new Date().toISOString().slice(0, 10)}`,
-  ];
-  const textOps = lines
-    .map((line, idx) => `BT /F1 12 Tf 50 ${760 - idx * 22} Td (${esc(line)}) Tj ET`)
-    .join("\n");
-  const stream = `${textOps}\n`;
-  const obj1 = "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n";
-  const obj2 = "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n";
-  const obj3 =
-    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n";
-  const obj4 = "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n";
-  const obj5 = `5 0 obj << /Length ${Buffer.byteLength(stream, "utf8")} >> stream\n${stream}endstream endobj\n`;
-  const body = `${obj1}${obj2}${obj3}${obj4}${obj5}`;
-  const header = "%PDF-1.4\n";
-  const offsets: number[] = [];
-  let cursor = header.length;
-  for (const part of [obj1, obj2, obj3, obj4, obj5]) {
-    offsets.push(cursor);
-    cursor += part.length;
+  answers: { label: string; value: string }[];
+}): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
+  const page = pdf.addPage([595, 842]); // A4
+  const { width, height } = page.getSize();
+
+  const fontBytes = await resolveInvoiceFontBytes();
+  const titleFont = fontBytes ? await pdf.embedFont(fontBytes) : await pdf.embedFont(StandardFonts.HelveticaBold);
+  const bodyFont = fontBytes ? titleFont : await pdf.embedFont(StandardFonts.Helvetica);
+  const monoFont = await pdf.embedFont(StandardFonts.CourierBold);
+
+  // Header strip
+  page.drawRectangle({
+    x: 0,
+    y: height - 115,
+    width,
+    height: 115,
+    color: rgb(0.05, 0.13, 0.29),
+  });
+  page.drawText("BUSY.mn", {
+    x: 42,
+    y: height - 58,
+    size: 24,
+    font: titleFont,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText("Нэхэмжлэх / Invoice", {
+    x: 42,
+    y: height - 84,
+    size: 13,
+    font: bodyFont,
+    color: rgb(0.88, 0.92, 1),
+  });
+
+  // Meta
+  let y = height - 150;
+  const line = (label: string, value: string, emphasize = false) => {
+    page.drawText(label, { x: 42, y, size: 10, font: bodyFont, color: rgb(0.4, 0.46, 0.56) });
+    page.drawText(value, {
+      x: 190,
+      y,
+      size: emphasize ? 13 : 11,
+      font: emphasize ? titleFont : bodyFont,
+      color: rgb(0.12, 0.16, 0.22),
+    });
+    y -= emphasize ? 26 : 20;
+  };
+  line("Захиалгын дугаар", params.orderRef);
+  line("Огноо", new Date().toISOString().slice(0, 10));
+  line("Үйлчилгээ", params.tripTitle);
+  line("Захиалагч", params.fullName || "-");
+  line("Нийт дүн (MNT)", `₮ ${params.amountMnt.toLocaleString("mn-MN")}`, true);
+
+  y -= 6;
+  page.drawLine({
+    start: { x: 42, y },
+    end: { x: width - 42, y },
+    thickness: 1,
+    color: rgb(0.9, 0.92, 0.95),
+  });
+  y -= 18;
+
+  page.drawText("Формын мэдээлэл", {
+    x: 42,
+    y,
+    size: 12,
+    font: titleFont,
+    color: rgb(0.1, 0.15, 0.25),
+  });
+  y -= 18;
+
+  const rows = params.answers.slice(0, 12);
+  for (const row of rows) {
+    if (y < 70) break;
+    page.drawText(`• ${row.label}`, {
+      x: 42,
+      y,
+      size: 10,
+      font: bodyFont,
+      color: rgb(0.36, 0.42, 0.52),
+      maxWidth: 210,
+    });
+    page.drawText(row.value || "-", {
+      x: 250,
+      y,
+      size: 10,
+      font: bodyFont,
+      color: rgb(0.12, 0.16, 0.22),
+      maxWidth: width - 292,
+    });
+    y -= 18;
   }
-  const xrefPos = cursor;
-  const xref =
-    `xref\n0 6\n0000000000 65535 f \n` +
-    offsets.map((off) => `${String(off).padStart(10, "0")} 00000 n \n`).join("");
-  const trailer = `trailer << /Size 6 /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
-  return new TextEncoder().encode(header + body + xref + trailer);
+
+  page.drawText(params.orderRef, {
+    x: width - 220,
+    y: 36,
+    size: 11,
+    font: monoFont,
+    color: rgb(0.35, 0.4, 0.5),
+  });
+
+  return await pdf.save();
 }
 
 async function sendInvoiceEmail(input: {
@@ -163,11 +278,12 @@ async function sendInvoiceEmail(input: {
   tripTitle: string;
   amountMnt: number;
   fullName: string;
+  answers: { label: string; value: string }[];
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
   const from = process.env.MAIL_FROM_ADDRESS?.trim() || "noreply@busy.mn";
   if (!apiKey) throw new Error("MAIL_CONFIG_MISSING");
-  const pdfBytes = simpleInvoicePdfBytes(input);
+  const pdfBytes = await styledInvoicePdfBytes(input);
   const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6">
@@ -305,7 +421,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         orderRef,
         tripTitle: schemaOut.ok ? schemaOut.tripTitle : `Trip #${tripId}`,
         amountMnt: totalMnt,
-        fullName: String(fullName || "").trim(),
+        fullName: extractFullNameFromAnswers(body.answers, schema) || String(fullName || "").trim(),
+        answers: buildAnswerRows(body.answers, schema),
       });
       await prisma.paymentOrder.create({
         data: {
