@@ -458,11 +458,11 @@ export default async function TripDetailsPage({ params }: Props) {
             ) : null}
 
             {tripNotes.length > 0 ? (
-              <div id="trd-section-notes" className="mb-5 trd-scroll-anchor">
+              <div id="trd-section-notes" className="mb-5 trd-scroll-anchor trd-notes-box">
                 <h2 className="fw-bold mb-3">Санамж</h2>
                 <ul className="trd-comp-list">
                   {tripNotes.map((item, idx) => (
-                    <li key={`note-${idx}-${item}`} className="trd-comp-item included">
+                    <li key={`note-${idx}-${item}`} className="trd-comp-item trd-comp-item--warning">
                       <i className="fa-solid fa-circle-info"></i> <div>{item}</div>
                     </li>
                   ))}
