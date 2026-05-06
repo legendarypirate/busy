@@ -183,10 +183,28 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
         responseId?: string;
         error?: string;
         code?: string;
+        questionId?: string | null;
+        questionLabel?: string | null;
       };
       if (!res.ok) {
         const err = data.error;
         const vCode = data.code;
+        const qid = data.questionId ?? "";
+        const byField: Record<string, string> = {};
+        if (qid) {
+          byField[qid] =
+            vCode === "phone"
+              ? "Утасны дугаар хамгийн багадаа 8 оронтой."
+              : vCode === "email"
+                ? "Имэйл хаягийн форматыг шалгана уу."
+                : vCode === "choice"
+                  ? "Зөв сонголтыг сонгоно уу."
+                  : vCode === "number"
+                    ? "Тоо оруулна уу."
+                    : vCode === "file_url"
+                      ? "Зөв URL оруулна уу (https://...)."
+                      : "Заавал бөглөнө.";
+        }
         setError(
           err === "validation"
             ? vCode === "phone"
@@ -208,7 +226,7 @@ export default function PublicTripRegistrationForm({ form }: { form: PublicFormP
                 ? "Илгээхэд алдаа гарлаа. Мэдээллээ шалгана уу."
                 : "Алдаа гарлаа.",
         );
-        setFieldErrors({});
+        setFieldErrors(byField);
         return;
       }
       const rid = data.responseId ?? "";

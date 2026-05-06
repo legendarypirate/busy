@@ -35,7 +35,15 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ ok: true, responseId: out.responseId });
   } catch (e) {
     if (e instanceof TripFormValidationError) {
-      return NextResponse.json({ error: "validation", code: e.code }, { status: e.status });
+      return NextResponse.json(
+        {
+          error: "validation",
+          code: e.code,
+          questionId: e.questionId ?? null,
+          questionLabel: e.questionLabel ?? null,
+        },
+        { status: e.status },
+      );
     }
     const msg = e instanceof Error ? e.message : "";
     const code =

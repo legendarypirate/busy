@@ -11,7 +11,11 @@ export type TripFormValidationCode =
 
 export class TripFormValidationError extends Error {
   readonly status = 400;
-  constructor(public readonly code: TripFormValidationCode) {
+  constructor(
+    public readonly code: TripFormValidationCode,
+    public readonly questionId?: string,
+    public readonly questionLabel?: string,
+  ) {
     super("VALIDATION");
     this.name = "TripFormValidationError";
   }
@@ -46,8 +50,8 @@ function countDecimalDigits(s: string): number {
   return m ? m.length : 0;
 }
 
-function throwV(code: TripFormValidationCode): never {
-  throw new TripFormValidationError(code);
+function throwV(code: TripFormValidationCode, q?: TripFormQuestionSnapshot): never {
+  throw new TripFormValidationError(code, q?.id, q?.label);
 }
 
 /** Normalize for option membership (trim + Unicode NFC so Cyrillic/Mongolian matches DB vs browser). */
@@ -109,38 +113,38 @@ export function assertTripFormSubmissionValid(questions: TripFormQuestionSnapsho
 
     if (q.isRequired) {
       if (q.type === "FILE_UPLOAD") {
-        if (!file || !/^https?:\/\//i.test(file)) throwV("file_url");
+        if (!file || !/^https?:\/\//i.test(file)) throwV("file_url", q);
       } else if (q.type === "CHECKBOXES") {
         const parts = checkboxParts(val);
-        if (parts.length === 0) throwV("required");
+        if (parts.length === 0) throwV("required", q);
         for (const p of parts) {
-          if (!isAllowedOptionToken(q, p)) throwV("choice");
+          if (!isAllowedOptionToken(q, p)) throwV("choice", q);
         }
       } else if (q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") {
-        if (!val) throwV("required");
-        if (!isAllowedOptionToken(q, val)) throwV("choice");
+        if (!val) throwV("required", q);
+        if (!isAllowedOptionToken(q, val)) throwV("choice", q);
       } else if (!textOrFile) {
-        throwV("required");
+        throwV("required", q);
       }
     }
 
-    if (q.type === "EMAIL" && val && !EMAIL_RE.test(val)) throwV("email");
+    if (q.type === "EMAIL" && val && !EMAIL_RE.test(val)) throwV("email", q);
     if (q.type === "PHONE" && val) {
-      if (countDecimalDigits(val) < 8) throwV("phone");
+      if (countDecimalDigits(val) < 8) throwV("phone", q);
     }
     if (q.type === "NUMBER" && val) {
-      if (!Number.isFinite(Number(val))) throwV("number");
+      if (!Number.isFinite(Number(val))) throwV("number", q);
     }
     if ((q.type === "MULTIPLE_CHOICE" || q.type === "DROPDOWN") && val && !q.isRequired) {
-      if (!isAllowedOptionToken(q, val)) throwV("choice");
+      if (!isAllowedOptionToken(q, val)) throwV("choice", q);
     }
     if (q.type === "CHECKBOXES" && val && !q.isRequired) {
       const parts = checkboxParts(val);
       for (const p of parts) {
-        if (!isAllowedOptionToken(q, p)) throwV("choice");
+        if (!isAllowedOptionToken(q, p)) throwV("choice", q);
       }
     }
-    if (q.type === "FILE_UPLOAD" && file && !/^https?:\/\//i.test(file)) throwV("file_url");
+    if (q.type === "FILE_UPLOAD" && file && !/^https?:\/\//i.test(file)) throwV("file_url", q);
   }
 }
 
