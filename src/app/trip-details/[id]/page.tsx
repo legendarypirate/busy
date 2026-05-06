@@ -149,6 +149,31 @@ function normalizeTripHelpChatHref(raw: string): string | null {
   return `https://${t.replace(/^\/+/, "")}`;
 }
 
+function stripLegacyTripStaticHighlights(html: string): string {
+  const banned = [
+    "BNI networking",
+    "Дэлхийн бизнесийн хамгийн том сүлжээний арга хэмжээ.",
+    "Үйлдвэртэй танилцах",
+    "Тэргүүлэх үйлдвэрүүд, технологийн шийдэлтэй танилцана.",
+    "B2B уулзалт",
+    "Үр дүнтэй уулзалтууд, хамтын ажиллагаа.",
+    "Соёл, аялал",
+    "Түүхэн дурсгалт газрууд болон орчин үеийн соёл.",
+  ];
+
+  let out = html;
+  for (const phrase of banned) {
+    const esc = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Remove list-item rows containing the static phrase.
+    out = out.replace(new RegExp(`<li[^>]*>[\\s\\S]*?${esc}[\\s\\S]*?<\\/li>`, "gi"), "");
+    // Remove standalone blocks containing the static phrase.
+    out = out.replace(new RegExp(`<p[^>]*>[\\s\\S]*?${esc}[\\s\\S]*?<\\/p>`, "gi"), "");
+    // Remove plain text fallthrough.
+    out = out.replace(new RegExp(esc, "gi"), "");
+  }
+  return out;
+}
+
 export default async function TripDetailsPage({ params }: Props) {
   const { id } = await params;
   const tripId = parseInt(id, 10);
@@ -245,7 +270,10 @@ export default async function TripDetailsPage({ params }: Props) {
     }
   }
 
-  const tripAbout = trip.description?.replace(/<[^>]*>?/gm, '').trim() || 'BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.';
+  const tripAboutRaw =
+    trip.description?.replace(/<[^>]*>?/gm, "").trim() ||
+    "BNI KOREA National Conference 2026-д оролцох энэхүү аялал нь бизнесийн харилцаагаа тэлэх, олон улсын туршлага судлах, тэргүүлэгч үйлдвэрүүдтэй танилцахаар төлөвлөгдсөн. Бид таны цаг хугацааг үнэ цэнтэй болгож, бизнесийн үр дүн төдийгүй, дээд зэрэглэлийн туршлагыг хүргэх болно.";
+  const tripAbout = stripLegacyTripStaticHighlights(tripAboutRaw);
 
   const basePriceMnt = trip.priceMnt ? Math.round(Number(trip.priceMnt)) : 4_590_000;
   const seatCapacity = parseSeatCapacity(trip.seatsLabel);
@@ -371,33 +399,9 @@ export default async function TripDetailsPage({ params }: Props) {
           {/* Left Column */}
           <div className="col-lg-8 order-2 order-lg-1">
             
-            {/* Feature Grid */}
-            <div id="trd-section-brief" className="trd-grid-features mt-5 trd-scroll-anchor">
-              <div className="trd-feature-card">
-                <div className="trd-feature-icon"><i className="fa-solid fa-users"></i></div>
-                <div className="trd-feature-title">BNI networking</div>
-                <div className="trd-feature-desc">Дэлхийн бизнесийн хамгийн том сүлжээний арга хэмжээ.</div>
-              </div>
-              <div className="trd-feature-card">
-                <div className="trd-feature-icon"><i className="fa-solid fa-industry"></i></div>
-                <div className="trd-feature-title">Үйлдвэртэй танилцах</div>
-                <div className="trd-feature-desc">Тэргүүлэх үйлдвэрүүд, технологийн шийдэлтэй танилцана.</div>
-              </div>
-              <div className="trd-feature-card">
-                <div className="trd-feature-icon"><i className="fa-solid fa-handshake"></i></div>
-                <div className="trd-feature-title">B2B уулзалт</div>
-                <div className="trd-feature-desc">Үр дүнтэй уулзалтууд, хамтын ажиллагаа.</div>
-              </div>
-              <div className="trd-feature-card">
-                <div className="trd-feature-icon"><i className="fa-solid fa-landmark"></i></div>
-                <div className="trd-feature-title">Соёл, аялал</div>
-                <div className="trd-feature-desc">Түүхэн дурсгалт газрууд болон орчин үеийн соёл.</div>
-              </div>
-            </div>
-
             {/* Tabs (scroll to sections) */}
             <div className="trd-tabs" role="tablist">
-              <a href="#trd-section-brief" className="trd-tab active">Товч мэдээлэл</a>
+              <a href="#trd-section-about" className="trd-tab active">Аяллын тухай</a>
               <a href="#trd-section-itinerary" className="trd-tab">Хөтөлбөр</a>
               <a href="#trd-section-included" className="trd-tab">Юу багтсан</a>
               <a href="#trd-section-faq" className="trd-tab">Асуулт хариулт</a>
