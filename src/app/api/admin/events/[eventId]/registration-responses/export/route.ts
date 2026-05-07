@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getApiPlatformUser } from "@/lib/api-platform-session";
 import { legacyRoleAllowsEventAdminApi } from "@/lib/admin-access";
 import { buildAdminEventRegistrationExportCsv } from "@/lib/trip-registration-form/organizer";
+import { buildContentDispositionAttachment } from "@/lib/http/content-disposition";
 
 export const runtime = "nodejs";
 
@@ -39,11 +40,15 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": buildContentDispositionAttachment(filename),
         "Cache-Control": "no-store",
       },
     });
   } catch (e) {
-    return NextResponse.json({ error: "failed" }, { status: statusFromError(e) });
+    console.error("[admin event registration export] failed", e);
+    return NextResponse.json(
+      { error: "failed", message: e instanceof Error ? e.message : String(e) },
+      { status: statusFromError(e) },
+    );
   }
 }

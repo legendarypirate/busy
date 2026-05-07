@@ -7,6 +7,7 @@ import { dbBusyWeeklyMeeting, prisma } from "@/lib/prisma";
 import { accountCanManageWeeklyMeeting, ensureBusyRbacSeed } from "@/lib/busy-rbac";
 import { createWeeklyMeetingPublicToken } from "@/lib/weekly-meeting-tokens";
 import { buildMeetingRosterCsv } from "@/lib/roster-export";
+import { buildContentDispositionAttachment } from "@/lib/http/content-disposition";
 import type { CreateWeeklyMeetingInput, PublicRegisterMeetingInput } from "@/lib/meetings/weekly-meeting-types";
 
 export type { CreateWeeklyMeetingInput, PublicRegisterMeetingInput } from "@/lib/meetings/weekly-meeting-types";
@@ -255,7 +256,7 @@ export async function getRosterCsvNextResponse(
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": buildContentDispositionAttachment(filename),
       "Cache-Control": "no-store",
     },
   });
