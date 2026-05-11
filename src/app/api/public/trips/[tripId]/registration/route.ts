@@ -11,6 +11,7 @@ import {
   getPublishedTripRegistrationDrawerSchema,
   submitPublicFormResponseByTripId,
 } from "@/lib/trip-registration-form/service";
+import { loadPublicTripCheckoutContext } from "@/lib/trip-registration-form/public-trip-checkout-context";
 import {
   TripFormValidationError,
   type TripFormSubmitAnswer,
@@ -609,10 +610,19 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     if (!out.ok) {
       return NextResponse.json({ success: false, message: out.message }, { status: 404 });
     }
+    const checkout = await loadPublicTripCheckoutContext(tripId);
     return NextResponse.json({
       success: true,
       tripTitle: out.tripTitle,
       schema: out.schema,
+      checkout: checkout
+        ? {
+            tiers: checkout.tiers,
+            departureIso: checkout.departureIso,
+            maxPassengers: checkout.maxPassengers,
+            capacityNote: checkout.capacityNote,
+          }
+        : null,
     });
   } catch {
     return NextResponse.json(
