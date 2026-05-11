@@ -58,6 +58,48 @@ body {
     margin-left: -250px;
 }
 
+/* Sidebar toggle button (always visible, state-aware) */
+.admin-sidebar-toggle {
+    border-radius: 0.5rem;
+    padding: 0.375rem 0.6rem;
+    line-height: 1;
+}
+
+.admin-sidebar-toggle i {
+    font-size: 1rem;
+}
+
+/* Floating "expand sidebar" button shown only when sidebar is collapsed.
+   It is fixed to the viewport so the user always has a way back, even if
+   the page-content-wrapper layout shifts the inline toggle button. */
+.admin-sidebar-floating-expand {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1080;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.admin-sidebar-floating-expand:hover,
+.admin-sidebar-floating-expand:focus {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.admin-sidebar-floating-expand i {
+    font-size: 0.95rem;
+    color: #fff;
+}
+
 /* Navigation */
 .navbar {
     padding: 0.75rem 1rem;

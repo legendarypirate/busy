@@ -60,9 +60,23 @@ export default function AdminChromeClient({
   };
 
   const wrapperClass = `d-flex${toggled ? " toggled" : ""}`;
+  const toggleLabel = toggled ? "Цэсийг нээх" : "Цэсийг хаах";
+  const toggleIcon = toggled ? "fas fa-angles-right" : "fas fa-bars";
 
   return (
     <div className={wrapperClass} id="wrapper">
+        {toggled ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-primary admin-sidebar-floating-expand"
+            id="sidebarFloatingExpand"
+            aria-label="Цэсийг нээх"
+            title="Цэсийг нээх"
+            onClick={toggle}
+          >
+            <i className="fas fa-angles-right" aria-hidden="true" />
+          </button>
+        ) : null}
         <div className="bg-white border-end" id="sidebar-wrapper" role="navigation">
           <div className="sidebar-heading text-center py-4 border-bottom">
             <Link href="/" prefetch={false} className="text-decoration-none fw-bold text-dark d-block">
@@ -86,8 +100,16 @@ export default function AdminChromeClient({
         <div id="page-content-wrapper">
           <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom">
             <div className="container-fluid">
-              <button type="button" className="btn btn-sm" id="sidebarToggle" aria-label="Цэс" onClick={toggle}>
-                <i className="fas fa-bars" />
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary admin-sidebar-toggle"
+                id="sidebarToggle"
+                aria-label={toggleLabel}
+                aria-pressed={toggled}
+                title={toggleLabel}
+                onClick={toggle}
+              >
+                <i className={toggleIcon} aria-hidden="true" />
               </button>
               <ul className="navbar-nav ms-auto">
                 <li className="nav-item dropdown">
